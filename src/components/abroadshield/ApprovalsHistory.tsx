@@ -14,100 +14,7 @@ import {
   History,
 } from "lucide-react";
 import Reveal from "./Reveal";
-
-interface ApprovalEntry {
-  id: string;
-  action: "approved" | "edited" | "declined";
-  kind: "email" | "form" | "search" | "message" | "document";
-  title: string;
-  recipient: string;
-  detail: string;
-  time: string;
-  phase: string;
-}
-
-const ENTRIES: ApprovalEntry[] = [
-  {
-    id: "h1",
-    action: "approved",
-    kind: "email",
-    title: "Consulate reschedule request",
-    recipient: "UK Visa & Immigration",
-    detail: "Reschedule 28 Aug appointment to 02 Sep due to delayed bank statement page.",
-    time: "2 min ago",
-    phase: "Pre-Departure",
-  },
-  {
-    id: "h2",
-    action: "approved",
-    kind: "form",
-    title: "FRRO registration form",
-    recipient: "Foreigners Regional Registration Office",
-    detail: "Pre-filled form with student details, passport, and visa info. Slot booked.",
-    time: "3 hr ago",
-    phase: "Arrival",
-  },
-  {
-    id: "h3",
-    action: "edited",
-    kind: "email",
-    title: "Landlord viewing reply",
-    recipient: "Maple St Property Management",
-    detail: "You edited the tone to be more formal. Agent re-sent with your changes.",
-    time: "5 hr ago",
-    phase: "Arrival",
-  },
-  {
-    id: "h4",
-    action: "approved",
-    kind: "search",
-    title: "Housing shortlist (5 listings)",
-    recipient: "Saved to your vault",
-    detail: "5 listings matched £650/mo budget, 35-min commute, bills included.",
-    time: "8 hr ago",
-    phase: "Arrival",
-  },
-  {
-    id: "h5",
-    action: "declined",
-    kind: "message",
-    title: "Off-campus job application",
-    recipient: "Local café (unverified)",
-    detail: "Agent flagged: this role would breach your 20-hr Tier-4 work-hour cap. You declined.",
-    time: "1 day ago",
-    phase: "Studying",
-  },
-  {
-    id: "h6",
-    action: "approved",
-    kind: "document",
-    title: "Sponsorship letter draft",
-    recipient: "Parent (for review)",
-    detail: "Drafted sponsorship letter with financial details. Sent to parent for sign-off.",
-    time: "1 day ago",
-    phase: "Pre-Departure",
-  },
-  {
-    id: "h7",
-    action: "approved",
-    kind: "email",
-    title: "Bank appointment request",
-    recipient: "Barclays Student Branch",
-    detail: "Drafted appointment-request email. 2 branches compared by student-account perks.",
-    time: "2 days ago",
-    phase: "Arrival",
-  },
-  {
-    id: "h8",
-    action: "edited",
-    kind: "search",
-    title: "CV tailored — Solutions Engineer",
-    recipient: "Saved to your vault",
-    detail: "You edited the summary line. Agent updated 12 tailored CV versions with your tone.",
-    time: "3 days ago",
-    phase: "Job Success",
-  },
-];
+import { useApprovalsStore, type ApprovalEntry } from "./approvalsStore";
 
 const ACTION_STYLE: Record<
   ApprovalEntry["action"],
@@ -148,9 +55,10 @@ const KIND_ICON: Record<ApprovalEntry["kind"], typeof Mail> = {
 };
 
 export default function ApprovalsHistory() {
-  const approved = ENTRIES.filter((e) => e.action === "approved").length;
-  const edited = ENTRIES.filter((e) => e.action === "edited").length;
-  const declined = ENTRIES.filter((e) => e.action === "declined").length;
+  const entries = useApprovalsStore((s) => s.entries);
+  const approved = entries.filter((e) => e.action === "approved").length;
+  const edited = entries.filter((e) => e.action === "edited").length;
+  const declined = entries.filter((e) => e.action === "declined").length;
 
   return (
     <section className="relative w-full bg-transparent py-20 sm:py-28">
@@ -191,7 +99,7 @@ export default function ApprovalsHistory() {
             <div className="absolute left-[19px] top-2 bottom-2 w-px bg-gradient-to-b from-[oklch(0.74_0.17_162/0.4)] via-[oklch(0.74_0.17_162/0.2)] to-transparent sm:left-[23px]" />
 
             <div className="space-y-3">
-              {ENTRIES.map((entry, i) => {
+              {entries.map((entry, i) => {
                 const style = ACTION_STYLE[entry.action];
                 const ActionIcon = style.icon;
                 const KindIcon = KIND_ICON[entry.kind];

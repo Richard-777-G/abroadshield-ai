@@ -303,27 +303,16 @@ export default function CountryRules() {
                     })}
                   </div>
 
-                  {/* comparison summary */}
-                  <div className="border-t border-[var(--shield-border)] bg-[oklch(0.14_0.018_165/0.5)] px-6 py-4">
-                    <div className="flex items-center gap-2 text-[11px] text-[var(--shield-text-dim)]">
-                      <GitCompare className="h-3.5 w-3.5 text-[oklch(0.82_0.13_210)]" />
-                      {compareA === compareB ? (
+                  {/* comparison summary + best-for recommendation */}
+                  <div className="border-t border-[var(--shield-border)] bg-[oklch(0.14_0.018_165/0.5)] px-6 py-5">
+                    {compareA === compareB ? (
+                      <div className="flex items-center gap-2 text-[11px] text-[var(--shield-text-dim)]">
+                        <GitCompare className="h-3.5 w-3.5 text-[oklch(0.82_0.13_210)]" />
                         <span>Pick two different countries to compare.</span>
-                      ) : (
-                        <span>
-                          Comparing{" "}
-                          <span className="font-semibold text-[oklch(0.82_0.13_210)]">
-                            {countryA.country}
-                          </span>{" "}
-                          vs{" "}
-                          <span className="font-semibold text-[oklch(0.86_0.17_80)]">
-                            {countryB.country}
-                          </span>{" "}
-                          — the agent tracks every difference and flags the one that matters
-                          most for your visa stage.
-                        </span>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <CompareRecommendation a={countryA} b={countryB} idxA={compareA} idxB={compareB} />
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -332,5 +321,153 @@ export default function CountryRules() {
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Compare recommendation — analyses two countries across key student
+ * priorities and surfaces a "best for" verdict per dimension plus an
+ * overall recommendation.
+ */
+function CompareRecommendation({
+  a,
+  b,
+}: {
+  a: CountryRule;
+  b: CountryRule;
+  idxA: number;
+  idxB: number;
+}) {
+  // Extract numeric work-hour caps (e.g. "20 hrs/week" → 20, "48 hrs/fortnight" → 24/week)
+  const extractWeekHours = (s: string): number => {
+    const fort = s.match(/(\d+)\s*hrs?\/fortnight/i);
+    if (fort) return Number(fort[1]) / 2;
+    const week = s.match(/(\d+)\s*hrs?\/week/i);
+    if (week) return Number(week[1]);
+    const day = s.match(/(\d+)\s*full-days/i);
+    if (day) return Number(day[1]) * 8 / 7; // approx weekly
+    return 0;
+  };
+  // Extract post-study window in months (e.g. "2 years" → 24, "18 months" → 18)
+  const extractMonths = (s: string): number => {
+    const yr = s.match(/(\d+)\s*yr/i);
+    if (yr) return Number(yr[1]) * 12;
+    const mo = s.match(/(\d+)\s*month/i);
+    if (mo) return Number(mo[1]);
+    return 0;
+  };
+
+  const hoursA = extractWeekHours(a.workCap);
+  const hoursB = extractWeekHours(b.workCap);
+  const postA = extractMonths(a.postStudyWindow);
+  const postB = extractMonths(b.postStudyWindow);
+  // Registration speed — fewer days = faster = better
+  const regDaysA = (a.registration.match(/(\d+)\s*days?/i) || [, 99])[1] as number;
+  const regDaysB = (b.registration.match(/(\d+)\s*days?/i) || [, 99])[1] as number;
+
+  const dims: {
+    label: string;
+    winner: "a" | "b" | "tie";
+    reason: string;
+  }[] = [
+    {
+      label: "Part-time work hours",
+      winner: hoursA > hoursB ? "a" : hoursB > hoursA ? "b" : "tie",
+      reason:
+        hoursA === hoursB
+          ? "Same cap"
+          : `${Math.max(hoursA, hoursB)} hrs/wk vs ${Math.min(hoursA, hoursB)}`,
+    },
+    {
+      label: "Post-study window",
+      winner: postA > postB ? "a" : postB > postA ? "b" : "tie",
+      reason:
+        postA === postB
+          ? "Same length"
+          : `${Math.max(postA, postB)}mo vs ${Math.min(postA, postB)}mo`,
+    },
+    {
+      label: "Registration speed",
+      winner: regDaysA < regDaysB ? "a" : regDaysB < regDaysA ? "b" : "tie",
+      reason:
+        regDaysA === regDaysB
+          ? "Same window"
+          : `${Math.min(regDaysA, regDaysB)}d vs ${Math.max(regDaysA, regDaysB)}d`,
+    },
+  ];
+
+  // Overall winner — count dimension wins
+  const winsA = dims.filter((d) => d.winner === "a").length;
+  const winsB = dims.filter((d) => d.winner === "b").length;
+  const overall = winsA > winsB ? "a" : winsB > winsA ? "b" : "tie";
+
+  const winnerName = overall === "a" ? a.country : overall === "b" ? b.country : null;
+
+  return (
+    <div className="space-y-4">
+      {/* dimension breakdown */}
+      <div className="space-y-2">
+        <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[oklch(0.82_0.13_210)]">
+          <GitCompare className="h-3.5 w-3.5" />
+          Best for — dimension by dimension
+        </div>
+        {dims.map((d) => (
+          <div
+            key={d.label}
+            className="flex items-center gap-3 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.4)] px-3 py-2.5"
+          >
+            <span className="flex-1 text-xs font-medium text-[var(--shield-text)]">
+              {d.label}
+            </span>
+            {d.winner === "a" && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.74_0.13_210/0.4)] bg-[oklch(0.74_0.13_210/0.12)] px-2 py-0.5 text-[10px] font-semibold text-[oklch(0.82_0.13_210)]">
+                {a.flag} {a.country.split(" ")[0]} wins
+              </span>
+            )}
+            {d.winner === "b" && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.8_0.15_80/0.4)] bg-[oklch(0.8_0.15_80/0.12)] px-2 py-0.5 text-[10px] font-semibold text-[oklch(0.86_0.17_80)]">
+                {b.flag} {b.country.split(" ")[0]} wins
+              </span>
+            )}
+            {d.winner === "tie" && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] px-2 py-0.5 text-[10px] font-semibold text-[var(--shield-text-dim)]">
+                Tie
+              </span>
+            )}
+            <span className="text-[11px] text-[var(--shield-text-dim)]">{d.reason}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* overall verdict */}
+      <div className="rounded-xl border border-[oklch(0.74_0.17_162/0.3)] bg-[oklch(0.74_0.17_162/0.08)] p-4">
+        <div className="flex items-start gap-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.12)]">
+            <Check className="h-4 w-4 text-[oklch(0.85_0.19_158)]" />
+          </span>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-[oklch(0.85_0.19_158)]">
+              Agent verdict
+            </div>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--shield-text)]">
+              {winnerName ? (
+                <>
+                  <span className="font-semibold">{winnerName}</span> edges ahead on{" "}
+                  {Math.max(winsA, winsB)} of {dims.length} dimensions. But the right pick
+                  depends on your priority — the agent will tailor its recommendation to your
+                  specific situation when you ask.
+                </>
+              ) : (
+                <>
+                  It&apos;s a tie across the board. The agent will break it down by your
+                  specific priority (work hours vs post-study window vs registration speed)
+                  when you ask.
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

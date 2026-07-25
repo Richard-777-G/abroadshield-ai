@@ -18,6 +18,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import { CHAT_STARTERS, STUDENT } from "./data";
 import Reveal from "./Reveal";
+import { useApprovalsStore, type ApprovalKind } from "./approvalsStore";
 
 type DraftAction = "none" | "approved" | "edited" | "declined";
 
@@ -137,10 +138,26 @@ export default function AgentChat() {
     setInput("");
   };
 
+  const addEntry = useApprovalsStore((s) => s.addEntry);
+
   const markAction = (id: string, action: DraftAction) => {
     setMessages((m) =>
       m.map((msg) => (msg.id === id ? { ...msg, action } : msg))
     );
+    // Push to the shared approvals store so the ApprovalsHistory reflects
+    // the user's real action on this draft.
+    if (action === "none") return;
+    const msg = messages.find((m) => m.id === id);
+    if (!msg || msg.role !== "assistant") return;
+    const meta = extractDraftMeta(msg.content);
+    addEntry({
+      action,
+      kind: meta.kind,
+      title: meta.title,
+      recipient: meta.recipient,
+      detail: meta.detail,
+      phase: meta.phase,
+    });
   };
 
   return (
@@ -470,4 +487,60 @@ function DraftActionBar({
       </button>
     </div>
   );
+}
+
+/**
+ * Extract structured metadata from an agent draft reply so it can be logged
+ * in the ApprovalsHistory. Infers the kind (email/form/search/etc.), a
+ * short title, the recipient, a detail snippet, and the journey phase from
+ * the content.
+ */
+function extractDraftMeta(content: string): {
+  kind: ApprovalKind;
+  title: string;
+  recipient: string;
+  detail: string;
+  phase: string;
+} {
+  const lower = content.toLowerCase();
+
+  // infer kind
+  let kind: ApprovalKind = "message";
+  if (/subject:/i.test(content) || /dear\b/i.test(content)) kind = "email";
+  else if (/shortlist|listings|compared/i.test(lower)) kind = "search";
+  else if (/form|registration|application form/i.test(lower)) kind = "form";
+  else if (/cv|cover letter|tailor/i.test(lower)) kind = "document";
+
+  // extract title — first non-empty line, strip markdown
+  const lines = content.split("\n").filter((l) => l.trim());
+  let title = lines[0]?.replace(/[*#`]/g, "").trim() || "Agent draft";
+  if (title.length > 60) title = title.slice(0, 57) + "…";
+
+  // extract recipient — from "Dear X" or "Subject:" context
+  let recipient = "Saved to your vault";
+  const dearMatch = content.match(/Dear\s+([^,\n]+)/i);
+  if (dearMatch) {
+    recipient = dearMatch[1].trim();
+  } else if (/consulate|embassy|visa/i.test(lower)) {
+    recipient = "UK Visa & Immigration";
+  } else if (/landlord|property|viewing/i.test(lower)) {
+    recipient = "Property manager";
+  } else if (/bank|barclays|hsbc/i.test(lower)) {
+    recipient = "Student bank branch";
+  } else if (/alumni|networking/i.test(lower)) {
+    recipient = "Alumni network";
+  }
+
+  // detail — first 120 chars of body (skip title line)
+  const body = lines.slice(1).join(" ").replace(/[*#`]/g, "").trim();
+  const detail = body.length > 120 ? body.slice(0, 117) + "…" : body || "Draft prepared by the agent for your review.";
+
+  // infer phase from keywords
+  let phase = "Pre-Departure";
+  if (/visa appointment|consulate|passport|forex|flight/i.test(lower)) phase = "Pre-Departure";
+  else if (/housing|landlord|bank|sim|registration|frro|brp/i.test(lower)) phase = "Arrival";
+  else if (/work.hour|budget|coursework|dissertation|part-time/i.test(lower)) phase = "Studying";
+  else if (/cv|interview|job|alumni|sponsorship/i.test(lower)) phase = "Job Success";
+
+  return { kind, title, recipient, detail, phase };
 }
