@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Shield, Menu, X, Zap, Globe } from "lucide-react";
+import { Shield, Menu, X, Zap, Globe, LogIn } from "lucide-react";
+import AuthModal from "./AuthModal";
 
 const NAV = [
   { label: "Journey", href: "#journey" },
@@ -14,6 +15,8 @@ const NAV = [
 export default function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -67,13 +70,22 @@ export default function SiteHeader() {
             </span>
             Agent live
           </span>
-          <a
-            href="#agent"
+          {/* sign in link */}
+          <button
+            onClick={() => { setAuthMode("login"); setAuthOpen(true); }}
+            className="hidden items-center gap-1.5 rounded-full border border-[var(--shield-border)] px-3 py-1.5 text-[12.5px] font-medium text-[oklch(0.9_0.01_160)] transition hover:border-[oklch(0.74_0.17_162/0.4)] hover:bg-[oklch(0.24_0.028_165/0.5)] sm:inline-flex"
+          >
+            <LogIn className="h-3.5 w-3.5" />
+            Sign in
+          </button>
+          {/* primary CTA — opens signup modal */}
+          <button
+            onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}
             className="hidden items-center gap-1.5 rounded-full bg-[oklch(0.98_0.005_160)] px-3.5 py-1.5 text-[12.5px] font-semibold text-[oklch(0.14_0.018_165)] transition hover:bg-white sm:inline-flex"
           >
             <Zap className="h-3.5 w-3.5" />
             Try the agent
-          </a>
+          </button>
           {/* mobile toggle */}
           <button
             onClick={() => setOpen((o) => !o)}
@@ -108,9 +120,19 @@ export default function SiteHeader() {
               <Zap className="h-4 w-4" />
               Try the agent
             </a>
+            <button
+              onClick={() => { setOpen(false); setAuthMode("login"); setAuthOpen(true); }}
+              className="flex items-center justify-center gap-2 rounded-xl border border-[var(--shield-border)] px-4 py-2.5 text-sm font-medium text-[oklch(0.9_0.01_160)]"
+            >
+              <LogIn className="h-4 w-4" />
+              Sign in
+            </button>
           </nav>
         </div>
       )}
+
+      {/* auth modal */}
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} mode={authMode} />
     </header>
   );
 }

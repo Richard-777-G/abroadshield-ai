@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import { Shield, ArrowDown, Globe2 } from "lucide-react";
+import { Shield, ArrowDown, Globe2, CalendarClock, FileCheck2, BrainCircuit } from "lucide-react";
 import LanguageToggle from "./LanguageToggle";
 import HoloShield from "./HoloShield";
 import { HERO_STRINGS, type LocaleId } from "./data";
@@ -184,34 +184,45 @@ export default function Hero3D() {
           </motion.div>
         </div>
 
-        {/* bottom stats strip */}
+        {/* bottom stats strip — clickable cards, each links to its section */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[oklch(0.6_0.04_165/0.14)] bg-[oklch(0.22_0.025_165/0.55)] backdrop-blur sm:grid-cols-4"
+          className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4"
         >
-          {[
-            { k: t.stat1V, v: t.stat1L },
-            { k: t.stat2V, v: t.stat2L },
-            { k: t.stat3V, v: t.stat3L },
-            { k: t.stat4V, v: t.stat4L },
-          ].map((s, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 + i * 0.08 }}
-              className="px-5 py-4"
-            >
-              <div className="text-2xl font-semibold tracking-tight text-[oklch(0.98_0.005_160)] sm:text-3xl">
-                {s.k}
-              </div>
-              <div className="mt-1 text-[11px] leading-tight tracking-wide text-[oklch(0.62_0.012_220)]">
-                {s.v}
-              </div>
-            </motion.div>
-          ))}
+          <StatCard
+            icon={Shield}
+            value={t.stat1V}
+            label={t.stat1L}
+            flag="🛡️"
+            href="#journey"
+            delay={0.8}
+          />
+          <StatCard
+            icon={CalendarClock}
+            value={t.stat2V}
+            label={t.stat2L}
+            flag="📅"
+            href="#timeline"
+            delay={0.88}
+          />
+          <StatCard
+            icon={FileCheck2}
+            value={t.stat3V}
+            label={t.stat3L}
+            flag="📄"
+            href="#memory"
+            delay={0.96}
+          />
+          <StatCard
+            icon={BrainCircuit}
+            value={t.stat4V}
+            label={t.stat4L}
+            flag="🧠"
+            href="#agent"
+            delay={1.04}
+          />
         </motion.div>
       </div>
     </section>
@@ -258,5 +269,51 @@ function FloatingLabel({
       </div>
       <div className="mt-0.5 text-xs font-semibold">{value}</div>
     </motion.div>
+  );
+}
+
+/* ---------- clickable stat card ---------- */
+function StatCard({
+  icon: Icon,
+  value,
+  label,
+  flag,
+  href,
+  delay,
+}: {
+  icon: typeof Shield;
+  value: string;
+  label: string;
+  flag: string;
+  href: string;
+  delay: number;
+}) {
+  return (
+    <motion.a
+      href={href}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.5 }}
+      whileHover={{ y: -3 }}
+      className="as-card-hover group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-[oklch(0.6_0.04_165/0.18)] as-glass px-4 py-3.5"
+    >
+      {/* icon chip */}
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[oklch(0.74_0.17_162/0.3)] bg-[oklch(0.74_0.17_162/0.1)]">
+        <Icon className="h-4.5 w-4.5 text-[oklch(0.85_0.19_158)]" />
+      </span>
+      <div className="min-w-0">
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-xl font-semibold tracking-tight text-[oklch(0.98_0.005_160)] sm:text-2xl">
+            {value}
+          </span>
+          <span className="text-base opacity-70">{flag}</span>
+        </div>
+        <div className="mt-0.5 text-[10px] leading-tight tracking-wide text-[oklch(0.72_0.02_165)]">
+          {label}
+        </div>
+      </div>
+      {/* hover arrow */}
+      <ArrowDown className="absolute right-3 top-3 h-3 w-3 rotate-[-45deg] text-[oklch(0.5_0.03_165)] opacity-0 transition group-hover:opacity-100 group-hover:text-[oklch(0.85_0.19_158)]" />
+    </motion.a>
   );
 }

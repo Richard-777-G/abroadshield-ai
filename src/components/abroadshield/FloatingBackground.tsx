@@ -27,7 +27,7 @@ export default function FloatingBackground() {
       {/* faint grid */}
       <div className="as-bg-grid absolute inset-0 opacity-40" />
 
-      {/* drifting glow orbs — 3 (emerald, lime, mint) — the rich colour combination */}
+      {/* drifting glow orbs — 5 for richer colour combination (emerald, lime, mint, amber, violet) */}
       <Orb
         className="left-[-8%] top-[8%] h-[42vh] w-[42vh]"
         color="oklch(0.74 0.17 162 / 0.22)"
@@ -46,6 +46,18 @@ export default function FloatingBackground() {
         blur="70px"
         drift={animate ? { x: [0, 30, 0], y: [0, -40, 0], dur: 24, delay: 4 } : undefined}
       />
+      <Orb
+        className="right-[20%] bottom-[5%] h-[32vh] w-[32vh]"
+        color="oklch(0.8 0.15 80 / 0.1)"
+        blur="70px"
+        drift={animate ? { x: [0, -25, 0], y: [0, -20, 0], dur: 28, delay: 1 } : undefined}
+      />
+      <Orb
+        className="left-[8%] bottom-[25%] h-[28vh] w-[28vh]"
+        color="oklch(0.64 0.16 300 / 0.09)"
+        blur="60px"
+        drift={animate ? { x: [0, 35, 0], y: [0, 25, 0], dur: 30, delay: 5 } : undefined}
+      />
 
       {/* rotating geometric outlines — 2 for depth, very faint */}
       <GeoOutline
@@ -59,6 +71,66 @@ export default function FloatingBackground() {
         rotateDur={animate ? 64 : undefined}
         reverse
       />
+
+      {/* AI neural network pattern — subtle, conveys "AI agent" identity */}
+      {animate && (
+        <motion.svg
+          className="absolute right-[5%] top-[15%] h-48 w-48 opacity-20"
+          viewBox="0 0 100 100"
+          fill="none"
+          animate={{ opacity: [0.1, 0.25, 0.1] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        >
+          {/* nodes */}
+          {[
+            [20, 30], [20, 50], [20, 70],
+            [50, 20], [50, 40], [50, 60], [50, 80],
+            [80, 35], [80, 65],
+          ].map(([cx, cy], i) => (
+            <circle key={i} cx={cx} cy={cy} r="2" fill="oklch(0.74 0.17 162 / 0.6)" />
+          ))}
+          {/* connections */}
+          <g stroke="oklch(0.74 0.17 162 / 0.25)" strokeWidth="0.4">
+            <line x1="20" y1="30" x2="50" y2="20" />
+            <line x1="20" y1="30" x2="50" y2="40" />
+            <line x1="20" y1="50" x2="50" y2="40" />
+            <line x1="20" y1="50" x2="50" y2="60" />
+            <line x1="20" y1="70" x2="50" y2="60" />
+            <line x1="20" y1="70" x2="50" y2="80" />
+            <line x1="50" y1="20" x2="80" y2="35" />
+            <line x1="50" y1="40" x2="80" y2="35" />
+            <line x1="50" y1="60" x2="80" y2="65" />
+            <line x1="50" y1="80" x2="80" y2="65" />
+          </g>
+        </motion.svg>
+      )}
+
+      {/* second neural net — bottom left, different position */}
+      {animate && (
+        <motion.svg
+          className="absolute left-[8%] bottom-[20%] h-40 w-40 opacity-15"
+          viewBox="0 0 100 100"
+          fill="none"
+          animate={{ opacity: [0.08, 0.2, 0.08] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+        >
+          {[
+            [25, 25], [25, 50], [25, 75],
+            [55, 35], [55, 65],
+            [80, 50],
+          ].map(([cx, cy], i) => (
+            <circle key={i} cx={cx} cy={cy} r="1.8" fill="oklch(0.86 0.2 135 / 0.5)" />
+          ))}
+          <g stroke="oklch(0.86 0.2 135 / 0.2)" strokeWidth="0.4">
+            <line x1="25" y1="25" x2="55" y2="35" />
+            <line x1="25" y1="50" x2="55" y2="35" />
+            <line x1="25" y1="50" x2="55" y2="65" />
+            <line x1="25" y1="75" x2="55" y2="65" />
+            <line x1="55" y1="35" x2="80" y2="50" />
+            <line x1="55" y1="65" x2="80" y2="50" />
+          </g>
+        </motion.svg>
+      )}
 
       {/* floating particle field — 12 motes (down from 24) */}
       {animate && (

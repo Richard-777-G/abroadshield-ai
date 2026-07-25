@@ -69,7 +69,7 @@ export default function DeadlineTimeline() {
   const active = hovered ?? selected;
 
   return (
-    <section className="relative w-full bg-transparent py-20 sm:py-28">
+    <section id="timeline" className="relative w-full bg-transparent py-20 sm:py-28 scroll-mt-20">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.8_0.15_80/0.35)] to-transparent" />
       <div className="pointer-events-none absolute inset-0 as-bg-grid-fine opacity-20" />
 
