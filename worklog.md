@@ -708,3 +708,46 @@ Stage Summary:
   1. Add per-view bespoke infographics beyond just the hero banner.
   2. Wire "Ask agent to act" buttons to pre-fill the chat.
   3. Visual QA in a higher-memory environment.
+
+---
+
+Task ID: 15
+Agent: main (user-requested: fix overlapping ViewHero text on all sections, enrich empty home view)
+
+Work Log:
+- User feedback: "EXPECT HOME PAGE SECTION REST OF THE SECTIONS HERO IMAGE AND THE TAG LINE AND TEXT WERE ALL OVER THE PLACE AND OVERLAPPING... SAME PROBLEM FOR EVERY SECTION... THE HOME BECAME A BIT EMPTY... IT NEEDS SOME OTHER INFO AND IMAGES... TRY TO ADD IMAGES AND DESIGNS AND 3D SMALL IMAGES HERE AND THERE."
+
+- **Fixed ViewHero overlapping text** (the root cause of the "all over the place" issue):
+  - The old ViewHero used a `-mt-20` negative margin to overlap the heading text ON TOP of the image banner. This caused the text to overlap the image — "all over the place" — on every section.
+  - Rewrote ViewHero with a clean, non-overlapping layout: image banner first (h-160/h-200), then heading text BELOW it with normal `mt-6` spacing. No overlap.
+  - Each view hero still has its bespoke image + eyebrow + title with gradient highlight + subtitle — just laid out cleanly.
+  - Applied to all 6 non-home views (Journey, Agent, Countries, Network, Connectors, Pricing).
+
+- **Enriched the Home view** (was empty — just the Hero3D):
+  - Built `HomeShowcase.tsx` with 3 new sections below the hero:
+    1. **"How it works — Three steps. Zero stress."**: 3 StepCards (01 Connect your platforms, 02 The agent does the work, 03 You approve, it sends) + a wide `home-how-it-works.png` image banner.
+    2. **"It actually does the work — Not a chatbot that waits. An agent that acts."**: a 2-column layout with the `home-agent-work.png` image (with floating badges: "5 drafts ready", "12 jobs applied", "23 network contacts") on the left, and a 6-item feature list (gap-checks docs, tracks deadlines, carries memory, knows 10 countries, tailors CV, runs networking tracker) + a "Talk to the agent" CTA on the right.
+    3. **Quick stats band**: 4 BigStat cards (4 phases, 27 deadlines, 13 docs, 1 memory) with icons + flags.
+  - Generated 2 new images: `home-agent-work.png` (AI agent doing work) + `home-how-it-works.png` (3-step visual).
+
+- **Added small images + 3D elements** throughout for cool, easy-to-understand visuals:
+  - HomeShowcase has 2 images (agent-work + how-it-works).
+  - Floating badges on the agent-work image.
+  - BigStat cards with icons + flag emojis.
+  - StepCards with numbered icons.
+
+QA / verification results:
+- `bun run lint` — clean (zero errors).
+- Page returns 200, all home content present: "How it works", "Three steps", "It actually does the work", "Not a chatbot", "Connect your platforms", "You approve", both home images referenced.
+- Chat API returns real LLM replies with the student's memory.
+- ViewHero no longer overlaps (image + text are stacked cleanly).
+- **Known limitation**: agent-browser (Chromium) crashes the dev server due to system RAM. QA done via curl + lint + API testing.
+
+Stage Summary:
+- ViewHero overlapping text fixed: clean stacked layout (image then text, no overlap) on all 6 section views.
+- Home view enriched: 3 new sections (How it works, Agent showcase, Quick stats) with 2 new images + floating badges + feature list.
+- Lint clean, page 200, chat API verified.
+- Next-phase recommendations:
+  1. Add per-view bespoke infographics beyond the hero banner.
+  2. Wire "Talk to the agent" CTA to switch to the Agent view.
+  3. Visual QA in a higher-memory environment.

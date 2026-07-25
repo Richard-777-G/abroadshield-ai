@@ -33,7 +33,7 @@ const VIEW_HEROES: Record<ViewId, ViewHeroConfig> = {
     title: "It already knows",
     highlight: "the rules.",
     subtitle:
-      "The milestone-template table — country → phase → required steps. Official embassy links, visa checklists, work-hour caps, and post-study windows for 10 destinations. Pick a country to see what the agent has memorized.",
+      "Official embassy links, visa checklists, work-hour caps, and post-study windows for 10 destinations. Pick a country to see what the agent has memorized.",
     image: "/sections/hero-countries.png",
   },
   network: {
@@ -41,7 +41,7 @@ const VIEW_HEROES: Record<ViewId, ViewHeroConfig> = {
     title: "The agent doesn't just advise.",
     highlight: "It applies.",
     subtitle:
-      "An always-on networking tracker — who's been contacted, who replied, who needs a nudge — plus a live job board filtered by your visa runway and sponsorship eligibility.",
+      "An always-on networking tracker plus a live job board filtered by your visa runway and sponsorship eligibility. Click any row to see what the agent is doing.",
     image: "/sections/hero-network.png",
   },
   connectors: {
@@ -49,7 +49,7 @@ const VIEW_HEROES: Record<ViewId, ViewHeroConfig> = {
     title: "It operates every platform",
     highlight: "you need.",
     subtitle:
-      "Connect the tools you already use. The agent searches, shortlists, drafts, and applies — across job portals, email, housing sites, and finance apps. Real platforms, real actions, with your approval.",
+      "Connect the tools you already use. The agent searches, shortlists, drafts, and applies across 16 real platforms — with your approval at every step.",
     image: "/sections/hero-connectors.png",
   },
   pricing: {
@@ -66,40 +66,36 @@ export default function ViewHero({ viewId }: { viewId: ViewId }) {
   const config = VIEW_HEROES[viewId];
 
   return (
-    <section className="relative w-full overflow-hidden bg-transparent pt-24 sm:pt-28">
-      {/* hero image banner */}
-      <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
+    <section className="relative w-full overflow-hidden bg-transparent pt-20 sm:pt-24">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        {/* image banner — full width, no text overlap */}
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="relative h-[180px] overflow-hidden rounded-3xl border border-[oklch(0.6_0.04_165/0.2)] sm:h-[220px]"
+          className="relative h-[160px] overflow-hidden rounded-2xl border border-[oklch(0.6_0.04_165/0.2)] sm:h-[200px]"
         >
           <img
             src={config.image}
             alt={config.title}
-            className="h-full w-full object-cover opacity-50"
+            className="h-full w-full object-cover opacity-40"
             loading="lazy"
           />
-          {/* gradient scrims */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.14_0.018_165/0.98)] via-[oklch(0.14_0.018_165/0.4)] to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[oklch(0.14_0.018_165/0.6)] to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.14_0.018_165/0.9)] to-transparent" />
         </motion.div>
-      </div>
 
-      {/* heading text */}
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        {/* heading text — BELOW the image, no overlap */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="relative -mt-20 max-w-2xl"
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="mt-6 max-w-2xl"
         >
           <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[oklch(0.85_0.19_158)]">
             <span className="h-px w-8 bg-[oklch(0.74_0.17_162/0.5)]" />
             {config.eyebrow}
           </div>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--shield-text)] sm:text-5xl">
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-[var(--shield-text)] sm:text-4xl">
             {config.title}{" "}
             <span className="as-text-gradient">{config.highlight}</span>
           </h1>

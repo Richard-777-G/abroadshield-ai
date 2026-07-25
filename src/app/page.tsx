@@ -6,6 +6,7 @@ import SiteHeader from "@/components/abroadshield/SiteHeader";
 import SiteFooter from "@/components/abroadshield/SiteFooter";
 import Hero3D from "@/components/abroadshield/Hero3D";
 import ViewHero from "@/components/abroadshield/ViewHero";
+import HomeShowcase from "@/components/abroadshield/HomeShowcase";
 import JourneyExplorer from "@/components/abroadshield/JourneyExplorer";
 import AgentActivityPanel from "@/components/abroadshield/AgentActivityPanel";
 import DeadlineTimeline from "@/components/abroadshield/DeadlineTimeline";
@@ -64,7 +65,12 @@ export default function Home() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           >
-            {activeView === "home" && <Hero3D />}
+            {activeView === "home" && (
+              <>
+                <Hero3D />
+                <HomeShowcase />
+              </>
+            )}
 
             {activeView === "journey" && (
               <>
