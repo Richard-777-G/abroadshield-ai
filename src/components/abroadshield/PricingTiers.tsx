@@ -46,9 +46,9 @@ export default function PricingTiers() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.45, delay: i * 0.1 }}
-                className={`relative overflow-hidden rounded-3xl border p-6 sm:p-7 ${
+                className={`as-card-hover relative overflow-hidden rounded-3xl border p-6 sm:p-7 ${
                   highlighted
-                    ? "border-[oklch(0.74_0.17_162/0.5)] as-glass-strong as-glow-emerald"
+                    ? "as-gradient-border border-transparent as-glass-strong as-glow-emerald"
                     : "border-[var(--shield-border)] as-glass"
                 }`}
               >

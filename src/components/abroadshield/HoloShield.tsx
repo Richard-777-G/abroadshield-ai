@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef, useState } from "react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Shield } from "lucide-react";
 
 /**
@@ -13,23 +14,71 @@ import { Shield } from "lucide-react";
  *  - Iridescent shimmer sweep (jade → cyan → violet → back).
  *  - Subtle scan-line texture for the "hologram" feel.
  *  - Floating particles done with pure CSS (no canvas, no GPU cost).
+ *  - Hover-tilt: the whole hologram rotates toward the cursor (max ~8°).
  *  - Everything moves — but slowly and deliberately, not bouncy.
  */
 export default function HoloShield() {
+  // hover-tilt: track pointer position relative to the center of the hologram
+  const ref = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const [hovering, setHovering] = useState(false);
+
+  const rotateY = useSpring(useTransform(mx, [-0.5, 0.5], [8, -8]), {
+    stiffness: 150,
+    damping: 20,
+  });
+  const rotateX = useSpring(useTransform(my, [-0.5, 0.5], [-8, 8]), {
+    stiffness: 150,
+    damping: 20,
+  });
+
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    mx.set((e.clientX - rect.left) / rect.width - 0.5);
+    my.set((e.clientY - rect.top) / rect.height - 0.5);
+  };
+
+  const onLeave = () => {
+    mx.set(0);
+    my.set(0);
+    setHovering(false);
+  };
+
   return (
-    <div className="relative flex h-[340px] w-[340px] items-center justify-center sm:h-[420px] sm:w-[420px]">
-      {/* ambient glow behind the whole hologram */}
+    <div
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={onLeave}
+      className="relative flex h-[340px] w-[340px] items-center justify-center sm:h-[420px] sm:w-[420px]"
+      style={{ perspective: 800 }}
+    >
+      {/* tilt container */}
       <motion.div
-        aria-hidden
-        className="absolute inset-0 rounded-full"
-        animate={{ opacity: [0.5, 0.85, 0.5], scale: [0.96, 1.04, 0.96] }}
-        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        className="relative flex h-full w-full items-center justify-center"
         style={{
-          background:
-            "radial-gradient(circle, oklch(0.62 0.09 165 / 0.28), oklch(0.58 0.12 295 / 0.1) 45%, transparent 70%)",
-          filter: "blur(28px)",
+          rotateX,
+          rotateY,
+          transformStyle: "preserve-3d",
+          scale: hovering ? 1.03 : 1,
         }}
-      />
+        transition={{ scale: { duration: 0.3 } }}
+      >
+        {/* ambient glow behind the whole hologram */}
+        <motion.div
+          aria-hidden
+          className="absolute inset-0 rounded-full"
+          animate={{ opacity: [0.5, 0.85, 0.5], scale: [0.96, 1.04, 0.96] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          style={{
+            background:
+              "radial-gradient(circle, oklch(0.74 0.17 162 / 0.3), oklch(0.64 0.16 300 / 0.12) 45%, transparent 70%)",
+            filter: "blur(28px)",
+          }}
+        />
 
       {/* outer ring — slow clockwise, holographic conic gradient */}
       <motion.div
@@ -39,7 +88,7 @@ export default function HoloShield() {
         transition={{ duration: 48, repeat: Infinity, ease: "linear" }}
         style={{
           background:
-            "conic-gradient(from 0deg, transparent 0%, oklch(0.62 0.09 165 / 0.5) 18%, transparent 36%, oklch(0.7 0.08 215 / 0.4) 54%, transparent 72%, oklch(0.58 0.12 295 / 0.4) 88%, transparent 100%)",
+            "conic-gradient(from 0deg, transparent 0%, oklch(0.62 0.09 165 / 0.5) 18%, transparent 36%, oklch(0.74 0.13 210 / 0.4) 54%, transparent 72%, oklch(0.58 0.12 295 / 0.4) 88%, transparent 100%)",
           maskImage: "radial-gradient(circle, transparent 58%, black 60%, black 62%, transparent 64%)",
           WebkitMaskImage: "radial-gradient(circle, transparent 58%, black 60%, black 62%, transparent 64%)",
         }}
@@ -48,7 +97,7 @@ export default function HoloShield() {
       {/* mid ring — counter-rotating, thinner, brighter */}
       <motion.div
         aria-hidden
-        className="absolute h-[64%] w-[64%] rounded-full border border-[oklch(0.78_0.11_165/0.35)]"
+        className="absolute h-[64%] w-[64%] rounded-full border border-[oklch(0.85_0.19_158/0.35)]"
         animate={{ rotate: -360 }}
         transition={{ duration: 36, repeat: Infinity, ease: "linear" }}
         style={{
@@ -76,7 +125,7 @@ export default function HoloShield() {
       {/* inner ring — fastest, faint */}
       <motion.div
         aria-hidden
-        className="absolute h-[46%] w-[46%] rounded-full border border-dashed border-[oklch(0.7 0.08 215/0.4)]"
+        className="absolute h-[46%] w-[46%] rounded-full border border-dashed border-[oklch(0.74 0.13 210/0.4)]"
         animate={{ rotate: 360 }}
         transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
       />
@@ -94,7 +143,7 @@ export default function HoloShield() {
           transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut", repeatDelay: 3.3 }}
           style={{
             background:
-              "linear-gradient(100deg, transparent, oklch(0.82 0.06 180 / 0.35), transparent)",
+              "linear-gradient(100deg, transparent, oklch(0.85 0.08 162 / 0.35), transparent)",
             filter: "blur(8px)",
           }}
         />
@@ -116,7 +165,7 @@ export default function HoloShield() {
           }}
         />
         {/* shield glyph */}
-        <div className="relative flex h-full w-full items-center justify-center rounded-2xl border border-[oklch(0.78_0.11_165/0.5)] bg-[oklch(0.16_0.012_235/0.6)] backdrop-blur-md">
+        <div className="relative flex h-full w-full items-center justify-center rounded-2xl border border-[oklch(0.85_0.19_158/0.5)] bg-[oklch(0.16_0.012_235/0.6)] backdrop-blur-md">
           <Shield
             className="h-1/2 w-1/2 text-[oklch(0.85_0.08_170)]"
             strokeWidth={1.4}
@@ -129,7 +178,7 @@ export default function HoloShield() {
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             style={{
               background:
-                "linear-gradient(135deg, oklch(0.78 0.11 165 / 0.2), transparent 30%, oklch(0.7 0.08 215 / 0.18) 60%, oklch(0.58 0.12 295 / 0.16))",
+                "linear-gradient(135deg, oklch(0.78 0.11 165 / 0.2), transparent 30%, oklch(0.74 0.13 210 / 0.18) 60%, oklch(0.58 0.12 295 / 0.16))",
               mixBlendMode: "screen",
             }}
           />
@@ -142,7 +191,7 @@ export default function HoloShield() {
         className="pointer-events-none absolute inset-0 rounded-full opacity-30"
         style={{
           background:
-            "repeating-linear-gradient(0deg, transparent 0px, transparent 2px, oklch(0.8 0.05 180 / 0.08) 3px, transparent 4px)",
+            "repeating-linear-gradient(0deg, transparent 0px, transparent 2px, oklch(0.85 0.08 162 / 0.08) 3px, transparent 4px)",
           maskImage: "radial-gradient(circle, black 55%, transparent 70%)",
           WebkitMaskImage: "radial-gradient(circle, black 55%, transparent 70%)",
         }}
@@ -153,7 +202,7 @@ export default function HoloShield() {
         <motion.span
           key={i}
           aria-hidden
-          className="absolute h-1 w-1 rounded-full bg-[oklch(0.78_0.11_165/0.7)]"
+          className="absolute h-1 w-1 rounded-full bg-[oklch(0.85_0.19_158/0.7)]"
           style={{ left: `${m.x}%`, top: `${m.y}%` }}
           animate={{
             y: [0, m.dy, 0],
@@ -174,6 +223,7 @@ export default function HoloShield() {
       <Bracket className="right-0 top-0 rotate-90" />
       <Bracket className="bottom-0 right-0 rotate-180" />
       <Bracket className="bottom-0 left-0 -rotate-90" />
+      </motion.div>
     </div>
   );
 }
@@ -192,7 +242,7 @@ function Bracket({ className }: { className?: string }) {
   return (
     <span
       aria-hidden
-      className={`absolute h-5 w-5 border-l border-t border-[oklch(0.62_0.09_165/0.5)] ${className}`}
+      className={`absolute h-5 w-5 border-l border-t border-[oklch(0.74_0.17_162/0.5)] ${className}`}
     />
   );
 }

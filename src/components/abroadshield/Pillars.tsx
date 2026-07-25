@@ -37,7 +37,7 @@ export default function Pillars() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.45, delay: i * 0.08 }}
-                className="group relative overflow-hidden rounded-3xl border border-[var(--shield-border)] as-glass p-6 transition hover:border-[oklch(0.74_0.17_162/0.4)]"
+                className="as-card-hover group relative overflow-hidden rounded-3xl border border-[var(--shield-border)] as-glass p-6"
               >
                 <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[oklch(0.74_0.17_162/0.12)] blur-2xl transition group-hover:bg-[oklch(0.74_0.17_162/0.2)]" />
                 <div className="relative">

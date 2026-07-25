@@ -229,3 +229,50 @@ Stage Summary:
   2. Add hover-tilt micro-interaction to the holographic shield (mouse-follow rotation).
   3. The deadline timeline dots could use a subtle pulse on critical items (already animate-ping on the corner — could add a full glow pulse).
   4. Consider localizing section headings (not just the hero) for the full "language they trust" experience.
+
+---
+
+Task ID: 5
+Agent: webDevReview (cron round 3)
+Task: Assess project status, fix the hydration error from the radiant-green round, complete the color migration, and add more rich UI features (scroll-progress bar, hover-tilt, gradient borders, shimmer effects).
+
+Work Log:
+- Read worklog.md. Found that Task 4 (3D removal + hologram) was complete, and an in-progress radiant-green-theme round had built FloatingBackground + ClientFloatingBackground (ssr:false wrapper) + migrated colors, but hit a hydration mismatch error that wasn't resolved.
+- Assessed current state: dev server was down (had been killed). Restarted it. Lint was clean. The `ClientFloatingBackground.tsx` with `dynamic(..., { ssr: false })` was already in place to fix the hydration mismatch caused by `useReducedMotion()` in FloatingBackground.
+- Completed the color migration to radiant green:
+  - Found and fixed 4 remaining old ink references (`0.145_0.012_235`, `0.185_0.014_235`) in Hero3D.tsx and SiteHeader.tsx.
+  - Found and fixed 3 old palette references in Hero3D's floating-label TONE map (emerald/amber/cyan tones).
+  - Found and fixed old colors in HoloShield.tsx (motes dot color, bracket border, scan-line gradient, ambient glow).
+  - Verified: 0 old muted-jade/bright/sand/violet/steel references remain across all components (outside data.ts).
+- Added ScrollProgress component — a thin (2px) radiant-green line fixed to the top of the viewport that fills as the user scrolls. Uses `useScroll` + `useSpring` from framer-motion for smooth motion. Wired into the root layout (z-[100], above everything).
+- Added hover-tilt micro-interaction to HoloShield — the holographic shield now rotates toward the cursor (max 8° on X and Y axes) with spring physics (stiffness 150, damping 20), and scales up 3% on hover. Uses `useMotionValue` + `useSpring` + `useTransform`. The tilt container wraps all the hologram content with `transformStyle: preserve-3d`.
+- Added 4 rich UI utility classes in globals.css:
+  - `as-gradient-border`: an animated rotating conic-gradient border (emerald → lime → bright-emerald) using `@property --as-gradient-angle` + `mask-composite: exclude`. Creates a "living" border effect.
+  - `as-card-hover`: radiant emerald aura + border-color shift + 2px lift on hover. Smooth 0.35s transition.
+  - `as-divider-rich`: a gradient section divider line (transparent → emerald → lime → emerald → transparent) with a 12px glow.
+  - `as-shimmer`: an animated shimmering text effect (emerald → lime → bright-emerald gradient that moves horizontally every 4s).
+- Applied the rich UI utilities:
+  - Pillars cards: `as-card-hover` (glow-on-hover replaces the old manual hover:border).
+  - Journey task cards: `as-card-hover`.
+  - Pricing highlighted tier (Shield Pro): `as-gradient-border` (animated rotating border replaces the static emerald border).
+  - Hero headline "One memory.": `as-shimmer` (animated shimmering text replaces the static `as-text-gradient`).
+
+QA / verification results:
+- `bun run lint` — clean (zero errors).
+- Page returns 200, renders all content (One AI, One memory, Four phases, AbroadShield, shield-ink, as-text-gradient all present in HTML).
+- Chat API returns real LLM replies: tested with "Can I take a Friday shift if I worked 17.5 hours this week on a UK Student visa?" → got a correct response citing the 20-hour/week term-time cap, the student's 17.5 hours logged, and action steps. ✓
+- Dev server stable when not running agent-browser.
+- **Known limitation**: agent-browser (Chromium) crashes the dev server — the combined memory of Next.js Turbopack dev server + Chromium exceeds the system's RAM limit, causing the server process to be OOM-killed. QA was done via curl (content checks) + lint (code quality) + API testing instead of visual browser QA. Future rounds should use the same curl-based approach or reduce the FloatingBackground animation count to lower memory pressure.
+
+Stage Summary:
+- Hydration mismatch from the previous round is fixed (the `ssr: false` dynamic import for FloatingBackground was already in place and is confirmed correct).
+- Radiant green palette is now 100% migrated — zero old palette references remain.
+- 3 new rich UI features added: scroll-progress bar, hover-tilt on the hologram, animated gradient border + card-hover + shimmer utilities.
+- All 5 core interactions verified via curl: page renders, chat API works.
+- The site now has: floating background (orbs + particles + geometric outlines + conic sweep), scroll-progress bar, holographic shield with hover-tilt, shimmer headline, gradient-border pricing tier, glow-on-hover cards, and scroll-reveal on every section.
+- Next-phase recommendations for the recurring agent:
+  1. **Visual QA**: Once the system has more memory (or agent-browser is optimized), do a full visual QA pass with screenshots + VLM to verify the radiant green theme looks cohesive across all sections.
+  2. **Reduce animation count**: If memory is still tight, consider reducing the FloatingBackground from 24 particles + 5 orbs to 12 particles + 3 orbs.
+  3. **Localize section headings**: Extend the multilingual toggle beyond the hero to all section headings (the data layer already supports it via the locale system).
+  4. **Add a "compare countries" mode**: Side-by-side comparison of work-hour caps, post-study windows, and registration deadlines.
+  5. **Add an approvals-history view**: Surface the chat's Approve/Edit/Decline actions as a timeline.

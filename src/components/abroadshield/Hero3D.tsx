@@ -74,7 +74,7 @@ export default function Hero3D() {
                   className="block"
                 >
                   {t.titleOne}{" "}
-                  <span className="as-text-gradient">{t.titleMemory}</span>
+                  <span className="as-shimmer">{t.titleMemory}</span>
                   <br />
                   {t.titleFour}{" "}
                   <span className="as-text-gradient-amber">{t.titleFinish}</span>
@@ -108,7 +108,7 @@ export default function Hero3D() {
             >
               <a
                 href="#journey"
-                className="group inline-flex items-center gap-2 rounded-full bg-[oklch(0.97_0.003_180)] px-5 py-3 text-sm font-semibold text-[oklch(0.145_0.012_235)] transition hover:-translate-y-0.5 hover:bg-white"
+                className="group inline-flex items-center gap-2 rounded-full bg-[oklch(0.98_0.005_160)] px-5 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)] transition hover:-translate-y-0.5 hover:bg-white"
               >
                 <Shield className="h-4 w-4" />
                 {t.ctaExplore}
@@ -116,7 +116,7 @@ export default function Hero3D() {
               </a>
               <a
                 href="#agent"
-                className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.5_0.02_235/0.22)] px-5 py-3 text-sm font-semibold text-[oklch(0.88_0.005_180)] backdrop-blur transition hover:border-[oklch(0.6_0.03_235/0.4)] hover:bg-[oklch(0.2_0.014_235/0.5)] hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.6_0.04_165/0.22)] px-5 py-3 text-sm font-semibold text-[oklch(0.88_0.005_180)] backdrop-blur transition hover:border-[oklch(0.6_0.03_235/0.4)] hover:bg-[oklch(0.2_0.014_235/0.5)] hover:-translate-y-0.5"
               >
                 <Globe2 className="h-4 w-4 text-[oklch(0.78_0.09_165)]" />
                 {t.ctaAgent}
@@ -189,7 +189,7 @@ export default function Hero3D() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[oklch(0.5_0.02_235/0.14)] bg-[oklch(0.185_0.014_235/0.55)] backdrop-blur sm:grid-cols-4"
+          className="mb-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[oklch(0.6_0.04_165/0.14)] bg-[oklch(0.22_0.025_165/0.55)] backdrop-blur sm:grid-cols-4"
         >
           {[
             { k: t.stat1V, v: t.stat1L },
@@ -204,7 +204,7 @@ export default function Hero3D() {
               transition={{ delay: 0.8 + i * 0.08 }}
               className="px-5 py-4"
             >
-              <div className="text-2xl font-semibold tracking-tight text-[oklch(0.97_0.003_180)] sm:text-3xl">
+              <div className="text-2xl font-semibold tracking-tight text-[oklch(0.98_0.005_160)] sm:text-3xl">
                 {s.k}
               </div>
               <div className="mt-1 text-[11px] leading-tight tracking-wide text-[oklch(0.62_0.012_220)]">
@@ -220,9 +220,9 @@ export default function Hero3D() {
 
 /* ---------- floating HUD label ---------- */
 const TONE: Record<string, string> = {
-  emerald: "text-[oklch(0.78_0.11_165)] border-[oklch(0.62_0.09_165/0.4)] bg-[oklch(0.62_0.09_165/0.08)]",
-  amber: "text-[oklch(0.8_0.1_75)] border-[oklch(0.74_0.11_75/0.4)] bg-[oklch(0.74_0.11_75/0.08)]",
-  cyan: "text-[oklch(0.78_0.07_215)] border-[oklch(0.7_0.08_215/0.4)] bg-[oklch(0.7_0.08_215/0.08)]",
+  emerald: "text-[oklch(0.85_0.19_158)] border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.08)]",
+  amber: "text-[oklch(0.86_0.17_80)] border-[oklch(0.8_0.15_80/0.4)] bg-[oklch(0.8_0.15_80/0.08)]",
+  cyan: "text-[oklch(0.82_0.13_210)] border-[oklch(0.74_0.13_210/0.4)] bg-[oklch(0.74_0.13_210/0.08)]",
 };
 
 function FloatingLabel({

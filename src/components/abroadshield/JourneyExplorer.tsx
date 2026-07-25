@@ -229,7 +229,7 @@ export default function JourneyExplorer() {
                   return (
                     <div
                       key={task.id}
-                      className="group rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.4)] p-4 transition hover:border-[oklch(0.74_0.17_162/0.4)] hover:bg-[oklch(0.24_0.028_165/0.6)]"
+                      className="as-card-hover group rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.4)] p-4"
                     >
                       <div className="flex items-start gap-3">
                         <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--shield-border)] bg-[oklch(0.18_0.022_165/0.6)]">

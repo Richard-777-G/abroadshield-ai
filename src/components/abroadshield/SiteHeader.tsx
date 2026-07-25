@@ -26,7 +26,7 @@ export default function SiteHeader() {
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "border-b border-[oklch(0.6_0.04_165/0.14)] bg-[oklch(0.145_0.012_235/0.8)] backdrop-blur-xl"
+          ? "border-b border-[oklch(0.6_0.04_165/0.14)] bg-[oklch(0.14_0.018_165/0.8)] backdrop-blur-xl"
           : "border-b border-transparent"
       }`}
     >
@@ -88,7 +88,7 @@ export default function SiteHeader() {
 
       {/* mobile menu */}
       {open && (
-        <div className="border-t border-[oklch(0.6_0.04_165/0.14)] bg-[oklch(0.145_0.012_235/0.96)] backdrop-blur-xl md:hidden">
+        <div className="border-t border-[oklch(0.6_0.04_165/0.14)] bg-[oklch(0.14_0.018_165/0.96)] backdrop-blur-xl md:hidden">
           <nav className="mx-auto flex max-w-7xl flex-col gap-1 px-6 py-4">
             {NAV.map((item) => (
               <a
