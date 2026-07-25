@@ -2,30 +2,21 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Menu, X, Zap, LogIn, type LucideIcon } from "lucide-react";
+import { Shield, Menu, X, Zap, LogIn } from "lucide-react";
 import AuthModal from "./AuthModal";
-import type { ViewId } from "./ViewSwitcher";
 
 interface NavItem {
-  id: ViewId;
+  id: string;
   label: string;
 }
 
-const NAV: NavItem[] = [
-  { id: "journey", label: "Journey" },
-  { id: "agent", label: "Agent" },
-  { id: "countries", label: "Countries" },
-  { id: "network", label: "Network" },
-  { id: "connectors", label: "Connect" },
-  { id: "pricing", label: "Pricing" },
-];
-
 interface Props {
-  activeView: ViewId;
-  onViewChange: (id: ViewId) => void;
+  activeView: string;
+  onViewChange: (id: string) => void;
+  views: NavItem[];
 }
 
-export default function SiteHeader({ activeView, onViewChange }: Props) {
+export default function SiteHeader({ activeView, onViewChange, views }: Props) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -39,7 +30,7 @@ export default function SiteHeader({ activeView, onViewChange }: Props) {
   }, []);
 
   const handleNav = useCallback(
-    (id: ViewId) => {
+    (id: string) => {
       onViewChange(id);
       setOpen(false);
       if (typeof window !== "undefined") {
@@ -62,7 +53,7 @@ export default function SiteHeader({ activeView, onViewChange }: Props) {
         >
           {/* brand */}
           <button
-            onClick={() => handleNav("journey")}
+            onClick={() => handleNav("home")}
             className="group flex items-center gap-2.5"
           >
             <span className="relative flex h-8 w-8 items-center justify-center">
@@ -78,7 +69,7 @@ export default function SiteHeader({ activeView, onViewChange }: Props) {
 
           {/* desktop nav — view switcher pills */}
           <nav className="hidden items-center gap-0.5 rounded-full border border-[oklch(0.6_0.04_165/0.12)] bg-[oklch(0.22_0.025_165/0.4)] p-0.5 lg:flex">
-            {NAV.map((item) => {
+            {views.map((item) => {
               const isActive = activeView === item.id;
               return (
                 <button
@@ -151,7 +142,7 @@ export default function SiteHeader({ activeView, onViewChange }: Props) {
             className="fixed inset-x-4 top-20 z-50 overflow-hidden rounded-2xl border border-[oklch(0.6_0.04_165/0.2)] bg-[oklch(0.14_0.018_165/0.96)] shadow-2xl backdrop-blur-xl lg:hidden"
           >
             <nav className="flex flex-col gap-1 p-3">
-              {NAV.map((item) => {
+              {views.map((item) => {
                 const isActive = activeView === item.id;
                 return (
                   <button
