@@ -1,0 +1,776 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  Plane,
+  Home,
+  BookOpen,
+  Briefcase,
+  FileCheck2,
+  CalendarClock,
+  Mail,
+  Search,
+  FileText,
+  ShieldCheck,
+  Bell,
+  PiggyBank,
+  MapPin,
+  KeyRound,
+  Wifi,
+  GraduationCap,
+  Clock,
+  Award,
+  Users,
+  Building2,
+} from "lucide-react";
+
+/* ----------------------------------------------------------------------------
+ *  AbroadShield AI — domain data model
+ *  Driven entirely by the four PDF briefs. Each phase is a real leg of the
+ *  student journey, not a marketing tab. The agent *does* work at each.
+ * -------------------------------------------------------------------------- */
+
+export type PhaseId = "pre-departure" | "arrival" | "studying" | "job-success";
+
+export interface Phase {
+  id: PhaseId;
+  index: number;
+  name: string;
+  tagline: string;
+  description: string;
+  icon: LucideIcon;
+  /** Tailwind-ish accent token name (matches --shield-* vars) */
+  accent: "emerald" | "amber" | "violet" | "cyan";
+  colorHex: string;
+  glowHex: string;
+  milestone: string;
+  agenticActions: string[];
+  tasks: PhaseTask[];
+  stats: { label: string; value: string }[];
+}
+
+export interface PhaseTask {
+  id: string;
+  title: string;
+  detail: string;
+  icon: LucideIcon;
+  status: "done" | "active" | "queued" | "at-risk";
+  /** days from "today" in the demo timeline; negative = past */
+  due?: number;
+  agentic?: boolean;
+}
+
+export const PHASES: Phase[] = [
+  {
+    id: "pre-departure",
+    index: 0,
+    name: "Pre-Departure",
+    tagline: "Get the stamp. Don't get the rejection.",
+    description:
+      "Builds the visa checklist, checks documents for gaps before the appointment (not after a rejection), tracks every deadline, and drafts the emails and forms the application needs.",
+    icon: Plane,
+    accent: "emerald",
+    colorHex: "#2dd4a7",
+    glowHex: "#0fd4a7",
+    milestone: "Visa granted · Documents verified",
+    agenticActions: [
+      "Builds a country-specific visa checklist automatically",
+      "Gap-checks passport, financials & admission letters",
+      "Tracks every deadline and nudges before it bites",
+      "Drafts consulate emails and form fields for approval",
+    ],
+    tasks: [
+      {
+        id: "pd-1",
+        title: "Passport validity check",
+        detail: "Must be valid 6 months beyond intended stay. Photo flagged: low resolution — re-upload requested.",
+        icon: FileCheck2,
+        status: "done",
+        due: -14,
+        agentic: true,
+      },
+      {
+        id: "pd-2",
+        title: "Financial proof gap",
+        detail: "Bank statement missing one transaction page. Agent detected and requested page 3 of 4.",
+        icon: FileText,
+        status: "active",
+        due: 2,
+        agentic: true,
+      },
+      {
+        id: "pd-3",
+        title: "Visa appointment booked",
+        detail: "Slot secured for 28 Aug, 09:30 IST. Travel itinerary draft ready for review.",
+        icon: CalendarClock,
+        status: "done",
+        due: -5,
+        agentic: true,
+      },
+      {
+        id: "pd-4",
+        title: "Sponsorship letter — draft",
+        detail: "Drafted for parent's approval. Awaiting your sign-off before it goes out.",
+        icon: Mail,
+        status: "queued",
+        due: 5,
+        agentic: true,
+      },
+      {
+        id: "pd-5",
+        title: "Forex & insurance shortlist",
+        detail: "3 providers compared against today's rate. Agent shortlisted by total cost, not markup.",
+        icon: Search,
+        status: "at-risk",
+        due: 9,
+        agentic: true,
+      },
+    ],
+    stats: [
+      { label: "Documents verified", value: "11 / 13" },
+      { label: "Days to appointment", value: "6" },
+      { label: "Drafts awaiting you", value: "2" },
+    ],
+  },
+  {
+    id: "arrival",
+    index: 1,
+    name: "Arrival",
+    tagline: "Land with a plan, not a panic.",
+    description:
+      "Searches housing and compares options against budget, drafts landlord and bank messages, and tracks local registration requirements and dates.",
+    icon: Home,
+    accent: "violet",
+    colorHex: "#b794ff",
+    glowHex: "#a06bff",
+    milestone: "Housed · Banked · Registered",
+    agenticActions: [
+      "Compares housing options against your real budget",
+      "Drafts landlord & letting-agent messages in your tone",
+      "Opens the bank-account appointment chain",
+      "Tracks police / FRRO registration windows by city",
+    ],
+    tasks: [
+      {
+        id: "ar-1",
+        title: "SIM card secured",
+        detail: "Pre-paid eSIM activated at landing. Number handed to your family & agent.",
+        icon: Wifi,
+        status: "done",
+        due: -2,
+        agentic: true,
+      },
+      {
+        id: "ar-2",
+        title: "Housing shortlist",
+        detail: "5 listings matched against £650/mo budget, 35-min commute cap, bills included.",
+        icon: Search,
+        status: "active",
+        due: 3,
+        agentic: true,
+      },
+      {
+        id: "ar-3",
+        title: "Bank appointment",
+        detail: "Drafted the appointment-request email; 2 branches compared by student-account perks.",
+        icon: Building2,
+        status: "queued",
+        due: 4,
+        agentic: true,
+      },
+      {
+        id: "ar-4",
+        title: "FRRO registration",
+        detail: "Within 14 days of arrival — agent has pre-filled the form and booked the slot.",
+        icon: KeyRound,
+        status: "active",
+        due: 11,
+        agentic: true,
+      },
+      {
+        id: "ar-5",
+        title: "Landlord message — draft",
+        detail: "Response to a viewing request, in your approved tone. Ready to send.",
+        icon: Mail,
+        status: "queued",
+        due: 1,
+        agentic: true,
+      },
+    ],
+    stats: [
+      { label: "Listings shortlisted", value: "5" },
+      { label: "Registration window", value: "14 days" },
+      { label: "Drafts ready", value: "3" },
+    ],
+  },
+  {
+    id: "studying",
+    index: 2,
+    name: "Studying & Part-Time",
+    tagline: "Stay legal. Stay funded. Stay on track.",
+    description:
+      "Tracks spending against real remaining funds, checks part-time opportunities against legal work-hour limits, and manages academic deadlines.",
+    icon: BookOpen,
+    accent: "amber",
+    colorHex: "#ffb454",
+    glowHex: "#f59e0b",
+    milestone: "On budget · Within work-hour cap · Coursework on time",
+    agenticActions: [
+      "Tracks every spend against your remaining runway",
+      "Flags part-time jobs that breach the work-hour cap",
+      "Sends a Wednesday reminder before coursework deadlines",
+      "Converts costs home so family sees the real number",
+    ],
+    tasks: [
+      {
+        id: "st-1",
+        title: "Weekly budget review",
+        detail: "£412 spent this week of £520 budget. Agent flagged an extra £30 transit charge.",
+        icon: PiggyBank,
+        status: "active",
+        due: 0,
+        agentic: true,
+      },
+      {
+        id: "st-2",
+        title: "Part-time job scan",
+        detail: "3 on-campus roles match your 20hr/wk cap. 1 off-campus role flagged: breaches Tier-4 rule.",
+        icon: Briefcase,
+        status: "active",
+        due: 4,
+        agentic: true,
+      },
+      {
+        id: "st-3",
+        title: "Coursework deadline",
+        detail: "Dissertation outline due Fri. Agent blocked your calendar & drafted the supervisor email.",
+        icon: GraduationCap,
+        status: "queued",
+        due: 3,
+        agentic: true,
+      },
+      {
+        id: "st-4",
+        title: "Work-hour ledger",
+        detail: "17.5 hrs logged this week of the 20 hr cap. You're legal. Don't pick up Friday's shift.",
+        icon: Clock,
+        status: "done",
+        due: 0,
+        agentic: true,
+      },
+    ],
+    stats: [
+      { label: "Weekly budget left", value: "£108" },
+      { label: "Hours used / cap", value: "17.5 / 20" },
+      { label: "Coursework due", value: "3" },
+    ],
+  },
+  {
+    id: "job-success",
+    index: 3,
+    name: "Job Success",
+    tagline: "Beat the post-study visa clock.",
+    description:
+      "Scans job openings against visa timelines, tailors the CV and cover letter per role, preps you for each specific interview, and runs an always-on networking tracker.",
+    icon: Briefcase,
+    accent: "cyan",
+    colorHex: "#5ad6e6",
+    glowHex: "#22b8d4",
+    milestone: "Sponsored offer · Before the visa runs out",
+    agenticActions: [
+      "Scans openings against your post-study visa runway",
+      "Tailors CV + cover letter per role automatically",
+      "Preps you with role-specific interview questions",
+      "Runs an always-on networking & follow-up tracker",
+    ],
+    tasks: [
+      {
+        id: "js-1",
+        title: "Visa runway tracker",
+        detail: "94 days left on your post-study work window. Agent re-ranked shortlist by sponsorship likelihood.",
+        icon: CalendarClock,
+        status: "active",
+        due: 0,
+        agentic: true,
+      },
+      {
+        id: "js-2",
+        title: "CV tailored — 12 roles",
+        detail: "12 tailored CVs generated this week. Each version highlights the keywords from that JD.",
+        icon: FileText,
+        status: "done",
+        due: -1,
+        agentic: true,
+      },
+      {
+        id: "js-3",
+        title: "Networking follow-ups",
+        detail: "3 alumni replies pending > 5 days. Agent drafted polite nudges, ready to send.",
+        icon: Users,
+        status: "active",
+        due: 1,
+        agentic: true,
+      },
+      {
+        id: "js-4",
+        title: "Interview prep — Solutions Eng",
+        detail: "Prep deck built from the JD, your CV, and public notes. Mock Q&A ready.",
+        icon: Award,
+        status: "queued",
+        due: 6,
+        agentic: true,
+      },
+    ],
+    stats: [
+      { label: "Visa runway", value: "94 days" },
+      { label: "Applications live", value: "12" },
+      { label: "Alumni contacted", value: "23" },
+    ],
+  },
+];
+
+/* ----------------------------------------------------------------------------
+ *  Live agent activity feed — what the agent does without being asked
+ * -------------------------------------------------------------------------- */
+
+export interface AgentActivity {
+  id: string;
+  phase: PhaseId;
+  kind: "nudge" | "draft" | "check" | "search" | "alert" | "submit";
+  title: string;
+  detail: string;
+  time: string;
+  icon: LucideIcon;
+}
+
+export const AGENT_FEED: AgentActivity[] = [
+  {
+    id: "a1",
+    phase: "pre-departure",
+    kind: "alert",
+    title: "Bank statement — missing page 3 of 4",
+    detail: "Auto-detected during gap-check. Re-upload requested before your appointment.",
+    time: "2 min ago",
+    icon: FileText,
+  },
+  {
+    id: "a2",
+    phase: "pre-departure",
+    kind: "draft",
+    title: "Drafted sponsorship letter for parent",
+    detail: "Awaiting your approval. One tap to send to the consulate inbox.",
+    time: "9 min ago",
+    icon: Mail,
+  },
+  {
+    id: "a3",
+    phase: "studying",
+    kind: "nudge",
+    title: "17.5 / 20 hours logged — skip Friday's shift",
+    detail: "Picking up the extra shift would breach your Tier-4 work-hour cap.",
+    time: "21 min ago",
+    icon: Clock,
+  },
+  {
+    id: "a4",
+    phase: "job-success",
+    kind: "search",
+    title: "Re-ranked 12 openings by sponsorship likelihood",
+    detail: "Visa runway: 94 days. Two roles with confirmed sponsorship moved to the top.",
+    time: "44 min ago",
+    icon: Search,
+  },
+  {
+    id: "a5",
+    phase: "arrival",
+    kind: "draft",
+    title: "Drafted landlord reply for the Maple St viewing",
+    detail: "In your approved tone. Confirm to send.",
+    time: "1 hr ago",
+    icon: Mail,
+  },
+  {
+    id: "a6",
+    phase: "job-success",
+    kind: "nudge",
+    title: "3 alumni replies pending > 5 days",
+    detail: "Polite follow-up drafts ready. Network window closes faster than you think.",
+    time: "2 hr ago",
+    icon: Users,
+  },
+  {
+    id: "a7",
+    phase: "pre-departure",
+    kind: "check",
+    title: "Passport photo — low resolution flagged",
+    detail: "Re-capture suggested in daylight, plain background.",
+    time: "3 hr ago",
+    icon: ShieldCheck,
+  },
+  {
+    id: "a8",
+    phase: "studying",
+    kind: "alert",
+    title: "Spend this week exceeded budget by £30",
+    detail: "Train ticket repeat-charge detected. Cancel subscription? Draft ready.",
+    time: "4 hr ago",
+    icon: PiggyBank,
+  },
+  {
+    id: "a9",
+    phase: "arrival",
+    kind: "submit",
+    title: "FRRO registration form pre-filled",
+    detail: "Slot booked within the 14-day window. Documents queued for upload.",
+    time: "5 hr ago",
+    icon: KeyRound,
+  },
+  {
+    id: "a10",
+    phase: "job-success",
+    kind: "draft",
+    title: "Tailored CV — Solutions Engineer role",
+    detail: "12 tailored CVs generated this week. This one surfaces your AWS work.",
+    time: "6 hr ago",
+    icon: FileText,
+  },
+];
+
+/* ----------------------------------------------------------------------------
+ *  The student — one continuous memory across all four phases
+ * -------------------------------------------------------------------------- */
+
+export const STUDENT = {
+  name: "Aarav Mehta",
+  origin: "Pune, India",
+  destination: "Manchester, United Kingdom",
+  course: "MSc Data Science",
+  university: "University of Manchester",
+  intake: "Sep 2026",
+  homeLanguage: "Marathi",
+  familyCurrency: "INR",
+  journeyStart: "2026-06-12",
+  currentPhase: "pre-departure" as PhaseId,
+  readiness: 72,
+  documentsTotal: 13,
+  documentsVerified: 11,
+  deadlinesTracked: 27,
+  draftsReady: 5,
+};
+
+export interface MemoryItem {
+  phase: PhaseId;
+  label: string;
+  value: string;
+  icon: LucideIcon;
+}
+
+export const MEMORY: MemoryItem[] = [
+  { phase: "pre-departure", label: "Visa type", value: "Student — Tier 4 (General)", icon: FileCheck2 },
+  { phase: "pre-departure", label: "Appointment", value: "28 Aug, 09:30 IST", icon: CalendarClock },
+  { phase: "pre-departure", label: "Funding proof", value: "£28,500 — shown", icon: PiggyBank },
+  { phase: "arrival", label: "Target postcode", value: "M14 (rusholme)", icon: MapPin },
+  { phase: "arrival", label: "Housing budget", value: "£650 / month, bills incl.", icon: Home },
+  { phase: "arrival", label: "Bank preference", value: "Student account, no fees", icon: Building2 },
+  { phase: "studying", label: "Weekly cap", value: "20 hrs (Tier 4 rule)", icon: Clock },
+  { phase: "studying", label: "Runway left", value: "8.4 months at current burn", icon: PiggyBank },
+  { phase: "studying", label: "Next deadline", value: "Dissertation outline — Fri", icon: GraduationCap },
+  { phase: "job-success", label: "Post-study window", value: "94 days remaining", icon: CalendarClock },
+  { phase: "job-success", label: "Target roles", value: "Data Eng · ML · Analytics", icon: Briefcase },
+  { phase: "job-success", label: "Alumni network", value: "23 contacted · 7 replied", icon: Users },
+];
+
+/* ----------------------------------------------------------------------------
+ *  Document vault — the gap-checker's view
+ * -------------------------------------------------------------------------- */
+
+export interface VaultDoc {
+  id: string;
+  name: string;
+  phase: PhaseId;
+  status: "verified" | "issue" | "missing" | "pending";
+  issue?: string;
+  scannedAt?: string;
+}
+
+export const VAULT: VaultDoc[] = [
+  { id: "d1", name: "Passport bio page", phase: "pre-departure", status: "verified", scannedAt: "12 Jun" },
+  { id: "d2", name: "Passport photo", phase: "pre-departure", status: "issue", issue: "Low resolution — recapture in daylight", scannedAt: "12 Jun" },
+  { id: "d3", name: "University CAS letter", phase: "pre-departure", status: "verified", scannedAt: "18 Jun" },
+  { id: "d4", name: "Bank statement (4 pages)", phase: "pre-departure", status: "issue", issue: "Missing page 3 of 4", scannedAt: "20 Jun" },
+  { id: "d5", name: "Sponsorship letter", phase: "pre-departure", status: "pending" },
+  { id: "d6", name: "TB test certificate", phase: "pre-departure", status: "verified", scannedAt: "02 Jul" },
+  { id: "d7", name: "Flight itinerary", phase: "pre-departure", status: "verified", scannedAt: "10 Jul" },
+  { id: "d8", name: "University enrollment", phase: "arrival", status: "missing" },
+  { id: "d9", name: "Tenancy agreement", phase: "arrival", status: "missing" },
+  { id: "d10", name: "Bank statement (UK)", phase: "arrival", status: "missing" },
+  { id: "d11", name: "FRRO / police reg.", phase: "arrival", status: "missing" },
+  { id: "d12", name: "BRP collection slip", phase: "arrival", status: "missing" },
+  { id: "d13", name: "Academic transcript", phase: "studying", status: "missing" },
+];
+
+/* ----------------------------------------------------------------------------
+ *  Country rules — the proprietary milestone-template table
+ * -------------------------------------------------------------------------- */
+
+export interface CountryRule {
+  country: string;
+  flag: string;
+  currency: string;
+  studentVisa: string;
+  workCap: string;
+  postStudyWindow: string;
+  registration: string;
+  insurance: string;
+  bankAccount: string;
+  highlights: string[];
+}
+
+export const COUNTRIES: CountryRule[] = [
+  {
+    country: "United Kingdom",
+    flag: "🇬🇧",
+    currency: "GBP (£)",
+    studentVisa: "Student Visa (Tier 4 successor)",
+    workCap: "20 hrs/week term-time · full-time holidays",
+    postStudyWindow: "2 years (Graduate Route)",
+    registration: "Police reg. if vignette notes it · BRP collection in 10 days",
+    insurance: "IHS surcharge paid upfront · NHS access",
+    bankAccount: "Student account · 2-week appointment lead",
+    highlights: [
+      "BRP must be collected within 10 days of arrival",
+      "Switching to Graduate Route before visa expiry only",
+      "Off-campus work capped even in holidays",
+    ],
+  },
+  {
+    country: "United States",
+    flag: "🇺🇸",
+    currency: "USD ($)",
+    studentVisa: "F-1 Academic Student",
+    workCap: "On-campus only in year 1 · 20 hrs/week",
+    postStudyWindow: "12 months OPT · +24 months STEM",
+    registration: "SEVIS check-in within 30 days · I-20 endorsed for travel",
+    insurance: "University plan required · varies by state",
+    bankAccount: "SSN optional · student checking w/ passport + I-20",
+    highlights: [
+      "OPT must be applied for before program end date",
+      "STEM extension locks employer to E-Verify",
+      "CPT requires enrolment for a full academic year",
+    ],
+  },
+  {
+    country: "Canada",
+    flag: "🇨🇦",
+    currency: "CAD ($)",
+    studentVisa: "Study Permit",
+    workCap: "24 hrs/week off-campus (2024 rule)",
+    postStudyWindow: "Up to 3 years PGWP",
+    registration: "Port-of-entry CoPR · Service Canada for SIN",
+    insurance: "Provincial plan · 3-month wait in ON/BC",
+    bankAccount: "SIN required · student package at Big-5 banks",
+    highlights: [
+      "PGWP length tied to program length",
+      "Off-campus cap moved from 20 to 24 hrs in 2024",
+      "Provincial health has a coverage wait period",
+    ],
+  },
+  {
+    country: "Australia",
+    flag: "🇦🇺",
+    currency: "AUD ($)",
+    studentVisa: "Subclass 500",
+    workCap: "48 hrs/fortnight (capped)",
+    postStudyWindow: "2–4 yrs (485 visa, by region & qual.)",
+    registration: "TFN for tax · NSW/Vic police check for some work",
+    insurance: "OSHC mandatory for visa duration",
+    bankAccount: "Student account · TFN avoids top tax rate",
+    highlights: [
+      "485 visa length depends on region & qualification",
+      "OSHC must be active before arrival",
+      "Work cap is per fortnight, not per week",
+    ],
+  },
+  {
+    country: "Germany",
+    flag: "🇩🇪",
+    currency: "EUR (€)",
+    studentVisa: "National Visa (Type D) → Residence Permit",
+    workCap: "140 full-days or 280 half-days/yr",
+    postStudyWindow: "18 months job-search residence",
+    registration: "Anmeldung within 14 days · Ausländerbehörde for permit",
+    insurance: "Public (TK/AOK) ~€120/mo · mandatory",
+    bankAccount: "Blocked account required for visa",
+    highlights: [
+      "Anmeldung unlocks every other service",
+      "Blocked account proves financials at visa stage",
+      "18-month job search window starts at graduation",
+    ],
+  },
+];
+
+/* ----------------------------------------------------------------------------
+ *  Pricing — direct-to-student, agentic actions gated in paid tier
+ * -------------------------------------------------------------------------- */
+
+export interface PricingTier {
+  id: string;
+  name: string;
+  price: string;
+  cadence: string;
+  tagline: string;
+  features: { text: string; included: boolean; agentic?: boolean }[];
+  cta: string;
+  highlighted?: boolean;
+}
+
+export const TIERS: PricingTier[] = [
+  {
+    id: "free",
+    name: "Shield Free",
+    price: "₹0",
+    cadence: "forever",
+    tagline: "The checklist + nudges. Forever free for the students who need it most.",
+    cta: "Start free",
+    features: [
+      { text: "Country-specific visa checklist", included: true },
+      { text: "Deadline tracking + proactive nudges", included: true, agentic: true },
+      { text: "Document vault (5 uploads)", included: true },
+      { text: "Multi-language interface (Hindi, Marathi, Tamil, more)", included: true },
+      { text: "Document gap-checking", included: false, agentic: true },
+      { text: "Drafted emails & forms", included: false, agentic: true },
+      { text: "Housing & job shortlisting", included: false, agentic: true },
+    ],
+  },
+  {
+    id: "shield",
+    name: "Shield Pro",
+    price: "₹499",
+    cadence: "/ month",
+    tagline: "The agent does the work. You approve, it sends.",
+    cta: "Unlock the agent",
+    highlighted: true,
+    features: [
+      { text: "Everything in Shield Free", included: true },
+      { text: "Unlimited document vault + OCR gap-checking", included: true, agentic: true },
+      { text: "Drafts emails, forms, landlord & bank messages", included: true, agentic: true },
+      { text: "Housing shortlist vs your real budget", included: true, agentic: true },
+      { text: "Spending tracker vs runway", included: true, agentic: true },
+      { text: "Work-hour ledger (never breach the cap)", included: true, agentic: true },
+      { text: "Networking tracker & follow-up drafts", included: true, agentic: true },
+    ],
+  },
+  {
+    id: "jobsuccess",
+    name: "Job Success",
+    price: "₹1,499",
+    cadence: "/ month · Phase 4 only",
+    tagline: "Highest willingness-to-pay moment. Win the sponsored offer before the clock runs out.",
+    cta: "Go for the offer",
+    features: [
+      { text: "Everything in Shield Pro", included: true },
+      { text: "Visa-runway tracker vs openings", included: true, agentic: true },
+      { text: "Per-role CV & cover-letter tailoring", included: true, agentic: true },
+      { text: "Role-specific interview prep decks", included: true, agentic: true },
+      { text: "Alumni & HR outreach drafts", included: true, agentic: true },
+      { text: "1:1 human review on sponsored-offer shortlist", included: true },
+      { text: "Offer-letter red-flag check before you sign", included: true, agentic: true },
+    ],
+  },
+];
+
+/* ----------------------------------------------------------------------------
+ *  Why AbroadShield beats Claude / ChatGPT directly
+ * -------------------------------------------------------------------------- */
+
+export interface Pillar {
+  title: string;
+  detail: string;
+  icon: LucideIcon;
+}
+
+export const PILLARS: Pillar[] = [
+  {
+    title: "Persistent journey memory",
+    detail:
+      "Not 'memory' in general — memory organized around a real sequence (visa → flight → SIM → housing → bank → work-hour limits) for one specific country.",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Proactive, not reactive",
+    detail:
+      "The product reaches out first, before a deadline, instead of waiting to be asked. General AI assistants are reactive by default.",
+    icon: Bell,
+  },
+  {
+    title: "Country-specific rules baked in",
+    detail:
+      "It already knows the checklist, the sequence, and the work-hour cap. The student never has to explain their situation from scratch.",
+    icon: MapPin,
+  },
+  {
+    title: "Agentic task execution",
+    detail:
+      "It drafts, searches, shortlists, and fills in — with your approval — rather than only explaining what to do. The strongest pillar.",
+    icon: FileCheck2,
+  },
+];
+
+/* ----------------------------------------------------------------------------
+ *  Chat starter prompts — show off what the agent can actually do
+ * -------------------------------------------------------------------------- */
+
+export const CHAT_STARTERS: { label: string; prompt: string }[] = [
+  {
+    label: "Draft a consulate email",
+    prompt:
+      "Draft a polite email to the UK consulate requesting a reschedule of my 28 Aug appointment to 02 Sep due to a delayed document. Keep it formal and short.",
+  },
+  {
+    label: "Check my work-hour cap",
+    prompt:
+      "I've worked 17.5 hours this week and have a Friday shift. On a UK Student visa, can I take that shift without breaching the 20-hour cap?",
+  },
+  {
+    label: "Tailor my CV",
+    prompt:
+      "I'm applying for a Solutions Engineer role. Tailor my CV bullet points to emphasize AWS, data pipelines, and stakeholder communication.",
+  },
+  {
+    label: "Draft a landlord reply",
+    prompt:
+      "Draft a reply to a landlord who listed a room near M14 Manchester. I want to confirm viewing availability this Saturday and ask if bills are included.",
+  },
+];
+
+export const ACCENT_MAP: Record<
+  Phase["accent"],
+  { text: string; border: string; bg: string; glow: string; dot: string }
+> = {
+  emerald: {
+    text: "text-[oklch(0.82_0.16_165)]",
+    border: "border-[oklch(0.72_0.15_165/0.45)]",
+    bg: "bg-[oklch(0.72_0.15_165/0.12)]",
+    glow: "as-glow-emerald",
+    dot: "bg-[oklch(0.72_0.15_165)]",
+  },
+  amber: {
+    text: "text-[oklch(0.82_0.16_70)]",
+    border: "border-[oklch(0.78_0.16_70/0.45)]",
+    bg: "bg-[oklch(0.78_0.16_70/0.12)]",
+    glow: "as-glow-amber",
+    dot: "bg-[oklch(0.78_0.16_70)]",
+  },
+  violet: {
+    text: "text-[oklch(0.78_0.18_300)]",
+    border: "border-[oklch(0.62_0.18_300/0.45)]",
+    bg: "bg-[oklch(0.62_0.18_300/0.12)]",
+    glow: "as-glow-emerald",
+    dot: "bg-[oklch(0.62_0.18_300)]",
+  },
+  cyan: {
+    text: "text-[oklch(0.82_0.13_210)]",
+    border: "border-[oklch(0.75_0.13_210/0.45)]",
+    bg: "bg-[oklch(0.75_0.13_210/0.12)]",
+    glow: "as-glow-emerald",
+    dot: "bg-[oklch(0.75_0.13_210)]",
+  },
+};
