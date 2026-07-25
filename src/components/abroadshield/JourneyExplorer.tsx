@@ -119,6 +119,27 @@ export default function JourneyExplorer() {
                           />
                         </span>
                       </div>
+
+                      {/* small phase image — thumbnail banner */}
+                      <div className="relative mt-3 h-16 overflow-hidden rounded-lg">
+                        <img
+                          src={`/phases/${p.id}.png`}
+                          alt={`${p.name} visual`}
+                          className={`h-full w-full object-cover transition ${
+                            isActive ? "opacity-50" : "opacity-25 group-hover:opacity-40"
+                          }`}
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.22_0.028_165/0.9)] via-transparent to-transparent" />
+                        {/* phase accent tint */}
+                        <div
+                          className="absolute inset-0 mix-blend-overlay"
+                          style={{
+                            background: `linear-gradient(135deg, ${p.colorHex}40, transparent 60%)`,
+                          }}
+                        />
+                      </div>
+
                       <div
                         className={`mt-3 text-base font-semibold sm:text-lg ${
                           isActive ? "text-[var(--shield-text)]" : "text-[var(--shield-text-dim)]"

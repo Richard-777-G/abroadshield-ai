@@ -9,6 +9,7 @@ const NAV = [
   { label: "Agent", href: "#agent" },
   { label: "Countries", href: "#countries" },
   { label: "Network", href: "#network" },
+  { label: "Connect", href: "#connectors" },
   { label: "Pricing", href: "#pricing" },
 ];
 

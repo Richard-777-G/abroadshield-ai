@@ -158,6 +158,15 @@ export default function Hero3D() {
             transition={{ duration: 1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="relative flex items-center justify-center"
           >
+            {/* AI-era agentic background image — glowing sphere behind the hologram */}
+            <motion.img
+              src="/sections/agentic-hero.png"
+              alt="AI agent — autonomous intelligent assistant"
+              className="pointer-events-none absolute inset-0 h-full w-full object-contain opacity-25"
+              animate={{ opacity: [0.18, 0.32, 0.18], scale: [1, 1.04, 1] }}
+              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+              style={{ filter: "blur(8px)" }}
+            />
             <HoloShield />
 
             {/* 3D rotating cube — genuine 3D visual, floats above the hologram */}

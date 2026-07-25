@@ -10,6 +10,7 @@ import Pillars from "@/components/abroadshield/Pillars";
 import AgentChat from "@/components/abroadshield/AgentChat";
 import ApprovalsHistory from "@/components/abroadshield/ApprovalsHistory";
 import NetworkingJobs from "@/components/abroadshield/NetworkingJobs";
+import Connectors from "@/components/abroadshield/Connectors";
 import PricingTiers from "@/components/abroadshield/PricingTiers";
 import VisionCTA from "@/components/abroadshield/VisionCTA";
 
@@ -33,6 +34,7 @@ export default function Home() {
         <AgentChat />
         <ApprovalsHistory />
         <NetworkingJobs />
+        <Connectors />
         <PricingTiers />
         <VisionCTA />
       </main>
