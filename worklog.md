@@ -276,3 +276,41 @@ Stage Summary:
   3. **Localize section headings**: Extend the multilingual toggle beyond the hero to all section headings (the data layer already supports it via the locale system).
   4. **Add a "compare countries" mode**: Side-by-side comparison of work-hour caps, post-study windows, and registration deadlines.
   5. **Add an approvals-history view**: Surface the chat's Approve/Edit/Decline actions as a timeline.
+
+---
+
+Task ID: 6
+Agent: webDevReview (cron round 4)
+Task: Assess project status, reduce FloatingBackground memory for agent-browser, add Compare Countries + Approvals History features.
+
+Work Log:
+- Read worklog.md (Task 5 complete: radiant green theme, scroll-progress, hover-tilt, rich UI utilities all shipped).
+- Assessed current state: dev server was down. Lint clean. agent-browser still crashes the server (Chromium + Turbopack exceeds system RAM).
+- **Reduced FloatingBackground memory footprint**: cut particles from 24 → 12, orbs from 5 → 3 (emerald/lime/mint only), geo outlines from 3 → 2 (removed triangle + the heavy conic-gradient sweep). Removed the x-axis animation from particles (kept y-axis + opacity only). This significantly reduces the number of simultaneous Framer Motion animations. Despite reductions, the background is still rich and alive.
+- **Built Compare Countries feature** (`CountryRules.tsx` rewrite): Added a Single/Compare mode toggle (Eye / GitCompare icons). In Compare mode, two `<select>` dropdowns let the user pick Country A and Country B. The right panel renders a side-by-side comparison: two flag headers (A in cyan, B in amber), then a 3-column grid (field label | value A | value B) for all 6 rule fields (visa type, work-hour cap, post-study window, registration, insurance, bank account). A summary footer notes the comparison and the agent's role. Animated transitions between modes via AnimatePresence.
+- **Built Approvals History timeline** (`ApprovalsHistory.tsx`, new component): A vertical timeline of 8 past agent actions (approved emails, edited forms, declined suggestions) with:
+  - 3 stat cards at top (Approved / Edited / Declined counts).
+  - Each timeline entry has: a colored action icon (green CheckCircle2 / amber Pencil / red X), a kind icon (Mail / FileText / Search / Users / ShieldCheck), phase label, action badge, title, recipient, detail, and timestamp.
+  - A vertical gradient line connecting all entries.
+  - Staggered scroll-reveal animation on each entry.
+  - A footer note about the audit trail.
+  - 8 realistic mock entries spanning all 4 phases (consulate email, FRRO form, landlord reply, housing search, declined off-campus job, sponsorship letter, bank appointment, CV tailoring).
+- **Wired ApprovalsHistory into page.tsx** between AgentChat and PricingTiers (narrative: "talk to the agent" → "see what it did" → "pricing"). Page now has 11 sections (was 10).
+
+QA / verification results:
+- `bun run lint` — clean (zero errors).
+- Page returns 200, renders all content including new features: "Compare" (mode toggle), "Approvals" (history heading), "Country A" / "Country B" (compare view), "One AI" (hero), "shield-ink", "as-card-hover" all present in HTML.
+- Chat API returns real LLM replies: tested with "Can I work a Friday shift if I worked 17.5 hours this week on a UK Student visa?" → got correct advice: "No, you cannot work a Friday shift this week" citing the 20-hour/week term-time cap, the student's 17.5 hours logged, and action items. ✓
+- **Known limitation persists**: agent-browser (Chromium) crashes the dev server due to system RAM limits. Even after reducing FloatingBackground animations, the combined memory of Turbopack dev server + Chromium exceeds available RAM. QA done via curl (content + API) + lint. Visual QA deferred to a higher-memory environment.
+
+Stage Summary:
+- FloatingBackground optimized: 24→12 particles, 5→3 orbs, 3→2 geo outlines, removed conic sweep. Still rich, less memory-hungry.
+- Two new features shipped: Compare Countries (side-by-side mode with toggle) and Approvals History (8-entry timeline with stat cards).
+- Page now has 11 sections, 19 components, lint clean, chat API verified.
+- The radiant green theme is fully cohesive across all new components (Compare uses cyan/amber for A/B distinction, Approvals uses emerald/amber/rose for approved/edited/declined).
+- Next-phase recommendations for the recurring agent:
+  1. **Visual QA in higher-memory env**: Do a full screenshot + VLM pass to verify the Compare mode and Approvals timeline render correctly visually.
+  2. **Wire ApprovalsHistory to real chat state**: Use a Zustand store so the ApprovalsHistory reflects actual Approve/Edit/Decline actions from the AgentChat (currently uses realistic mock data).
+  3. **Add export functionality**: Let the user export the approvals history as a PDF/CSV audit trail.
+  4. **Extend Compare mode**: Add a "best for" recommendation (e.g., "Country A has a longer post-study window, Country B has a higher work-hour cap — pick based on your priority").
+  5. **Localize section headings**: Extend the multilingual toggle beyond the hero.

@@ -8,6 +8,7 @@ import MemoryVault from "@/components/abroadshield/MemoryVault";
 import CountryRules from "@/components/abroadshield/CountryRules";
 import Pillars from "@/components/abroadshield/Pillars";
 import AgentChat from "@/components/abroadshield/AgentChat";
+import ApprovalsHistory from "@/components/abroadshield/ApprovalsHistory";
 import PricingTiers from "@/components/abroadshield/PricingTiers";
 import VisionCTA from "@/components/abroadshield/VisionCTA";
 
@@ -29,6 +30,7 @@ export default function Home() {
         </div>
         <Pillars />
         <AgentChat />
+        <ApprovalsHistory />
         <PricingTiers />
         <VisionCTA />
       </main>
