@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Check, Sparkles, Lock, Crown } from "lucide-react";
 import { TIERS } from "./data";
+import Reveal from "./Reveal";
 
 const TIER_ICON = {
   free: Lock,
@@ -13,13 +14,13 @@ const TIER_ICON = {
 export default function PricingTiers() {
   return (
     <section id="pricing" className="relative w-full bg-[var(--shield-ink)] py-20 sm:py-28">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.78_0.16_70/0.35)] to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.74_0.11_75/0.35)] to-transparent" />
 
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         {/* heading */}
-        <div className="mb-12 max-w-2xl">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[oklch(0.78_0.16_70)]">
-            <span className="h-px w-8 bg-[oklch(0.78_0.16_70/0.5)]" />
+        <Reveal className="mb-12 max-w-2xl">
+          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[oklch(0.74_0.11_75)]">
+            <span className="h-px w-8 bg-[oklch(0.74_0.11_75/0.5)]" />
             Direct-to-student, from day one
           </div>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--shield-text)] sm:text-5xl">
@@ -31,7 +32,7 @@ export default function PricingTiers() {
             direct-to-student — free tier for the checklist + nudges, agentic actions gated
             behind a paid tier that unlocks the moment the agent starts doing real work.
           </p>
-        </div>
+        </Reveal>
 
         {/* tiers */}
         <div className="grid gap-5 lg:grid-cols-3">
@@ -47,15 +48,15 @@ export default function PricingTiers() {
                 transition={{ duration: 0.45, delay: i * 0.1 }}
                 className={`relative overflow-hidden rounded-3xl border p-6 sm:p-7 ${
                   highlighted
-                    ? "border-[oklch(0.72_0.15_165/0.5)] as-glass-strong as-glow-emerald"
+                    ? "border-[oklch(0.62_0.09_165/0.5)] as-glass-strong as-glow-emerald"
                     : "border-[var(--shield-border)] as-glass"
                 }`}
               >
                 {highlighted && (
                   <>
-                    <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[oklch(0.72_0.15_165/0.15)] blur-3xl" />
+                    <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[oklch(0.62_0.09_165/0.15)] blur-3xl" />
                     <div className="absolute right-5 top-5">
-                      <span className="rounded-full border border-[oklch(0.72_0.15_165/0.5)] bg-[oklch(0.72_0.15_165/0.15)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[oklch(0.82_0.16_165)]">
+                      <span className="rounded-full border border-[oklch(0.62_0.09_165/0.5)] bg-[oklch(0.62_0.09_165/0.15)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-[oklch(0.78_0.11_165)]">
                         Most chosen
                       </span>
                     </div>
@@ -67,14 +68,14 @@ export default function PricingTiers() {
                     <div
                       className={`flex h-11 w-11 items-center justify-center rounded-2xl border ${
                         highlighted
-                          ? "border-[oklch(0.72_0.15_165/0.5)] bg-[oklch(0.72_0.15_165/0.12)]"
-                          : "border-[var(--shield-border)] bg-[oklch(0.2_0.03_220/0.5)]"
+                          ? "border-[oklch(0.62_0.09_165/0.5)] bg-[oklch(0.62_0.09_165/0.12)]"
+                          : "border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.5)]"
                       }`}
                     >
                       <Icon
                         className={`h-5 w-5 ${
                           highlighted
-                            ? "text-[oklch(0.82_0.16_165)]"
+                            ? "text-[oklch(0.78_0.11_165)]"
                             : "text-[var(--shield-text-dim)]"
                         }`}
                       />
@@ -94,7 +95,7 @@ export default function PricingTiers() {
                     <span
                       className={`text-4xl font-semibold tracking-tight ${
                         highlighted
-                          ? "text-[oklch(0.82_0.16_165)]"
+                          ? "text-[oklch(0.78_0.11_165)]"
                           : "text-[var(--shield-text)]"
                       }`}
                     >
@@ -121,7 +122,7 @@ export default function PricingTiers() {
                         <span
                           className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
                             f.included
-                              ? "bg-[oklch(0.72_0.15_165/0.2)] text-[oklch(0.82_0.16_165)]"
+                              ? "bg-[oklch(0.62_0.09_165/0.2)] text-[oklch(0.78_0.11_165)]"
                               : "bg-[oklch(0.3_0.02_220/0.6)] text-[var(--shield-text-dim)]"
                           }`}
                         >
@@ -134,7 +135,7 @@ export default function PricingTiers() {
                         <span className="leading-relaxed">
                           {f.text}
                           {f.agentic && f.included && (
-                            <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-full border border-[oklch(0.72_0.15_165/0.3)] bg-[oklch(0.72_0.15_165/0.08)] px-1.5 py-px text-[9px] font-semibold uppercase text-[oklch(0.82_0.16_165)]">
+                            <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-full border border-[oklch(0.62_0.09_165/0.3)] bg-[oklch(0.62_0.09_165/0.08)] px-1.5 py-px text-[9px] font-semibold uppercase text-[oklch(0.78_0.11_165)]">
                               <Sparkles className="h-2 w-2" />
                               agentic
                             </span>
@@ -148,8 +149,8 @@ export default function PricingTiers() {
                   <button
                     className={`mt-7 inline-flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-semibold transition ${
                       highlighted
-                        ? "bg-[oklch(0.72_0.15_165)] text-[oklch(0.16_0.02_220)] hover:bg-[oklch(0.82_0.16_165)] as-glow-emerald"
-                        : "border border-[var(--shield-border)] bg-[oklch(0.2_0.03_220/0.5)] text-[var(--shield-text)] hover:border-[oklch(0.72_0.15_165/0.4)] hover:bg-[oklch(0.24_0.03_220/0.7)]"
+                        ? "bg-[oklch(0.62_0.09_165)] text-[oklch(0.145_0.012_235)] hover:bg-[oklch(0.78_0.11_165)] as-glow-emerald"
+                        : "border border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.5)] text-[var(--shield-text)] hover:border-[oklch(0.62_0.09_165/0.4)] hover:bg-[oklch(0.2_0.014_235/0.7)]"
                     }`}
                   >
                     {tier.cta}

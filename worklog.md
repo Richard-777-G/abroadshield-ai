@@ -174,3 +174,58 @@ Stage Summary:
   2. Add scroll-triggered parallax/progress bar at the top of the page.
   3. Add a subtle mouse-follow light on the hero (already have pointer parallax; could add a radial light that tracks cursor).
   4. Consider a hero video / Lottie fallback for the 3D on low-power devices (MeshTransmissionMaterial is GPU-heavy).
+
+---
+
+Task ID: 4
+Agent: main (user-requested redesign — remove 3D, add hologram + motion)
+Task: User feedback: "THE 3D IS VERY POOR DEVELOPMENT... JUST TOTALLY REMOVE IT AND COME UP WITH PROFESSIONAL DECENT AND RICH DESIGNS... THE DESIGN YOU GAVE IS TOO BIG... MAKE THINGS MOVING INSTEAD OF BEING STATIC AND LAME... ADD SOME HOLOGRAM KIND OF STAFF... EVERYTHING SHOULD WORK, CROSS CHECK EVERYTHING."
+
+Work Log:
+- Removed `src/components/abroadshield/Hero3DScene.tsx` (the React Three Fiber glass torus knot scene).
+- Uninstalled `three`, `@react-three/fiber`, `@react-three/drei`, `@types/three` — the project no longer ships any 3D library. Bundle is significantly lighter.
+- Built a new `HoloShield.tsx` — a compact (~340px mobile / ~420px desktop) holographic shield visual built entirely with CSS/SVG + Framer Motion (no canvas, no GPU cost). Composition:
+  - Ambient radial glow behind the whole hologram that pulses (opacity + scale, 6s loop).
+  - Outer ring: a conic-gradient (jade → cyan → violet) that rotates 360° over 48s, masked to a thin ring.
+  - Mid ring: counter-rotating (36s) with inset glow + 12 tick marks (every 30°, brighter every 3rd).
+  - Inner ring: dashed, fastest rotation (24s).
+  - Shimmer sweep: a diagonal light bar that crosses the shield every ~5s with a blur.
+  - Central shield emblem: a glass card with the Shield lucide icon, iridescent border sweep, floating up/down (5.5s).
+  - Scan-line overlay: repeating-linear-gradient for the CRT/hologram texture, masked to a circle.
+  - 7 floating data motes: pure-CSS dots that drift up and fade, staggered.
+  - 4 corner brackets: HUD-style framing.
+- Redesigned `Hero3D.tsx` to use the hologram in a 2-column grid (text left, hologram right) on desktop, stacked on mobile. Added:
+  - Scroll-driven parallax on the hologram (useScroll + useTransform: y/scale/opacity shift as user scrolls).
+  - 3 floating HUD label cards around the hologram ("AGENT online" / "PHASE 01 / 04" / "DEADLINES 27 tracked") that fade in with stagger and gently float.
+  - Animated entrance for headline, subtitle, CTAs, trust strip (staggered city names), and stats strip.
+- Built a reusable `Reveal.tsx` component (scroll-triggered fade-up, honors prefers-reduced-motion) + `StaggerGroup`/`staggerItem` variants.
+- Applied Reveal to ALL section headings: JourneyExplorer, AgentActivityPanel (both columns), DeadlineTimeline, MemoryVault, CountryRules (both columns), Pillars, PricingTiers, AgentChat. VisionCTA already had whileInView motion. Now everything moves as the user scrolls — no static/lame sections.
+- Migrated ALL remaining old neon color references across every section component (JourneyExplorer, LanguageToggle, SiteFooter, AgentActivityPanel, MemoryVault, CountryRules, Pillars, PricingTiers, VisionCTA, AgentChat, DeadlineTimeline) to the refined jade/sand/steel palette via a sed pass. Verified zero `0.72_0.15_165` / `0.82_0.16_165` / `0.78_0.16_70` / `0.82_0.16_70` references remain in src/components (outside data.ts which keeps the source-of-truth hexes).
+
+Cross-check QA (every interaction verified via agent-browser):
+- Page compiles, returns 200, `bun run lint` clean.
+- Fresh browser session: zero runtime errors, zero console errors.
+- Hero: holographic shield renders (compact, not oversized), HUD cards float, scroll parallax works.
+- Language toggle: opens menu (EN/हिन्दी/मराठी/தமிழ்), selecting Marathi localizes the entire hero (eyebrow + headline + subtitle + CTAs + stats) with fade animation. ✓
+- Journey stations: clicking "PHASE 04 Job Success" updates the detail panel (visa runway 94 days, 12 tailored CVs, alumni tracker). ✓
+- Gap-checker: "Run simulated gap-check" → 4-step scan animation → field report (MEHTA, Expiry, Photo resolution flagged "1 ISSUE FOUND") → agent action prompt. ✓
+- Country rules: switching to Germany updates the rules panel (National Visa Type D, 140 full-days, 18-month residence, Anmeldung, blocked account). ✓
+- Agent chat: "Draft a consulate email" starter → LLM returns a full draft → Approve & send / Edit / Decline buttons appear → clicking Approve shows the green "Approved — sent on your behalf" chip + Copy. ✓
+- Mobile (390×844): header collapses to toggle menu, language toggle + CTAs present, hologram appropriately sized, layout holds (VLM confirmed). ✓
+
+VLM verification:
+- Hero: 9/10 — "3D glass knot completely replaced by compact glowing holographic shield emblem with concentric rings," "floating HUD label cards present," "size is appropriate, not oversized," "international-level design with excellent typography hierarchy." No glaring issues.
+- Mobile: layout holds, hologram appropriately sized, no overlap.
+
+Stage Summary:
+- 3D canvas completely removed; project no longer depends on three.js / R3F / drei (4 packages uninstalled).
+- New holographic shield visual is compact, CSS/SVG-based, performant, and genuinely "hologram-like" (rings, shimmer, scan lines, floating motes, HUD framing).
+- Every section now reveals on scroll with fade-up motion (Reveal component, reduced-motion-aware).
+- Entire site migrated to the refined jade/sand/steel palette (zero old neon references remain).
+- All 5 core interactions verified working end-to-end: language toggle, journey stations, gap-checker, country switch, agent chat with Approve/Edit/Decline.
+- Mobile + desktop both VLM-verified.
+- Next-phase recommendations for the recurring agent:
+  1. Add a scroll-progress bar at the very top of the page (thin jade line that fills as you scroll).
+  2. Add hover-tilt micro-interaction to the holographic shield (mouse-follow rotation).
+  3. The deadline timeline dots could use a subtle pulse on critical items (already animate-ping on the corner — could add a full glow pulse).
+  4. Consider localizing section headings (not just the hero) for the full "language they trust" experience.

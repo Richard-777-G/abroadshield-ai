@@ -4,20 +4,20 @@ export default function SiteFooter() {
   return (
     <footer className="relative mt-auto border-t border-[var(--shield-border)] bg-[oklch(0.13_0.02_220)]">
       {/* top accent line */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-[oklch(0.72_0.15_165/0.5)] to-transparent" />
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-[oklch(0.62_0.09_165/0.5)] to-transparent" />
 
       <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-16">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           {/* brand block */}
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[oklch(0.72_0.15_165/0.5)] bg-[oklch(0.72_0.15_165/0.12)]">
-                <Shield className="h-4.5 w-4.5 text-[oklch(0.82_0.16_165)]" />
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-[oklch(0.62_0.09_165/0.5)] bg-[oklch(0.62_0.09_165/0.12)]">
+                <Shield className="h-4.5 w-4.5 text-[oklch(0.78_0.11_165)]" />
               </span>
               <div className="leading-none">
                 <div className="text-sm font-semibold tracking-tight text-[var(--shield-text)]">
                   AbroadShield
-                  <span className="ml-1 text-[oklch(0.72_0.15_165)]">AI</span>
+                  <span className="ml-1 text-[oklch(0.62_0.09_165)]">AI</span>
                 </div>
                 <div className="mt-0.5 text-[10px] uppercase tracking-[0.15em] text-[var(--shield-text-dim)]">
                   One agent · four phases
@@ -34,7 +34,7 @@ export default function SiteFooter() {
                 <a
                   key={i}
                   href="#top"
-                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--shield-border)] bg-[oklch(0.2_0.03_220/0.5)] text-[var(--shield-text-dim)] transition hover:border-[oklch(0.72_0.15_165/0.4)] hover:text-[oklch(0.82_0.16_165)]"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.5)] text-[var(--shield-text-dim)] transition hover:border-[oklch(0.62_0.09_165/0.4)] hover:text-[oklch(0.78_0.11_165)]"
                   aria-label="social link"
                 >
                   <Icon className="h-4 w-4" />
@@ -104,7 +104,7 @@ function FooterCol({
 }) {
   return (
     <div>
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[oklch(0.82_0.16_165)]">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[oklch(0.78_0.11_165)]">
         {title}
       </div>
       <ul className="mt-4 space-y-2.5">
