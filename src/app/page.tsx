@@ -13,30 +13,68 @@ import NetworkingJobs from "@/components/abroadshield/NetworkingJobs";
 import Connectors from "@/components/abroadshield/Connectors";
 import PricingTiers from "@/components/abroadshield/PricingTiers";
 import VisionCTA from "@/components/abroadshield/VisionCTA";
+import ViewSwitcher from "@/components/abroadshield/ViewSwitcher";
 
 export default function Home() {
+  // Each view bundles related sections into one focused experience.
+  const views = [
+    {
+      id: "journey" as const,
+      label: "Journey",
+      component: (
+        <>
+          <JourneyExplorer />
+          <DeadlineTimeline />
+          <MemoryVault />
+        </>
+      ),
+    },
+    {
+      id: "agent" as const,
+      label: "Agent",
+      component: (
+        <>
+          <AgentActivityPanel />
+          <AgentChat />
+          <ApprovalsHistory />
+        </>
+      ),
+    },
+    {
+      id: "countries" as const,
+      label: "Countries",
+      component: <CountryRules />,
+    },
+    {
+      id: "network" as const,
+      label: "Network & Jobs",
+      component: <NetworkingJobs />,
+    },
+    {
+      id: "connectors" as const,
+      label: "Connectors",
+      component: <Connectors />,
+    },
+    {
+      id: "pricing" as const,
+      label: "Pricing",
+      component: (
+        <>
+          <Pillars />
+          <PricingTiers />
+          <VisionCTA />
+        </>
+      ),
+    },
+  ];
+
   return (
     <div className="relative flex min-h-screen flex-col bg-transparent">
       <SiteHeader />
 
       <main className="flex-1">
         <Hero3D />
-        <JourneyExplorer />
-        <AgentActivityPanel />
-        <DeadlineTimeline />
-        <div id="memory" className="scroll-mt-20">
-          <MemoryVault />
-        </div>
-        <div id="countries" className="scroll-mt-20">
-          <CountryRules />
-        </div>
-        <Pillars />
-        <AgentChat />
-        <ApprovalsHistory />
-        <NetworkingJobs />
-        <Connectors />
-        <PricingTiers />
-        <VisionCTA />
+        <ViewSwitcher views={views} initialView="journey" />
       </main>
 
       <SiteFooter />

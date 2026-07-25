@@ -1,22 +1,29 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 /**
- * Site-wide floating background — DRAMATICALLY dynamic.
+ * Site-wide floating background — DRAMATICALLY dynamic, performance-tuned.
  *
- * The user said "background is still static and not floating visuals" so this
- * version is much more visible:
- *  - 6 large drifting orbs (faster, higher opacity)
- *  - 14 floating geometric shapes (cubes, triangles, rings) that visibly
- *    rotate + drift across the screen
- *  - 2 AI neural network SVGs that pulse
- *  - A moving conic gradient that sweeps the whole viewport
- *  - All with clearly-visible motion (8-16s durations, not 30s)
+ * On mobile: fewer shapes (6 instead of 14) for faster load.
+ * On desktop: full 14 shapes + all orbs + neural nets + conic sweep.
+ * Honors prefers-reduced-motion (renders static).
  */
 export default function FloatingBackground() {
   const reduce = useReducedMotion();
   const animate = !reduce;
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // On mobile, show fewer shapes for performance
+  const shapesToShow = isMobile ? FLOATING_SHAPES.slice(0, 6) : FLOATING_SHAPES;
 
   return (
     <div
@@ -111,7 +118,7 @@ export default function FloatingBackground() {
 
       {/* floating 3D-style shapes — cubes, triangles, rings that drift + rotate visibly */}
       {animate &&
-        FLOATING_SHAPES.map((s, i) => (
+        shapesToShow.map((s, i) => (
           <motion.div
             key={i}
             className="absolute"
@@ -232,8 +239,8 @@ export default function FloatingBackground() {
         </motion.svg>
       )}
 
-      {/* moving conic gradient sweep — visible rotating light */}
-      {animate && (
+      {/* moving conic gradient sweep — visible rotating light (desktop only for performance) */}
+      {animate && !isMobile && (
         <motion.div
           className="absolute left-1/2 top-1/2 h-[140vmax] w-[140vmax] -translate-x-1/2 -translate-y-1/2 opacity-[0.08]"
           style={{

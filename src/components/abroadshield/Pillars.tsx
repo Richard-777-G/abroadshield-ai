@@ -39,12 +39,12 @@ export default function Pillars() {
                 transition={{ duration: 0.45, delay: i * 0.08 }}
                 className="as-card-hover group relative overflow-hidden rounded-3xl border border-[var(--shield-border)] as-glass"
               >
-                {/* image banner on each pillar card */}
+                {/* image banner on each pillar card — bespoke per pillar */}
                 <div className="relative h-24 overflow-hidden">
                   <img
-                    src={`/sections/pillars.png`}
+                    src={p.image}
                     alt={p.title}
-                    className="h-full w-full object-cover opacity-40 transition group-hover:opacity-60 group-hover:scale-105"
+                    className="h-full w-full object-cover opacity-50 transition group-hover:opacity-70 group-hover:scale-105"
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.22_0.028_165/0.95)] to-transparent" />

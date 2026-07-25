@@ -74,7 +74,7 @@ export default function DeadlineTimeline() {
       <div className="pointer-events-none absolute inset-0 as-bg-grid-fine opacity-20" />
 
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
-        {/* heading */}
+        {/* heading + image */}
         <Reveal className="mb-10 max-w-2xl">
           <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[oklch(0.8_0.15_80)]">
             <span className="h-px w-8 bg-[oklch(0.8_0.15_80/0.5)]" />
@@ -89,6 +89,25 @@ export default function DeadlineTimeline() {
             deadline the agent is tracking, across all four phases, on one continuous rail.
             Today is the bright marker. Hover any dot for detail.
           </p>
+        </Reveal>
+
+        {/* timeline visual — wide image banner */}
+        <Reveal delay={0.1} className="mb-8">
+          <div className="relative h-32 overflow-hidden rounded-2xl border border-[var(--shield-border)] sm:h-40">
+            <img
+              src="/sections/timeline-hero.png"
+              alt="Deadline timeline visualization"
+              className="h-full w-full object-cover opacity-40"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.14_0.018_165/0.95)] via-[oklch(0.14_0.018_165/0.3)] to-transparent" />
+            <div className="absolute bottom-3 left-5 flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-[oklch(0.86_0.17_80)]" />
+              <span className="text-xs font-medium text-[oklch(0.86_0.17_80)]">
+                27 deadlines across 4 phases · today is the bright marker
+              </span>
+            </div>
+          </div>
         </Reveal>
 
         {/* filters + legend */}

@@ -948,6 +948,7 @@ export interface Pillar {
   title: string;
   detail: string;
   icon: LucideIcon;
+  image: string;
 }
 
 export const PILLARS: Pillar[] = [
@@ -956,24 +957,28 @@ export const PILLARS: Pillar[] = [
     detail:
       "Not 'memory' in general — memory organized around a real sequence (visa → flight → SIM → housing → bank → work-hour limits) for one specific country.",
     icon: ShieldCheck,
+    image: "/sections/pillar-1-memory.png",
   },
   {
     title: "Proactive, not reactive",
     detail:
       "The product reaches out first, before a deadline, instead of waiting to be asked. General AI assistants are reactive by default.",
     icon: Bell,
+    image: "/sections/pillar-2-proactive.png",
   },
   {
     title: "Country-specific rules baked in",
     detail:
       "It already knows the checklist, the sequence, and the work-hour cap. The student never has to explain their situation from scratch.",
     icon: MapPin,
+    image: "/sections/pillar-3-rules.png",
   },
   {
     title: "Agentic task execution",
     detail:
       "It drafts, searches, shortlists, and fills in — with your approval — rather than only explaining what to do. The strongest pillar.",
     icon: FileCheck2,
+    image: "/sections/pillar-4-agentic.png",
   },
 ];
 
