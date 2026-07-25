@@ -1,0 +1,949 @@
+================================================================================
+         ABROADSHIELD AI — COMPLETE PROJECT REPORT
+         Agentic AI for the Entire Study-Abroad Journey
+================================================================================
+
+Document Version: 1.0
+Date: July 2026
+Project Type: Full-Stack Next.js 16 Web Application (Single-Page, View-Based)
+Status: Production-Ready (Development Environment)
+
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1.  Executive Summary
+2.  Product Vision & Core Idea
+3.  Technology Stack (Pin-to-Pin)
+4.  Architecture Overview
+5.  Project Structure (File-by-File)
+6.  Component Inventory (27 Components)
+7.  Data Layer (Domain Model)
+8.  AI/LLM Integration
+9.  Image & Media Asset Strategy
+10. Design System & Styling
+11. Feature Breakdown (Per View)
+12. State Management
+13. API Routes
+14. Performance Optimizations
+15. Known Limitations & Risks
+16. Build & Deployment
+17. Future Roadmap
+
+
+================================================================================
+1. EXECUTIVE SUMMARY
+================================================================================
+
+AbroadShield AI is an agentic AI web application that walks a single student
+through the entire journey of going abroad to study — from the visa decision
+to the sponsored job offer. Unlike a chatbot that waits to be asked, the
+agent ACTS: it drafts emails, gap-checks documents, tracks deadlines,
+shortlists housing, tailors CVs, and runs a networking tracker — all with
+the student's one-tap approval.
+
+The application is built as a single-page Next.js 16 experience with a
+header-driven view-switching architecture. The landing page (Home) presents
+the product vision with a premium AI hero visual; six additional views
+(Journey, Agent, Countries, Network & Jobs, Connectors, Pricing) each
+present their own bespoke hero, data, images, and interactive features.
+
+KEY METRICS:
+- 27 React components (6,535 lines of component code)
+- 1,245-line domain data layer (data.ts)
+- 421-line custom CSS design system (globals.css)
+- 24 AI-generated images (2.8MB total)
+- 10 study-abroad countries with full visa rules
+- 16 real platform connectors
+- 1 functional LLM-powered agent chat (z-ai-web-dev-sdk)
+- 7 views (Home + 6 section views)
+- 0 lint errors
+
+
+================================================================================
+2. PRODUCT VISION & CORE IDEA
+================================================================================
+
+THE PROBLEM:
+Every year, millions of students leave home to study abroad, and almost
+every one of them ends up doing it alone. A visa consultant helps once,
+then disappears. A forum answers one question, then moves on. A government
+website assumes you already understand its own rules. Nobody stays with
+the student through the whole journey.
+
+THE SOLUTION:
+AbroadShield AI is built to be the one thing that does stay. It is a
+highly agentic AI — it doesn't wait to be asked. It holds a running,
+detailed picture of exactly where a student stands, and takes real action
+on their behalf, at every stage of the journey, in every way it practically
+can.
+
+THE FOUR PHASES:
+1. Pre-Departure — visa checklist, document gap-checking, deadline tracking,
+   drafting emails and forms.
+2. Arrival — housing search vs budget, landlord & bank messages, FRRO/police
+   registration within 14 days.
+3. Studying & Part-Time — spending vs runway, work-hour cap compliance,
+   academic deadline management.
+4. Job Success — scan openings vs post-study visa runway, tailor CV/cover
+   letter per role, interview prep, alumni networking tracker.
+
+THE FOUR PILLARS (Why not just use Claude/ChatGPT):
+1. Persistent journey memory — organized around a real sequence for one
+   specific country.
+2. Proactive, not reactive — reaches out first, before a deadline.
+3. Country-specific rules baked in — the student never explains from scratch.
+4. Agentic task execution — drafts, searches, shortlists, fills in, with
+   approval. The strongest pillar.
+
+
+================================================================================
+3. TECHNOLOGY STACK (Pin-to-Pin)
+================================================================================
+
+CORE FRAMEWORK:
+- Next.js 16.1.3 (App Router, Turbopack dev server)
+- React 19.0.0
+- TypeScript 5 (strict typing throughout)
+
+LANGUAGE & RUNTIME:
+- TypeScript (ES6+ import/export syntax)
+- Bun 1.3.14 (package manager + runtime)
+- Node.js (API route runtime)
+
+STYLING:
+- Tailwind CSS 4 (via @tailwindcss/postcss)
+- shadcn/ui component library (New York style) — full Radix UI primitive set
+- Custom CSS design system (globals.css, 421 lines) with OKLCH color tokens
+- tw-animate-css for animation utilities
+- tailwindcss-animate for shadcn transitions
+
+UI COMPONENTS (shadcn/ui — 48 components installed):
+accordion, alert, alert-dialog, aspect-ratio, avatar, badge, button,
+calendar, card, carousel, chart, checkbox, collapsible, command,
+context-menu, dialog, drawer, dropdown-menu, form, hover-card, input,
+input-otp, label, menubar, navigation-menu, pagination, popover,
+progress, radio-group, resizable, scroll-area, select, separator, sheet,
+sidebar, skeleton, slider, sonner, switch, table, tabs, textarea, toast,
+toaster, toggle, toggle-group, tooltip.
+
+ICONS:
+- lucide-react 0.525.0 (all icons throughout the app)
+
+ANIMATION:
+- framer-motion 12.23.2 (all motion: scroll-reveal, view transitions,
+  hover-tilt, count-up, breathing orbs, floating shapes, layout animations)
+
+STATE MANAGEMENT:
+- Zustand 5.0.6 (approvals store — shares chat Approve/Edit/Decline
+  actions with the ApprovalsHistory timeline)
+- React useState/useEffect (component-level state)
+- URL hash (deep linking for view switching)
+
+LLM / AI:
+- z-ai-web-dev-sdk 0.0.18 (backend-only; powers the agent chat)
+- System prompt encodes the full student profile + 4-phase journey +
+  agentic behavior rules
+
+MARKDOWN:
+- react-markdown 10.1.0 (renders LLM replies with formatting)
+- react-syntax-highlighter 15.6.1 (code blocks in chat)
+
+FORMS & VALIDATION:
+- react-hook-form 7.60.0
+- @hookform/resolvers 5.1.1
+- zod 4.0.2 (schema validation)
+
+DATA TABLES:
+- @tanstack/react-table 8.21.3
+- @tanstack/react-query 5.82.0 (server state, installed but currently
+  using local data layer)
+
+DATABASE (installed, schema defined, not yet wired to live data):
+- Prisma ORM 6.11.1
+- @prisma/client 6.11.1
+- SQLite (development database)
+- Schema: User model (id, email, name, createdAt) — ready for auth
+  persistence
+
+AUTHENTICATION (installed, UI built, backend not yet wired):
+- next-auth 4.24.11 (NextAuth.js v4)
+- AuthModal component with login/signup modes + social auth buttons
+
+FONTS:
+- Geist (sans-serif, via next/font/google)
+- Geist Mono (monospace, via next/font/google)
+
+OTHER LIBRARIES:
+- clsx 2.1.1 + tailwind-merge 3.3.1 (className utilities)
+- class-variance-authority 0.7.1 (component variants)
+- cmdk 1.1.1 (command palette primitive)
+- date-fns 4.1.0 (date utilities)
+- embla-carousel-react 8.6.0 (carousel primitive)
+- input-otp 1.4.2 (OTP input)
+- react-day-picker 9.8.0 (date picker)
+- react-resizable-panels 3.0.3 (resizable layouts)
+- recharts 2.15.4 (chart library, installed)
+- sonner 2.0.6 (toast notifications)
+- uuid 11.1.0 (ID generation)
+- vaul 1.1.2 (drawer component)
+- @dnd-kit (drag-and-drop, installed)
+- @mdxeditor/editor 3.39.1 (MDX editor, installed)
+- @reactuses/core 6.0.5 (React hooks utilities)
+- next-intl 4.3.4 (internationalization, installed)
+- next-themes 0.4.6 (theme switching, installed)
+- sharp 0.34.3 (image optimization)
+
+DEV DEPENDENCIES:
+- @tailwindcss/postcss 4
+- @types/react 19, @types/react-dom 19
+- bun-types 1.3.4
+- eslint 9 + eslint-config-next 16.1.1
+- tailwindcss 4
+- tw-animate-css 1.3.5
+- typescript 5
+
+IMAGE GENERATION TOOL:
+- z-ai CLI (image generation skill) — used to generate all 24 bespoke
+  AI-themed images via text prompts
+
+
+================================================================================
+4. ARCHITECTURE OVERVIEW
+================================================================================
+
+The application uses a HEADER-DRIVEN VIEW-SWITCHING architecture instead
+of a traditional long-scroll single page:
+
+LAYOUT (layout.tsx):
+  <html className="dark">
+    <body>
+      <FloatingBackground />     ← fixed, full-viewport, -z-10
+      <ScrollProgress />         ← fixed, top, z-100
+      {children}                 ← the page
+      <Toaster />                ← toast notifications
+    </body>
+  </html>
+
+PAGE (page.tsx):
+  <SiteHeader activeView onViewChange views />
+  <main>
+    <AnimatePresence mode="wait">
+      <motion.div key={activeView}>
+        {activeView === "home"     → <Hero3D /> + <HomeShowcase />}
+        {activeView === "journey"  → <ViewHero /> + Journey sections}
+        {activeView === "agent"    → <ViewHero /> + Agent sections}
+        {activeView === "countries"→ <ViewHero /> + CountryRules}
+        {activeView === "network"  → <ViewHero /> + NetworkingJobs}
+        {activeView === "connectors"→<ViewHero /> + Connectors}
+        {activeView === "pricing"  → <ViewHero /> + Pillars + Pricing + Vision}
+      </motion.div>
+    </AnimatePresence>
+  </main>
+  <SiteFooter />
+
+KEY ARCHITECTURAL DECISIONS:
+
+1. VIEW SWITCHING (not routing):
+   - Single page with client-side state (useState) drives view switching.
+   - URL hash (#journey, #agent, etc.) provides deep linking.
+   - hashchange listener syncs state when the hash changes.
+   - AnimatePresence provides smooth cross-fade + slide transitions.
+   - Only the active view's sections mount (less DOM, faster).
+
+2. FLOATING BACKGROUND (global, fixed):
+   - Rendered once in layout.tsx, behind everything (-z-10).
+   - 5 drifting orbs + 14 floating 3D shapes + 2 neural network SVGs +
+     rotating conic sweep + animated grid + film grain.
+   - Mobile-optimized: fewer shapes on small screens.
+   - ssr:false dynamic import to avoid hydration mismatch.
+
+3. SCROLL PROGRESS BAR:
+   - Fixed at the very top (z-100), fills as the user scrolls.
+   - Uses framer-motion useScroll + useSpring.
+
+4. HEADER AS VIEW SWITCHER:
+   - The header nav pills ARE the view switcher (no separate tab bar).
+   - Active pill animates with a spring layoutId.
+   - Mobile: sliding panel menu.
+
+
+================================================================================
+5. PROJECT STRUCTURE (File-by-File)
+================================================================================
+
+src/
+├── app/
+│   ├── api/
+│   │   └── abroadshield/
+│   │       └── chat/
+│   │           └── route.ts          ← LLM agent chat endpoint
+│   ├── api/
+│   │   └── route.ts                  ← default API route
+│   ├── globals.css                   ← custom design system (421 lines)
+│   ├── layout.tsx                    ← root layout (fonts, bg, metadata)
+│   └── page.tsx                      ← main page (view switcher logic)
+├── components/
+│   ├── ui/                           ← 48 shadcn/ui components
+│   │   ├── accordion.tsx
+│   │   ├── alert.tsx
+│   │   ├── ... (48 files total)
+│   │   └── tooltip.tsx
+│   └── abroadshield/                 ← 27 custom components
+│       ├── data.ts                   ← domain data layer (1,245 lines)
+│       ├── approvalsStore.ts         ← Zustand store
+│       ├── AIPrimeCore.tsx            ← premium AI hero visual
+│       ├── AgentActivityPanel.tsx     ← live agent feed
+│       ├── AgentChat.tsx              ← LLM chat with Approve/Edit/Decline
+│       ├── ApprovalsHistory.tsx       ← audit timeline
+│       ├── AuthModal.tsx              ← login/signup modal
+│       ├── ClientFloatingBackground.tsx ← ssr:false wrapper
+│       ├── Connectors.tsx             ← 16 platform integrations
+│       ├── CountryRules.tsx           ← 10 countries + compare mode
+│       ├── DeadlineTimeline.tsx       ← 27 deadlines on a rail
+│       ├── Floating3DCube.tsx         ← CSS 3D rotating cube
+│       ├── FloatingBackground.tsx     ← global animated background
+│       ├── Hero3D.tsx                ← landing hero (home view)
+│       ├── HoloShield.tsx             ← (legacy, superseded by AIPrimeCore)
+│       ├── HomeShowcase.tsx           ← home enrichment (how it works + stats)
+│       ├── JourneyExplorer.tsx        ← 4-phase interactive journey
+│       ├── LanguageToggle.tsx         ← EN/हिन्दी/मराठी/தமிழ்
+│       ├── MemoryVault.tsx            ← student profile + gap-checker + vault
+│       ├── NetworkingJobs.tsx          ← networking tracker + job board
+│       ├── Pillars.tsx                ← 4 differentiation pillars
+│       ├── PricingTiers.tsx            ← 3 pricing tiers
+│       ├── Reveal.tsx                 ← scroll-reveal wrapper
+│       ├── ScrollProgress.tsx         ← top progress bar
+│       ├── SiteFooter.tsx             ← sticky footer
+│       ├── SiteHeader.tsx              ← view-switcher header
+│       ├── ViewHero.tsx               ← per-view hero banner
+│       ├── ViewSwitcher.tsx           ← view types + renderer
+│       └── VisionCTA.tsx              ← closing vision statement
+├── hooks/
+│   ├── use-toast.ts
+│   └── use-mobile.ts
+└── lib/
+    ├── db.ts                          ← Prisma client
+    └── utils.ts                       ← cn() utility
+
+prisma/
+└── schema.prisma                      ← User model (ready for auth)
+
+public/
+├── phases/                            ← 4 phase images (448KB)
+│   ├── pre-departure.png
+│   ├── arrival.png
+│   ├── studying.png
+│   └── job-success.png
+├── sections/                          ← 20 section images (2.4MB)
+│   ├── agent-avatar.png
+│   ├── agentic-hero.png
+│   ├── gap-check.png
+│   ├── hero-agent.png
+│   ├── hero-connectors.png
+│   ├── hero-countries.png
+│   ├── hero-journey.png
+│   ├── hero-network.png
+│   ├── hero-pricing.png
+│   ├── home-agent-work.png
+│   ├── home-how-it-works.png
+│   ├── memory-vault.png
+│   ├── networking.png
+│   ├── pillar-1-memory.png
+│   ├── pillar-2-proactive.png
+│   ├── pillar-3-rules.png
+│   ├── pillar-4-agentic.png
+│   ├── pillars.png
+│   ├── timeline-hero.png
+│   └── timeline.png
+├── logo.svg
+└── robots.txt
+
+
+================================================================================
+6. COMPONENT INVENTORY (27 Components)
+================================================================================
+
+Each component's purpose, line count, and key technology:
+
+1. data.ts (1,245 lines)
+   - Domain data layer: 4 phases, 10 countries, 16 connectors, 27 deadlines,
+     13 vault docs, 12 memory items, 8 agent feed items, 3 pricing tiers,
+     4 pillars, 4 chat starters, multilingual hero strings (EN/hi/mr/ta),
+     accent color map, severity styles.
+
+2. approvalsStore.ts (80 lines)
+   - Zustand store with 8 seed entries + addEntry action.
+   - Shares chat Approve/Edit/Decline actions with ApprovalsHistory.
+
+3. AIPrimeCore.tsx (222 lines)
+   - Premium glowing AI orb hero visual.
+   - Central core with shield emblem + readiness % counter (count-up animation).
+   - 3 breathing concentric rings, 16-point HUD ring, 3 orbiting particles.
+   - Hover-tilt 3D (useMotionValue + useSpring + useTransform).
+
+4. AgentActivityPanel.tsx (202 lines)
+   - Live rotating agent activity feed (6 items, "hot" item cycles every 3.2s).
+   - Phase color-coding, kind badges, human-in-the-loop footer.
+
+5. AgentChat.tsx (558 lines)
+   - Functional LLM chat wired to /api/abroadshield/chat.
+   - Markdown rendering (react-markdown), typing indicator, 4 starter prompts.
+   - Draft detection (isDraftMessage) → Approve/Edit/Decline action buttons.
+   - extractDraftMeta helper infers kind/title/recipient/phase from LLM reply.
+   - Pushes actions to Zustand approvalsStore.
+   - AI agent avatar image in the header.
+
+6. ApprovalsHistory.tsx (198 lines)
+   - Vertical timeline of agent actions (reads from Zustand store).
+   - 3 stat cards (Approved/Edited/Declined).
+   - Staggered scroll-reveal, action icons, phase badges.
+
+7. AuthModal.tsx (166 lines)
+   - Login/signup modal with social auth (Google/GitHub buttons).
+   - Email/password form, mode toggle, animated entrance.
+
+8. ClientFloatingBackground.tsx (26 lines)
+   - ssr:false dynamic import wrapper for FloatingBackground.
+   - Prevents hydration mismatch from useReducedMotion.
+
+9. Connectors.tsx (405 lines)
+   - 16 real platform connectors across 7 categories.
+   - Category filter chips, expandable panels with agent actions.
+   - "Open platform" (real URLs) + "Ask agent to act" buttons.
+
+10. CountryRules.tsx (542 lines)
+    - 10 countries with Single/Compare mode toggle.
+    - Embassy links, official checklists, quick facts, highlights.
+    - CompareRecommendation: analyzes work hours, post-study window,
+      registration speed → dimension-by-dimension winner + overall verdict.
+
+11. DeadlineTimeline.tsx (409 lines)
+    - 27 deadlines across 4 phase swimlanes on a horizontal rail.
+    - Today marker, day-axis labels, severity legend, filter chips.
+    - Hover/click for detail popover. Timeline hero image banner.
+
+12. Floating3DCube.tsx (70 lines)
+    - Pure CSS 3D rotating cube (6 glass faces, emerald tint).
+    - Rotates on X+Y axes, no WebGL.
+
+13. FloatingBackground.tsx (367 lines)
+    - Global animated background: 5 orbs, 14 floating shapes, 2 neural nets,
+      conic sweep, animated grid, film grain.
+    - Mobile-optimized (fewer shapes on small screens).
+
+14. Hero3D.tsx (278 lines)
+    - Landing hero (home view only).
+    - AIPrimeCore + floating HUD labels + clickable stat cards + trust strip.
+    - Multilingual (LanguageToggle), shimmer headline, scroll parallax.
+
+15. HomeShowcase.tsx (271 lines)
+    - Home enrichment: "How it works" 3-step + agent showcase + quick stats.
+    - 2 generated images, floating badges, 6-item feature list.
+
+16. JourneyExplorer.tsx (339 lines)
+    - Interactive 4-phase journey with clickable station cards.
+    - Per-phase thumbnail images, task lists, agentic actions, stats.
+    - Listens for "abroadshield:select-phase" custom events from the hero.
+
+17. LanguageToggle.tsx (77 lines)
+    - EN/हिन्दी/मराठी/தமிழ் dropdown with flags.
+    - Outside-click + escape to close.
+
+18. MemoryVault.tsx (492 lines)
+    - Student card with readiness bar, memory items, document vault.
+    - Simulated gap-checker (4-step scan animation → field report → agent action).
+    - Phase-filterable vault.
+
+19. NetworkingJobs.tsx (530 lines)
+    - Networking/Jobs tab toggle.
+    - 5 contacts (replied/pending/follow-up/connected) + 6 job applications.
+    - Expandable rows with agent actions, sponsorship badges, match scores.
+
+20. Pillars.tsx (101 lines)
+    - 4 differentiation pillars with bespoke images per pillar.
+    - Image banners + icon chips + hover glow.
+
+21. PricingTiers.tsx (173 lines)
+    - 3 tiers (Free/Pro/Job Success) with agentic-action badges.
+    - Highlighted tier gets animated gradient border.
+
+22. Reveal.tsx (89 lines)
+    - Scroll-triggered fade-up wrapper (whileInView).
+    - Honors prefers-reduced-motion. StaggerGroup + staggerItem variants.
+
+23. ScrollProgress.tsx (30 lines)
+    - Top progress bar (useScroll + useSpring, radiant green gradient).
+
+24. SiteFooter.tsx (124 lines)
+    - Sticky footer with brand, 3 link columns, social icons, vision quote.
+
+25. SiteHeader.tsx (186 lines)
+    - View-switcher header (nav pills drive view switching).
+    - Active pill spring animation (layoutId).
+    - "Agent live" badge, Sign in + Try the agent CTAs.
+    - Mobile sliding panel menu. AuthModal integration.
+
+26. ViewHero.tsx (109 lines)
+    - Per-view bespoke hero banner (6 views, each with unique image + headline).
+    - Clean non-overlapping layout (image then text below).
+
+27. ViewSwitcher.tsx (113 lines)
+    - ViewId type + ViewRenderer (animated mount).
+    - Legacy full ViewSwitcher with tab bar (superseded by header-driven switching).
+
+28. VisionCTA.tsx (90 lines)
+    - Closing vision statement with "built-for" badges.
+
+
+================================================================================
+7. DATA LAYER (Domain Model)
+================================================================================
+
+The data layer (data.ts, 1,245 lines) is the single source of truth for
+all domain content. It uses TypeScript interfaces + const arrays.
+
+EXPORTS:
+
+PHASES: Phase[] — 4 phases, each with:
+  id, index, name, tagline, description, icon, accent, colorHex, glowHex,
+  milestone, agenticActions[], tasks[], stats[].
+
+AGENT_FEED: AgentActivity[] — 10 live agent actions with:
+  id, phase, kind (nudge/draft/check/search/alert/submit), title, detail,
+  time, icon.
+
+STUDENT: { name, origin, destination, course, university, intake,
+  homeLanguage, familyCurrency, journeyStart, currentPhase, readiness,
+  documentsTotal, documentsVerified, deadlinesTracked, draftsReady }.
+
+MEMORY: MemoryItem[] — 12 facts the agent remembers (visa type, appointment,
+  funding, postcode, housing budget, bank preference, work cap, runway,
+  deadlines, visa window, target roles, alumni network).
+
+VAULT: VaultDoc[] — 13 documents with status (verified/issue/missing/pending).
+
+COUNTRIES: CountryRule[] — 10 countries, each with:
+  country, flag, currency, studentVisa, workCap, postStudyWindow,
+  registration, insurance, bankAccount, highlights[], embassyLinks[],
+  checklist[], cities[], avgTuition, avgLivingCost, language.
+
+  Countries: UK, US, Canada, Australia, Germany, Ireland, Netherlands,
+  France, New Zealand, Singapore.
+
+TIERS: PricingTier[] — 3 tiers (Free/Pro/Job Success) with features[].
+
+PILLARS: Pillar[] — 4 pillars with title, detail, icon, image.
+
+CHAT_STARTERS: 4 starter prompts (consulate email, work-hour cap, CV
+  tailoring, landlord reply).
+
+DEADLINES: Deadline[] — 27 deadlines across 4 phases with day offset,
+  severity (done/info/warning/critical), group.
+
+SEVERITY_STYLE: severity → { label, dot, ring, text } color mapping.
+
+LOCALES: 4 locales (English, हिन्दी, मराठी, தமிழ்) with flags.
+
+HERO_STRINGS: Record<LocaleId, HeroStrings> — fully localized hero text
+  (eyebrow, title parts, subtitle, CTAs, 4 stat labels) in 4 languages.
+
+ACCENT_MAP: phase accent → { text, border, bg, glow, dot } Tailwind classes.
+
+
+================================================================================
+8. AI/LLM INTEGRATION
+================================================================================
+
+ENDPOINT: POST /api/abroadshield/chat
+RUNTIME: Node.js (force-dynamic)
+
+SDK: z-ai-web-dev-sdk 0.0.18 (backend-only)
+
+SYSTEM PROMPT (encodes the full product context):
+- Student identity: Aarav Mehta, Pune → Manchester, MSc Data Science, Sep 2026.
+- Current state: Pre-Departure phase, visa appointment 28 Aug 09:30 IST,
+  11/13 docs verified, bank statement missing page 3, passport photo flagged.
+- The 4 phases the agent owns (Pre-Departure → Arrival → Studying → Job Success).
+- Behavior rules: ACT don't advise, be concise, match the student's register,
+  state country rules explicitly, end drafts with "Approve to send?", never
+  invent facts, keep under 220 words.
+- Output format: Markdown with bold facts, bullet lists, fenced code blocks
+  for drafts, "Approve / Edit / Decline" cue.
+
+CONVERSATION HISTORY:
+- Carries the last 8 messages for continuity.
+- System prompt as the first "assistant" message.
+
+DRAFT DETECTION (client-side):
+- isDraftMessage() checks for "Approve to send", "Approve / Edit / Decline",
+  "Subject:", "Dear", or fenced code blocks.
+- When detected, renders Approve/Edit/Decline action buttons.
+- extractDraftMeta() infers kind (email/form/search/document/message),
+  title, recipient, detail, and phase from the LLM reply content.
+- Actions are pushed to the Zustand approvalsStore → appear in the
+  ApprovalsHistory timeline.
+
+
+================================================================================
+9. IMAGE & MEDIA ASSET STRATEGY
+================================================================================
+
+All 24 images are AI-generated via the z-ai image-generation CLI tool
+(z-ai image -p "prompt" -o "path" -s size). No stock photos.
+
+IMAGE CATEGORIES:
+
+A. Phase Images (4 images, 448KB, 1344×768):
+   - pre-departure.png — passport + visa documents on dark desk, emerald rim light.
+   - arrival.png — Manchester apartment interior, suitcase, city through window.
+   - studying.png — student studying late, warm desk lamp, emerald monitor glow.
+   - job-success.png — professional walking toward glass office, golden hour.
+   Used in: JourneyExplorer phase station cards + detail panel banners.
+
+B. View Hero Images (6 images, ~900KB, 1344×768):
+   - hero-journey.png — 4-stage journey path with light trails.
+   - hero-agent.png — futuristic AI terminal with neural connections.
+   - hero-countries.png — glowing 3D globe with city connections.
+   - hero-network.png — professional networking pipeline visualization.
+   - hero-connectors.png — app icons connected by light streams.
+   - hero-pricing.png — crystal pricing tiers of different heights.
+   Used in: ViewHero banner for each non-home view.
+
+C. Pillar Images (4 images, bespoke per pillar, 1024×1024):
+   - pillar-1-memory.png — persistent memory neural network loop.
+   - pillar-2-proactive.png — proactive pulse wave from a central orb.
+   - pillar-3-rules.png — world map with data nodes on destinations.
+   - pillar-4-agentic.png — robotic hand drafting documents.
+   Used in: Pillars.tsx — each card gets its own bespoke image.
+
+D. Section Images (10 images, ~1.5MB, mixed sizes):
+   - agent-avatar.png — futuristic AI agent orb (used in AgentChat header).
+   - agentic-hero.png — glowing sphere behind the hologram (hero background).
+   - gap-check.png — visa document checklist floating.
+   - home-agent-work.png — AI agent doing work (HomeShowcase).
+   - home-how-it-works.png — 3-step visual (HomeShowcase).
+   - memory-vault.png — neural network memory vault.
+   - networking.png — 3D globe with connections.
+   - timeline-hero.png — horizontal timeline with milestone orbs.
+   - timeline.png — (alternate timeline visual).
+   - pillars.png — (legacy, superseded by per-pillar images).
+
+IMAGE LOADING:
+- All images use loading="lazy" to not block initial render.
+- Object-cover + opacity for atmospheric overlay.
+- Gradient scrims for text readability.
+
+
+================================================================================
+10. DESIGN SYSTEM & STYLING
+================================================================================
+
+COLOR SYSTEM (OKLCH, radiant green palette):
+- Primary: oklch(0.74 0.17 162) — radiant emerald.
+- Bright: oklch(0.85 0.19 158) — luminous highlight.
+- Deep: oklch(0.42 0.11 170) — deep anchor.
+- Lime: oklch(0.86 0.2 135) — Gen-Z lime/chartreuse pop.
+- Mint: oklch(0.88 0.13 175) — soft mint companion.
+- Amber: oklch(0.8 0.15 80) — warm amber companion.
+- Violet: oklch(0.64 0.16 300) — arrival phase accent.
+- Cyan: oklch(0.74 0.13 210) — job phase accent.
+- Rose: oklch(0.66 0.19 22) — alert/critical.
+
+INK (dark base, slightly green-tinted):
+- --shield-ink: oklch(0.14 0.018 165) — page background.
+- --shield-ink-2: oklch(0.18 0.022 165) — raised surface.
+- --shield-ink-3: oklch(0.22 0.025 165) — card/panel.
+
+TEXT:
+- --shield-text: oklch(0.98 0.005 160) — near-white with green whisper.
+- --shield-text-dim: oklch(0.72 0.02 165).
+- --shield-text-faint: oklch(0.5 0.015 165).
+
+CUSTOM UTILITY CLASSES (globals.css, 421 lines):
+- as-bg-grid — masked grid background.
+- as-radial-emerald / as-radial-warm / as-radial-lime — atmospheric glows.
+- as-glass / as-glass-strong — frosted quartz glass panels (saturate blur).
+- as-text-gradient — emerald→lime→bright gradient text clip.
+- as-text-gradient-amber — amber gradient text.
+- as-ring-glow — 1px hairline + emerald aura.
+- as-glow-emerald / as-glow-amber — radiant glow shadows.
+- as-hairline — gradient divider line with glow.
+- as-surface — premium inset card surface.
+- as-gradient-border — animated rotating conic-gradient border (@property).
+- as-card-hover — emerald aura + lift on hover.
+- as-divider-rich — gradient section divider.
+- as-shimmer — animated shimmering text effect.
+- as-aurora — slow drifting aurora keyframes.
+- as-pulse — emerald pulse ring.
+- as-typing-dot — chat typing indicator.
+- as-scroll — custom scrollbar (radiant green).
+- as-noise — film grain texture.
+- as-perspective / as-preserve-3d / as-backface-hidden — 3D helpers.
+
+KEYFRIMES:
+- as-marquee-up, as-orbit, as-pulse-ring, as-blink, as-aurora, as-fade-up,
+  as-gradient-spin (@property --as-gradient-angle), as-shimmer.
+
+SELECTION:
+- ::selection — radiant green background.
+
+FONTS:
+- Geist (sans-serif) + Geist Mono (monospace), via next/font/google.
+
+
+================================================================================
+11. FEATURE BREAKDOWN (Per View)
+================================================================================
+
+HOME VIEW:
+- Hero3D: AIPrimeCore (glowing AI orb with readiness %, breathing rings,
+  orbiting particles, hover-tilt), shimmer headline, floating HUD labels
+  (Documents 11/13, Drafts 5, Visa runway 94 days), clickable stat cards
+  (4 phases, 27 deadlines, 13 docs, 1 memory), trust strip (Manchester,
+  Toronto, Berlin, Sydney, Boston), multilingual toggle.
+- HomeShowcase: "How it works" 3 steps (Connect → Agent works → You approve),
+  agent showcase image with floating badges, 6-item feature list, quick stats.
+
+JOURNEY VIEW:
+- ViewHero: bespoke journey image + headline.
+- JourneyExplorer: 4 clickable phase station cards with thumbnail images,
+  task lists, agentic actions, stats. Clicking a station shows the detail
+  panel with a phase image banner.
+- DeadlineTimeline: 27 deadlines across 4 swimlanes, today marker, hover
+  for detail, severity legend, filter chips, timeline hero image.
+- MemoryVault: student card with readiness bar, 12 memory items, 13-doc
+  vault with phase filter, simulated gap-checker (4-step scan → field
+  report → agent action).
+
+AGENT VIEW:
+- ViewHero: bespoke agent image + headline.
+- AgentActivityPanel: live rotating agent feed (6 items), phase color-coding.
+- AgentChat: functional LLM chat with Markdown rendering, typing indicator,
+  4 starter prompts, Approve/Edit/Decline action buttons on drafts,
+  AI agent avatar image.
+- ApprovalsHistory: timeline of agent actions (reads from Zustand store),
+  3 stat cards, staggered reveal.
+
+COUNTRIES VIEW:
+- ViewHero: bespoke countries image + headline.
+- CountryRules: 10 countries (UK, US, Canada, Australia, Germany, Ireland,
+  Netherlands, France, New Zealand, Singapore) with flag, currency, visa
+  type, work cap, post-study window, registration, insurance, bank account,
+  highlights, official embassy links, official checklist, cities, tuition,
+  living cost, language. Single/Compare mode with side-by-side comparison
+  + "best for" recommendation (dimension-by-dimension winner).
+
+NETWORK VIEW:
+- ViewHero: bespoke network image + headline.
+- NetworkingJobs: tabbed Networking/Job Applications.
+  - Networking: 5 contacts with status (replied/pending/follow-up/connected),
+    expandable rows with agent actions, approve draft buttons.
+  - Jobs: 6 job applications with sponsorship badges, match scores,
+    status (applied/interview/offer/rejected/drafting), expandable rows.
+
+CONNECTORS VIEW:
+- ViewHero: bespoke connectors image + headline.
+- Connectors: 16 real platform connectors across 7 categories (Jobs,
+  Email, Housing, Education, Travel, Finance, Apps). Category filter,
+  expandable panels with "What the agent does here", "Open platform"
+  (real URLs), "Ask agent to act" buttons. "Connected" badges.
+
+PRICING VIEW:
+- ViewHero: bespoke pricing image + headline.
+- Pillars: 4 differentiation pillars with bespoke images, hover glow.
+- PricingTiers: 3 tiers (Free ₹0, Pro ₹499, Job Success ₹1499) with
+  agentic-action badges, highlighted tier gets animated gradient border.
+- VisionCTA: closing vision statement with built-for badges.
+
+
+================================================================================
+12. STATE MANAGEMENT
+================================================================================
+
+ZUSTAND STORE (approvalsStore.ts):
+- entries: ApprovalEntry[] (8 seed entries).
+- addEntry(entry): prepends a new entry with id + "just now" timestamp.
+- Used by: AgentChat (pushes on Approve/Edit/Decline) → ApprovalsHistory
+  (reads live).
+
+COMPONENT-LEVEL STATE:
+- page.tsx: activeView (View) — drives the view switching.
+- SiteHeader: scrolled, open (mobile menu), authOpen, authMode.
+- Hero3D: locale (LocaleId) — drives multilingual hero.
+- JourneyExplorer: activeId (PhaseId) — selected phase station.
+- CountryRules: mode (single/compare), activeIdx, compareA, compareB.
+- DeadlineTimeline: filter, hovered, selected.
+- MemoryVault: phaseFilter, scanning, scanStep, scanDone.
+- NetworkingJobs: tab (network/jobs), openId.
+- Connectors: filter, openId.
+- LanguageToggle: open.
+
+URL HASH (deep linking):
+- #home, #journey, #agent, #countries, #network, #connectors, #pricing.
+- hashchange listener in page.tsx syncs activeView.
+
+CUSTOM EVENTS:
+- "abroadshield:select-phase" — dispatched by hero phase nodes, listened
+  by JourneyExplorer to switch the selected phase.
+
+
+================================================================================
+13. API ROUTES
+================================================================================
+
+POST /api/abroadshield/chat
+- Runtime: Node.js (force-dynamic).
+- Request: { message: string, messages?: ChatMessage[] }.
+- Response: { ok: boolean, reply: string } | { ok: false, error: string }.
+- SDK: z-ai-web-dev-sdk (ZAI.create() → chat.completions.create()).
+- System prompt: 1,200+ character context encoding the student profile,
+  4 phases, behavior rules, and output format.
+- Carries last 8 messages for conversation continuity.
+- thinking: { type: "disabled" } for standard completions.
+
+GET /api (default route)
+- Default Next.js API route (placeholder).
+
+
+================================================================================
+14. PERFORMANCE OPTIMIZATIONS
+================================================================================
+
+1. VIEW-BASED ARCHITECTURE:
+   - Only the active view's sections mount → less DOM, fewer simultaneous
+     animations → faster render.
+
+2. MOBILE-OPTIMIZED BACKGROUND:
+   - FloatingBackground detects mobile (< 768px) and reduces floating shapes
+     from 14 → 6.
+   - Skips the heavy conic gradient sweep on mobile.
+   - Reduces simultaneous Framer Motion animations.
+
+3. LAZY IMAGE LOADING:
+   - All 24 images use loading="lazy" → don't block initial render.
+
+4. SSR-SAFE BACKGROUND:
+   - FloatingBackground uses ssr:false dynamic import → avoids hydration
+     mismatch from useReducedMotion.
+   - Deterministic particle positions (sine-based pseudo-random, not
+     Math.random) → no SSR/client mismatch.
+
+5. ANIMATEPRESENCE MODE="WAIT":
+   - View transitions use mode="wait" → old view exits before new view
+     mounts → no overlapping animations.
+
+6. REDUCED MOTION:
+   - Reveal component + FloatingBackground honor prefers-reduced-motion.
+   - Renders static when reduced motion is requested.
+
+7. PERSPECTIVE + 3D:
+   - CSS transforms (not WebGL) for 3D effects → no GPU-heavy canvas.
+   - AIPrimeCore hover-tilt uses lightweight useMotionValue + useSpring.
+
+
+================================================================================
+15. KNOWN LIMITATIONS & RISKS
+================================================================================
+
+1. AGENT-BROWSER QA LIMITATION:
+   - The Chromium browser (agent-browser) crashes the Next.js Turbopack
+     dev server due to system RAM limits.
+   - QA is performed via curl (content checks) + lint (code quality) +
+     API testing instead of visual browser QA.
+   - Recommendation: run visual QA in a higher-memory environment.
+
+2. AUTH NOT WIRED TO BACKEND:
+   - AuthModal UI is built (login/signup, social auth buttons) but does
+     not persist to a backend. NextAuth.js is installed but not configured.
+   - The Prisma User model exists but no auth flow writes to it.
+
+3. APPROVALS STORE IS IN-MEMORY:
+   - The Zustand store resets on page refresh. No persistence to
+     Prisma/SQLite yet.
+
+4. COUNTRY DATA IS STATIC:
+   - All 10 countries' rules are hardcoded in data.ts. In production,
+     these should be in a database and updated as rules change.
+
+5. CHAT HISTORY NOT PERSISTED:
+   - Conversation history resets on page refresh. The API carries the
+     last 8 messages within a session but doesn't persist across sessions.
+
+
+================================================================================
+16. BUILD & DEPLOYMENT
+================================================================================
+
+DEVELOPMENT:
+- Command: bun run dev
+- Server: http://localhost:3000 (port 3000 only)
+- Turbopack dev server with hot module replacement.
+- Dev log: dev.log (tee'd output).
+
+LINT:
+- Command: bun run lint
+- ESLint 9 + eslint-config-next 16.1.1.
+- Currently: 0 errors.
+
+BUILD:
+- Command: bun run build
+- next build → .next/standalone/ + copies static + public.
+
+PRODUCTION START:
+- Command: bun run start
+- NODE_ENV=production bun .next/standalone/server.js.
+
+DATABASE:
+- Command: bun run db:push (prisma db push --accept-data-loss).
+- SQLite (file-based, development).
+
+GATEWAY:
+- Caddy reverse proxy (Caddyfile) — exposes one port externally.
+- XTransformPort query parameter for cross-service requests.
+
+
+================================================================================
+17. FUTURE ROADMAP
+================================================================================
+
+IMMEDIATE (Next Sprint):
+1. Wire NextAuth.js to the AuthModal → real login/signup with Prisma.
+2. Persist chat history + approvals to Prisma/SQLite.
+3. Wire "Ask agent to act" buttons in Connectors to pre-fill the chat.
+4. Add per-view bespoke infographics beyond the hero banner.
+5. Visual QA in a higher-memory environment (agent-browser + VLM).
+
+MID-TERM (Next Quarter):
+1. WhatsApp Business API integration (proactive nudges via AiSensy).
+2. LangGraph state machine for milestone sequencing.
+3. LlamaParse OCR integration for real document gap-checking.
+4. Langfuse observability for agent tracing.
+5. Multi-country rule database (Prisma, not hardcoded).
+
+LONG-TERM (Vision):
+1. Full 4-phase agent execution (Pre-Departure → Arrival → Studying →
+   Job Success) with real platform integrations.
+2. Regional language support (Marathi, Hindi, Tamil) across all sections.
+3. Mobile app (React Native) with offline-first nudges.
+4. Data moat: track real outcomes (which documents led to rejections).
+5. Distribution partnerships (universities, financial services, employers).
+
+
+================================================================================
+END OF REPORT
+================================================================================
+
+AbroadShield AI — One Agent. Four Phases. The Whole Journey.
+
+Built with Next.js 16, TypeScript, Tailwind CSS 4, shadcn/ui, Framer Motion,
+Zustand, z-ai-web-dev-sdk, and 24 AI-generated images.
+
+Total component code: 6,535 lines across 27 components.
+Total data layer: 1,245 lines.
+Total CSS: 421 lines.
+Total images: 24 (2.8MB).
+Lint errors: 0.
+
+================================================================================
