@@ -1,42 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import { Shield, ArrowDown, Globe2, CalendarClock, FileCheck2, BrainCircuit } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Shield, ArrowDown, CalendarClock, FileCheck2, BrainCircuit } from "lucide-react";
 import LanguageToggle from "./LanguageToggle";
-import HoloShield from "./HoloShield";
-import Floating3DCube from "./Floating3DCube";
+import AIPrimeCore from "./AIPrimeCore";
 import { HERO_STRINGS, type LocaleId } from "./data";
 
 export default function Hero3D() {
   const [locale, setLocale] = useState<LocaleId>("en");
   const t = HERO_STRINGS[locale];
 
-  // subtle parallax on the hologram as the user scrolls
-  const { scrollY } = useScroll();
-  const holoY = useTransform(scrollY, [0, 600], [0, -60]);
-  const holoScale = useTransform(scrollY, [0, 600], [1, 0.94]);
-  const holoOpacity = useTransform(scrollY, [0, 500], [1, 0.4]);
-
   return (
     <section
       id="top"
       className="relative min-h-[100svh] w-full overflow-hidden bg-transparent"
     >
-      {/* ---------- atmospheric background (hero-local, sits above the global floating layer) ---------- */}
+      {/* hero-local atmospheric glow (above the global floating background) */}
       <motion.div
         aria-hidden
-        className="as-aurora pointer-events-none absolute right-[8%] top-[10%] h-[55vh] w-[55vh] rounded-full [background:radial-gradient(circle,oklch(0.74_0.17_162/0.22),transparent_65%)] blur-3xl"
+        className="as-aurora pointer-events-none absolute right-[8%] top-[10%] h-[55vh] w-[55vh] rounded-full [background:radial-gradient(circle,oklch(0.74_0.17_162/0.25),transparent_65%)] blur-3xl"
       />
       <motion.div
         aria-hidden
-        className="as-aurora pointer-events-none absolute bottom-[5%] left-[15%] h-[38vh] w-[38vh] rounded-full [background:radial-gradient(circle,oklch(0.86_0.2_135/0.12),transparent_65%)] blur-3xl [animation-delay:6s]"
+        className="as-aurora pointer-events-none absolute bottom-[5%] left-[15%] h-[38vh] w-[38vh] rounded-full [background:radial-gradient(circle,oklch(0.86_0.2_135/0.15),transparent_65%)] blur-3xl [animation-delay:6s]"
       />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[var(--shield-ink)] to-transparent" />
 
       {/* ---------- content ---------- */}
       <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col px-6 sm:px-10">
-        {/* top row */}
+        {/* top row: eyebrow + language toggle */}
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -53,7 +46,7 @@ export default function Hero3D() {
           <LanguageToggle locale={locale} onChange={setLocale} />
         </motion.div>
 
-        {/* hero body: text left, hologram right */}
+        {/* hero body: text left, AI core right */}
         <div className="mt-10 grid flex-1 items-center gap-8 lg:mt-6 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
           {/* ---- text column ---- */}
           <motion.div
@@ -117,9 +110,9 @@ export default function Hero3D() {
               </a>
               <a
                 href="#agent"
-                className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.6_0.04_165/0.22)] px-5 py-3 text-sm font-semibold text-[oklch(0.88_0.005_180)] backdrop-blur transition hover:border-[oklch(0.6_0.03_235/0.4)] hover:bg-[oklch(0.2_0.014_235/0.5)] hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.6_0.04_165/0.22)] px-5 py-3 text-sm font-semibold text-[oklch(0.88_0.005_180)] backdrop-blur transition hover:border-[oklch(0.6_0.03_235/0.4)] hover:bg-[oklch(0.24_0.028_165/0.5)] hover:-translate-y-0.5"
               >
-                <Globe2 className="h-4 w-4 text-[oklch(0.78_0.09_165)]" />
+                <BrainCircuit className="h-4 w-4 text-[oklch(0.78_0.09_165)]" />
                 {t.ctaAgent}
               </a>
             </motion.div>
@@ -131,7 +124,7 @@ export default function Hero3D() {
               transition={{ duration: 0.8, delay: 0.55 }}
               className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2"
             >
-              <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-[oklch(0.5_0.012_220)]">
+              <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-[oklch(0.5_0.015_165)]">
                 Built for journeys to
               </span>
               {["Manchester", "Toronto", "Berlin", "Sydney", "Boston"].map(
@@ -141,7 +134,7 @@ export default function Hero3D() {
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.7 + i * 0.08 }}
-                    className="text-[13px] font-medium tracking-tight text-[oklch(0.62_0.012_220)] transition hover:text-[oklch(0.85_0.005_180)]"
+                    className="text-[13px] font-medium tracking-tight text-[oklch(0.68_0.02_165)] transition hover:text-[oklch(0.85_0.005_180)]"
                   >
                     {city}
                   </motion.span>
@@ -150,40 +143,16 @@ export default function Hero3D() {
             </motion.div>
           </motion.div>
 
-          {/* ---- hologram column ---- */}
+          {/* ---- AI core column ---- */}
           <motion.div
-            style={{ y: holoY, scale: holoScale, opacity: holoOpacity }}
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="relative flex items-center justify-center"
           >
-            {/* AI-era agentic background image — glowing sphere behind the hologram */}
-            <motion.img
-              src="/sections/agentic-hero.png"
-              alt="AI agent — autonomous intelligent assistant"
-              className="pointer-events-none absolute inset-0 h-full w-full object-contain opacity-25"
-              animate={{ opacity: [0.18, 0.32, 0.18], scale: [1, 1.04, 1] }}
-              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-              style={{ filter: "blur(8px)" }}
-            />
-            <HoloShield />
+            <AIPrimeCore />
 
-            {/* 3D rotating cube — genuine 3D visual, floats above the hologram */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1, y: [0, -8, 0] }}
-              transition={{
-                opacity: { delay: 1.2, duration: 0.6 },
-                scale: { delay: 1.2, duration: 0.6 },
-                y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
-              }}
-              className="absolute -right-4 top-[8%] hidden lg:block"
-            >
-              <Floating3DCube size={80} />
-            </motion.div>
-
-            {/* floating label cards — complementary live data (not duplicating the hologram) */}
+            {/* floating label cards — complementary live data */}
             <FloatingLabel
               className="left-[-6%] top-[8%]"
               label="Documents"
@@ -215,38 +184,10 @@ export default function Hero3D() {
           transition={{ duration: 0.7, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4"
         >
-          <StatCard
-            icon={Shield}
-            value={t.stat1V}
-            label={t.stat1L}
-            flag="🛡️"
-            href="#journey"
-            delay={0.8}
-          />
-          <StatCard
-            icon={CalendarClock}
-            value={t.stat2V}
-            label={t.stat2L}
-            flag="📅"
-            href="#timeline"
-            delay={0.88}
-          />
-          <StatCard
-            icon={FileCheck2}
-            value={t.stat3V}
-            label={t.stat3L}
-            flag="📄"
-            href="#memory"
-            delay={0.96}
-          />
-          <StatCard
-            icon={BrainCircuit}
-            value={t.stat4V}
-            label={t.stat4L}
-            flag="🧠"
-            href="#agent"
-            delay={1.04}
-          />
+          <StatCard icon={Shield} value={t.stat1V} label={t.stat1L} flag="🛡️" href="#journey" delay={0.8} />
+          <StatCard icon={CalendarClock} value={t.stat2V} label={t.stat2L} flag="📅" href="#timeline" delay={0.88} />
+          <StatCard icon={FileCheck2} value={t.stat3V} label={t.stat3L} flag="📄" href="#memory" delay={0.96} />
+          <StatCard icon={BrainCircuit} value={t.stat4V} label={t.stat4L} flag="🧠" href="#agent" delay={1.04} />
         </motion.div>
       </div>
     </section>
@@ -276,11 +217,7 @@ function FloatingLabel({
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
-      animate={{
-        opacity: 1,
-        scale: 1,
-        y: [0, -5, 0],
-      }}
+      animate={{ opacity: 1, scale: 1, y: [0, -5, 0] }}
       transition={{
         opacity: { delay, duration: 0.5 },
         scale: { delay, duration: 0.5 },
@@ -321,7 +258,6 @@ function StatCard({
       whileHover={{ y: -3 }}
       className="as-card-hover group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-[oklch(0.6_0.04_165/0.18)] as-glass px-4 py-3.5"
     >
-      {/* icon chip */}
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[oklch(0.74_0.17_162/0.3)] bg-[oklch(0.74_0.17_162/0.1)]">
         <Icon className="h-4.5 w-4.5 text-[oklch(0.85_0.19_158)]" />
       </span>
@@ -332,11 +268,10 @@ function StatCard({
           </span>
           <span className="text-base opacity-70">{flag}</span>
         </div>
-        <div className="mt-0.5 text-[10px] leading-tight tracking-wide text-[oklch(0.72_0.02_165)]">
+        <div className="mt-0.5 text-[10px] leading-tight tracking-wide text-[oklch(0.68_0.02_165)]">
           {label}
         </div>
       </div>
-      {/* hover arrow */}
       <ArrowDown className="absolute right-3 top-3 h-3 w-3 rotate-[-45deg] text-[oklch(0.5_0.03_165)] opacity-0 transition group-hover:opacity-100 group-hover:text-[oklch(0.85_0.19_158)]" />
     </motion.a>
   );

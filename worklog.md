@@ -602,3 +602,55 @@ Stage Summary:
   2. Wire "Ask agent to act" buttons in Connectors to pre-fill the chat.
   3. Add a view-transition loading state for slower connections.
   4. Visual QA in a higher-memory environment.
+
+---
+
+Task ID: 13
+Agent: main (user-requested: fix double header, kill useless 3D diagram, premium hero with AI aura)
+
+Work Log:
+- User feedback: "THE SITE GOT FUCKED UP AND IT GOT 2 HEADER NOONE OF THEM WORKING WELL TOTAL MESS AND FUCKING HATE THE 3D DIAGRAM ITS A TOTAL MESS NONSENSE AND USELESS NO AI AURA TO IT... HERO SECTION IS VERY AMATEUR AND VERY LOW LEVEL DESIGNS I AM EXPECTING SOMETHING PREMIUM ESPECIALLY WITH THAT 3D DESIGNS."
+
+- **Fixed the double header**: The problem was TWO separate top bars — the fixed `SiteHeader` (floating pill) + the `ViewSwitcher`'s sticky tab bar at `top-16`. They looked like two headers and both weren't working well together.
+  - Rewrote `SiteHeader` to BE the view switcher — the nav pills in the header now switch views directly (no separate tab bar needed).
+  - Header receives `activeView` + `onViewChange` props. Clicking a nav item calls `onViewChange(id)` + updates the URL hash + scrolls to top.
+  - The active nav pill animates with a spring `layoutId` (smooth sliding indicator).
+  - Mobile menu also switches views.
+  - Removed the ViewSwitcher's separate sticky tab bar entirely.
+
+- **Killed the useless HoloShield diagram**: The 368-line SVG phase-ring diagram was confusing, had no AI aura, and was "a total mess." Deleted its usage from the hero.
+  - Replaced with `AIPrimeCore.tsx` — a premium, simple, glowing AI orb:
+    - A central glowing orb with a radial gradient (bright emerald core → deep emerald edge) + inner shine highlight.
+    - Shield emblem + live readiness % counter (counts up from 0 to 72% on mount) in the center.
+    - 3 concentric pulsing rings that breathe (scale + opacity animation, staggered).
+    - An outer rotating ring of 16 HUD data points (every 4th is bright emerald, others dim).
+    - 3 orbiting particles that circle the core at different speeds.
+    - Ambient outer glow that pulses.
+    - Hover-tilt: the whole core responds to the cursor in 3D (max 12° X/Y with spring physics).
+    - 4 corner accents (HUD framing).
+  - This is clean, premium, and has genuine "AI aura" — a glowing, breathing, living core.
+
+- **Rewrote page.tsx** to use a single `activeView` state that drives both the header and the view renderer:
+  - `SiteHeader` receives `activeView` + `onViewChange`.
+  - `AnimatePresence` renders the active view with a smooth cross-fade + slide.
+  - Deep linking via URL hash (hashchange listener).
+  - No separate tab bar — the header IS the navigation.
+
+QA / verification results:
+- `bun run lint` — clean (zero errors).
+- Page returns 200, all 6 view tabs present (Journey, Agent, Countries, Network, Connectors, Pricing).
+- Chat API returns real LLM replies with the student's memory.
+- Single header confirmed (SiteHeader is the only header; ViewSwitcher's tab bar removed).
+- HoloShield removed (0 references in Hero3D); AIPrimeCore is the new hero visual.
+- "ready" readiness % renders in the AI core.
+- **Known limitation**: agent-browser (Chromium) crashes the dev server due to system RAM. QA done via curl + lint + API testing.
+
+Stage Summary:
+- Double header fixed: one clean header that drives view switching (no separate tab bar).
+- Useless HoloShield diagram killed; replaced with AIPrimeCore — a premium glowing AI orb with breathing rings, orbiting particles, HUD data points, hover-tilt, and a live readiness counter.
+- Hero is now clean and premium: text left, glowing AI core right, floating labels, clickable stat cards.
+- Lint clean, page 200, chat API verified.
+- Next-phase recommendations:
+  1. Add per-view bespoke hero artwork (each view gets its own atmospheric header image).
+  2. Wire "Ask agent to act" buttons to pre-fill the chat.
+  3. Visual QA in a higher-memory environment.

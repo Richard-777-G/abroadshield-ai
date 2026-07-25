@@ -1,3 +1,7 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import SiteHeader from "@/components/abroadshield/SiteHeader";
 import SiteFooter from "@/components/abroadshield/SiteFooter";
 import Hero3D from "@/components/abroadshield/Hero3D";
@@ -13,68 +17,96 @@ import NetworkingJobs from "@/components/abroadshield/NetworkingJobs";
 import Connectors from "@/components/abroadshield/Connectors";
 import PricingTiers from "@/components/abroadshield/PricingTiers";
 import VisionCTA from "@/components/abroadshield/VisionCTA";
-import ViewSwitcher from "@/components/abroadshield/ViewSwitcher";
+import type { ViewId } from "@/components/abroadshield/ViewSwitcher";
+
+const VIEWS: { id: ViewId; label: string; component: React.ReactNode }[] = [
+  {
+    id: "journey",
+    label: "Journey",
+    component: (
+      <>
+        <JourneyExplorer />
+        <DeadlineTimeline />
+        <MemoryVault />
+      </>
+    ),
+  },
+  {
+    id: "agent",
+    label: "Agent",
+    component: (
+      <>
+        <AgentActivityPanel />
+        <AgentChat />
+        <ApprovalsHistory />
+      </>
+    ),
+  },
+  {
+    id: "countries",
+    label: "Countries",
+    component: <CountryRules />,
+  },
+  {
+    id: "network",
+    label: "Network & Jobs",
+    component: <NetworkingJobs />,
+  },
+  {
+    id: "connectors",
+    label: "Connectors",
+    component: <Connectors />,
+  },
+  {
+    id: "pricing",
+    label: "Pricing",
+    component: (
+      <>
+        <Pillars />
+        <PricingTiers />
+        <VisionCTA />
+      </>
+    ),
+  },
+];
 
 export default function Home() {
-  // Each view bundles related sections into one focused experience.
-  const views = [
-    {
-      id: "journey" as const,
-      label: "Journey",
-      component: (
-        <>
-          <JourneyExplorer />
-          <DeadlineTimeline />
-          <MemoryVault />
-        </>
-      ),
-    },
-    {
-      id: "agent" as const,
-      label: "Agent",
-      component: (
-        <>
-          <AgentActivityPanel />
-          <AgentChat />
-          <ApprovalsHistory />
-        </>
-      ),
-    },
-    {
-      id: "countries" as const,
-      label: "Countries",
-      component: <CountryRules />,
-    },
-    {
-      id: "network" as const,
-      label: "Network & Jobs",
-      component: <NetworkingJobs />,
-    },
-    {
-      id: "connectors" as const,
-      label: "Connectors",
-      component: <Connectors />,
-    },
-    {
-      id: "pricing" as const,
-      label: "Pricing",
-      component: (
-        <>
-          <Pillars />
-          <PricingTiers />
-          <VisionCTA />
-        </>
-      ),
-    },
-  ];
+  const [activeView, setActiveView] = useState<ViewId>("journey");
+
+  // sync with URL hash on mount + hash changes (deep linking)
+  useEffect(() => {
+    const fromHash = () => {
+      const h = window.location.hash.replace("#", "") as ViewId;
+      if (h && VIEWS.some((v) => v.id === h)) {
+        setActiveView(h);
+      }
+    };
+    fromHash();
+    window.addEventListener("hashchange", fromHash);
+    return () => window.removeEventListener("hashchange", fromHash);
+  }, []);
+
+  const activeViewData = VIEWS.find((v) => v.id === activeView) ?? VIEWS[0];
 
   return (
     <div className="relative flex min-h-screen flex-col bg-transparent">
-      <SiteHeader />
+      <SiteHeader activeView={activeView} onViewChange={setActiveView} />
 
       <main className="flex-1">
         <Hero3D />
-        <ViewSwitcher views={views} initialView="journey" />
+
+        {/* view renderer — no separate tab bar, header drives switching */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeView}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {activeViewData.component}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       <SiteFooter />
