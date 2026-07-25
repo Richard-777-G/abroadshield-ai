@@ -189,10 +189,22 @@ export default function AgentChat() {
         {/* chat surface */}
         <div className="overflow-hidden rounded-3xl border border-[oklch(0.74_0.17_162/0.3)] as-glass-strong">
           {/* header */}
-          <div className="flex items-center justify-between border-b border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] px-5 py-3.5">
-            <div className="flex items-center gap-3">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-[oklch(0.74_0.17_162/0.5)] bg-[oklch(0.74_0.17_162/0.12)]">
-                <Bot className="h-4.5 w-4.5 text-[oklch(0.85_0.19_158)]" />
+          <div className="relative flex items-center justify-between overflow-hidden border-b border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] px-5 py-3.5">
+            {/* avatar image background */}
+            <img
+              src="/sections/agent-avatar.png"
+              alt="AI agent avatar"
+              className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-15"
+              loading="lazy"
+            />
+            <div className="relative flex items-center gap-3">
+              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-[oklch(0.74_0.17_162/0.5)] bg-[oklch(0.74_0.17_162/0.12)]">
+                <img
+                  src="/sections/agent-avatar.png"
+                  alt="AI agent"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
                 <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[oklch(0.22_0.025_165)] bg-[oklch(0.74_0.17_162)] as-pulse" />
               </div>
               <div>

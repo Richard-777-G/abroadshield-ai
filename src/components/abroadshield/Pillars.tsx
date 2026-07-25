@@ -37,14 +37,23 @@ export default function Pillars() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-60px" }}
                 transition={{ duration: 0.45, delay: i * 0.08 }}
-                className="as-card-hover group relative overflow-hidden rounded-3xl border border-[var(--shield-border)] as-glass p-6"
+                className="as-card-hover group relative overflow-hidden rounded-3xl border border-[var(--shield-border)] as-glass"
               >
-                <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[oklch(0.74_0.17_162/0.12)] blur-2xl transition group-hover:bg-[oklch(0.74_0.17_162/0.2)]" />
-                <div className="relative">
-                  <div className="font-mono text-[11px] tracking-wider text-[var(--shield-text-dim)]">
+                {/* image banner on each pillar card */}
+                <div className="relative h-24 overflow-hidden">
+                  <img
+                    src={`/sections/pillars.png`}
+                    alt={p.title}
+                    className="h-full w-full object-cover opacity-40 transition group-hover:opacity-60 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.22_0.028_165/0.95)] to-transparent" />
+                  <div className="absolute top-3 left-4 font-mono text-[11px] tracking-wider text-[oklch(0.85_0.19_158)]">
                     PILLAR 0{i + 1}
                   </div>
-                  <div className="mt-3 flex h-11 w-11 items-center justify-center rounded-2xl border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.1)]">
+                </div>
+                <div className="relative p-6">
+                  <div className="mt-1 flex h-11 w-11 items-center justify-center rounded-2xl border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.1)]">
                     <Icon className="h-5 w-5 text-[oklch(0.85_0.19_158)]" />
                   </div>
                   <h3 className="mt-4 text-lg font-semibold text-[var(--shield-text)]">

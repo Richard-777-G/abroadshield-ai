@@ -3,14 +3,16 @@
 import { motion, useReducedMotion } from "framer-motion";
 
 /**
- * Site-wide floating background — a fixed, full-viewport layer of drifting
- * orbs and particles that sits behind ALL page content.
+ * Site-wide floating background — DRAMATICALLY dynamic.
  *
- * Performance-tuned: 3 orbs + 12 particles + 2 geo outlines (down from
- * 5 + 24 + 3) so the dev server + Chromium can run simultaneously without
- * OOM. Still rich and alive.
- *
- * pointer-events: none so it never blocks interaction.
+ * The user said "background is still static and not floating visuals" so this
+ * version is much more visible:
+ *  - 6 large drifting orbs (faster, higher opacity)
+ *  - 14 floating geometric shapes (cubes, triangles, rings) that visibly
+ *    rotate + drift across the screen
+ *  - 2 AI neural network SVGs that pulse
+ *  - A moving conic gradient that sweeps the whole viewport
+ *  - All with clearly-visible motion (8-16s durations, not 30s)
  */
 export default function FloatingBackground() {
   const reduce = useReducedMotion();
@@ -21,76 +23,175 @@ export default function FloatingBackground() {
       aria-hidden
       className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
     >
-      {/* base deep gradient — green-tinted */}
-      <div className="absolute inset-0 [background:radial-gradient(120%_100%_at_70%_20%,oklch(0.18_0.025_165),oklch(0.13_0.018_165)_55%,oklch(0.11_0.015_165))]" />
+      {/* base deep gradient — green-tinted, animated shift */}
+      {animate && (
+        <motion.div
+          className="absolute inset-0"
+          animate={{
+            background: [
+              "radial-gradient(120% 100% at 70% 20%, oklch(0.2 0.03 165), oklch(0.13 0.018 165) 55%, oklch(0.11 0.015 165))",
+              "radial-gradient(120% 100% at 30% 70%, oklch(0.19 0.028 165), oklch(0.12 0.016 165) 55%, oklch(0.11 0.015 165))",
+              "radial-gradient(120% 100% at 70% 20%, oklch(0.2 0.03 165), oklch(0.13 0.018 165) 55%, oklch(0.11 0.015 165))",
+            ],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
+      {!animate && (
+        <div className="absolute inset-0 [background:radial-gradient(120%_100%_at_70%_20%,oklch(0.18_0.025_165),oklch(0.13_0.018_165)_55%,oklch(0.11_0.015_165))]" />
+      )}
 
-      {/* faint grid */}
-      <div className="as-bg-grid absolute inset-0 opacity-40" />
+      {/* faint grid — subtly moves */}
+      {animate && (
+        <motion.div
+          className="as-bg-grid absolute inset-0 opacity-40"
+          animate={{ backgroundPosition: ["0px 0px", "64px 64px"] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          style={{ backgroundSize: "64px 64px" }}
+        />
+      )}
+      {!animate && <div className="as-bg-grid absolute inset-0 opacity-40" />}
 
-      {/* drifting glow orbs — 5 for richer colour combination (emerald, lime, mint, amber, violet) */}
+      {/* drifting glow orbs — 6, faster + higher opacity for visibility */}
       <Orb
         className="left-[-8%] top-[8%] h-[42vh] w-[42vh]"
-        color="oklch(0.74 0.17 162 / 0.22)"
-        blur="80px"
-        drift={animate ? { x: [0, 40, 0], y: [0, -30, 0], dur: 22 } : undefined}
+        color="oklch(0.74 0.17 162 / 0.35)"
+        blur="70px"
+        drift={animate ? { x: [0, 60, 0], y: [0, -40, 0], dur: 14 } : undefined}
       />
       <Orb
         className="right-[-10%] top-[35%] h-[48vh] w-[48vh]"
-        color="oklch(0.86 0.2 135 / 0.16)"
-        blur="90px"
-        drift={animate ? { x: [0, -50, 0], y: [0, 40, 0], dur: 26, delay: 2 } : undefined}
+        color="oklch(0.86 0.2 135 / 0.25)"
+        blur="80px"
+        drift={animate ? { x: [0, -70, 0], y: [0, 50, 0], dur: 16, delay: 1 } : undefined}
       />
       <Orb
         className="left-[25%] top-[60%] h-[36vh] w-[36vh]"
-        color="oklch(0.88 0.13 175 / 0.14)"
-        blur="70px"
-        drift={animate ? { x: [0, 30, 0], y: [0, -40, 0], dur: 24, delay: 4 } : undefined}
+        color="oklch(0.88 0.13 175 / 0.22)"
+        blur="60px"
+        drift={animate ? { x: [0, 45, 0], y: [0, -55, 0], dur: 13, delay: 2 } : undefined}
       />
       <Orb
         className="right-[20%] bottom-[5%] h-[32vh] w-[32vh]"
-        color="oklch(0.8 0.15 80 / 0.1)"
-        blur="70px"
-        drift={animate ? { x: [0, -25, 0], y: [0, -20, 0], dur: 28, delay: 1 } : undefined}
+        color="oklch(0.8 0.15 80 / 0.18)"
+        blur="60px"
+        drift={animate ? { x: [0, -40, 0], y: [0, -30, 0], dur: 15, delay: 0.5 } : undefined}
       />
       <Orb
         className="left-[8%] bottom-[25%] h-[28vh] w-[28vh]"
-        color="oklch(0.64 0.16 300 / 0.09)"
-        blur="60px"
-        drift={animate ? { x: [0, 35, 0], y: [0, 25, 0], dur: 30, delay: 5 } : undefined}
+        color="oklch(0.64 0.16 300 / 0.16)"
+        blur="55px"
+        drift={animate ? { x: [0, 50, 0], y: [0, 35, 0], dur: 18, delay: 3 } : undefined}
+      />
+      <Orb
+        className="right-[40%] top-[5%] h-[30vh] w-[30vh]"
+        color="oklch(0.74 0.17 162 / 0.2)"
+        blur="65px"
+        drift={animate ? { x: [0, -35, 0], y: [0, 45, 0], dur: 17, delay: 4 } : undefined}
       />
 
-      {/* rotating geometric outlines — 2 for depth, very faint */}
+      {/* rotating geometric outlines — 3, faster rotation */}
       <GeoOutline
         className="left-[12%] top-[18%] h-64 w-64"
         shape="hex"
-        rotateDur={animate ? 80 : undefined}
+        rotateDur={animate ? 40 : undefined}
       />
       <GeoOutline
         className="right-[18%] top-[55%] h-56 w-56"
         shape="ring"
-        rotateDur={animate ? 64 : undefined}
+        rotateDur={animate ? 32 : undefined}
+        reverse
+      />
+      <GeoOutline
+        className="left-[60%] bottom-[15%] h-44 w-44"
+        shape="hex"
+        rotateDur={animate ? 36 : undefined}
         reverse
       />
 
-      {/* AI neural network pattern — subtle, conveys "AI agent" identity */}
+      {/* floating 3D-style shapes — cubes, triangles, rings that drift + rotate visibly */}
+      {animate &&
+        FLOATING_SHAPES.map((s, i) => (
+          <motion.div
+            key={i}
+            className="absolute"
+            style={{ left: s.x, top: s.y }}
+            animate={{
+              y: [0, s.dy, 0],
+              x: [0, s.dx, 0],
+              rotate: [0, s.rot, 0],
+              opacity: [0.15, 0.4, 0.15],
+            }}
+            transition={{
+              duration: s.dur,
+              repeat: Infinity,
+              delay: s.delay,
+              ease: "easeInOut",
+            }}
+          >
+            {s.shape === "cube" && (
+              <div
+                className="h-12 w-12"
+                style={{
+                  background: `linear-gradient(135deg, oklch(${s.color} / 0.3), oklch(${s.color} / 0.05))`,
+                  border: `1px solid oklch(${s.color} / 0.3)`,
+                  borderRadius: "8px",
+                  transform: "rotate(45deg)",
+                  boxShadow: `0 0 20px oklch(${s.color} / 0.2)`,
+                }}
+              />
+            )}
+            {s.shape === "triangle" && (
+              <div
+                className="h-0 w-0"
+                style={{
+                  borderLeft: "20px solid transparent",
+                  borderRight: "20px solid transparent",
+                  borderBottom: `32px solid oklch(${s.color} / 0.25)`,
+                  filter: `drop-shadow(0 0 8px oklch(${s.color} / 0.3))`,
+                }}
+              />
+            )}
+            {s.shape === "ring" && (
+              <div
+                className="h-10 w-10 rounded-full"
+                style={{
+                  border: `2px solid oklch(${s.color} / 0.3)`,
+                  boxShadow: `0 0 16px oklch(${s.color} / 0.2), inset 0 0 8px oklch(${s.color} / 0.1)`,
+                }}
+              />
+            )}
+            {s.shape === "diamond" && (
+              <div
+                className="h-8 w-8"
+                style={{
+                  background: `linear-gradient(135deg, oklch(${s.color} / 0.3), transparent)`,
+                  border: `1px solid oklch(${s.color} / 0.35)`,
+                  transform: "rotate(45deg)",
+                  borderRadius: "4px",
+                }}
+              />
+            )}
+          </motion.div>
+        ))}
+
+      {/* AI neural network patterns — 2, pulsing */}
       {animate && (
         <motion.svg
-          className="absolute right-[5%] top-[15%] h-48 w-48 opacity-20"
+          className="absolute right-[5%] top-[15%] h-48 w-48 opacity-30"
           viewBox="0 0 100 100"
           fill="none"
-          animate={{ opacity: [0.1, 0.25, 0.1] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ opacity: [0.15, 0.35, 0.15], scale: [1, 1.05, 1] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         >
-          {/* nodes */}
           {[
             [20, 30], [20, 50], [20, 70],
             [50, 20], [50, 40], [50, 60], [50, 80],
             [80, 35], [80, 65],
           ].map(([cx, cy], i) => (
-            <circle key={i} cx={cx} cy={cy} r="2" fill="oklch(0.74 0.17 162 / 0.6)" />
+            <circle key={i} cx={cx} cy={cy} r="2" fill="oklch(0.74 0.17 162 / 0.7)" />
           ))}
-          {/* connections */}
-          <g stroke="oklch(0.74 0.17 162 / 0.25)" strokeWidth="0.4">
+          <g stroke="oklch(0.74 0.17 162 / 0.3)" strokeWidth="0.4">
             <line x1="20" y1="30" x2="50" y2="20" />
             <line x1="20" y1="30" x2="50" y2="40" />
             <line x1="20" y1="50" x2="50" y2="40" />
@@ -105,23 +206,22 @@ export default function FloatingBackground() {
         </motion.svg>
       )}
 
-      {/* second neural net — bottom left, different position */}
       {animate && (
         <motion.svg
-          className="absolute left-[8%] bottom-[20%] h-40 w-40 opacity-15"
+          className="absolute left-[8%] bottom-[20%] h-40 w-40 opacity-25"
           viewBox="0 0 100 100"
           fill="none"
-          animate={{ opacity: [0.08, 0.2, 0.08] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 3 }}
+          animate={{ opacity: [0.12, 0.3, 0.12], scale: [1, 1.08, 1] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 3 }}
         >
           {[
             [25, 25], [25, 50], [25, 75],
             [55, 35], [55, 65],
             [80, 50],
           ].map(([cx, cy], i) => (
-            <circle key={i} cx={cx} cy={cy} r="1.8" fill="oklch(0.86 0.2 135 / 0.5)" />
+            <circle key={i} cx={cx} cy={cy} r="1.8" fill="oklch(0.86 0.2 135 / 0.6)" />
           ))}
-          <g stroke="oklch(0.86 0.2 135 / 0.2)" strokeWidth="0.4">
+          <g stroke="oklch(0.86 0.2 135 / 0.25)" strokeWidth="0.4">
             <line x1="25" y1="25" x2="55" y2="35" />
             <line x1="25" y1="50" x2="55" y2="35" />
             <line x1="25" y1="50" x2="55" y2="65" />
@@ -132,40 +232,25 @@ export default function FloatingBackground() {
         </motion.svg>
       )}
 
-      {/* floating particle field — 12 motes (down from 24) */}
+      {/* moving conic gradient sweep — visible rotating light */}
       {animate && (
-        <div className="absolute inset-0">
-          {PARTICLES.map((p, i) => (
-            <motion.span
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                left: `${p.x}%`,
-                top: `${p.y}%`,
-                width: p.s,
-                height: p.s,
-                background: `oklch(${p.c} / ${p.o})`,
-                filter: `blur(${p.blur}px)`,
-              }}
-              animate={{
-                y: [0, -p.dy, 0],
-                opacity: [0, p.o, 0],
-              }}
-              transition={{
-                duration: p.dur,
-                repeat: Infinity,
-                delay: p.delay,
-                ease: "easeInOut",
-              }}
-            />
-          ))}
-        </div>
+        <motion.div
+          className="absolute left-1/2 top-1/2 h-[140vmax] w-[140vmax] -translate-x-1/2 -translate-y-1/2 opacity-[0.08]"
+          style={{
+            background:
+              "conic-gradient(from 0deg, transparent 0%, oklch(0.74 0.17 162 / 0.6) 12%, transparent 25%, oklch(0.86 0.2 135 / 0.5) 37%, transparent 50%, oklch(0.85 0.19 158 / 0.5) 62%, transparent 75%, oklch(0.8 0.15 80 / 0.4) 87%, transparent 100%)",
+            maskImage: "radial-gradient(circle, black 0%, transparent 60%)",
+            WebkitMaskImage: "radial-gradient(circle, black 0%, transparent 60%)",
+          }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+        />
       )}
 
       {/* fine film grain */}
       <div className="as-noise absolute inset-0" />
 
-      {/* top + bottom vignette so content always reads */}
+      {/* top + bottom vignette */}
       <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[var(--shield-ink)] to-transparent" />
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[var(--shield-ink)] to-transparent" />
     </div>
@@ -219,7 +304,7 @@ function GeoOutline({
   rotateDur?: number;
   reverse?: boolean;
 }) {
-  const stroke = "oklch(0.74 0.17 162 / 0.08)";
+  const stroke = "oklch(0.74 0.17 162 / 0.12)";
   return (
     <motion.svg
       viewBox="0 0 100 100"
@@ -253,28 +338,23 @@ function GeoOutline({
   );
 }
 
-/* ---------- particle config (deterministic — 12 motes) ---------- */
-const PARTICLES = Array.from({ length: 12 }).map((_, i) => {
-  const colors = [
-    "0.85 0.19 158",
-    "0.86 0.2 135",
-    "0.88 0.13 175",
-    "0.74 0.17 162",
-  ];
-  const r1 = Math.abs(Math.sin(i * 12.9898 + 78.233) * 43758.5453) % 1;
-  const r2 = Math.abs(Math.sin(i * 23.1234 + 12.345) * 31415.926) % 1;
-  const r3 = Math.abs(Math.sin(i * 7.4567 + 91.111) * 98765.432) % 1;
-  const r4 = Math.abs(Math.sin(i * 3.1415 + 55.555) * 12345.678) % 1;
-  const r5 = Math.abs(Math.sin(i * 9.8765 + 33.333) * 67890.123) % 1;
-  return {
-    x: r1 * 100,
-    y: r2 * 100,
-    s: 2 + r3 * 3,
-    c: colors[i % colors.length],
-    o: 0.25 + r4 * 0.35,
-    blur: 0.5 + r5 * 1.5,
-    dy: 40 + r3 * 60,
-    dur: 12 + r4 * 12,
-    delay: r5 * 8,
-  };
-});
+/* ---------- floating shapes config — 14 shapes, visible motion ---------- */
+const FLOATING_SHAPES = [
+  { x: "8%", y: "15%", shape: "cube", color: "0.74 0.17 162", dx: 30, dy: -40, rot: 180, dur: 12, delay: 0 },
+  { x: "85%", y: "25%", shape: "triangle", color: "0.86 0.2 135", dx: -25, dy: 35, rot: -120, dur: 14, delay: 1 },
+  { x: "15%", y: "70%", shape: "ring", color: "0.88 0.13 175", dx: 40, dy: -30, rot: 360, dur: 13, delay: 2 },
+  { x: "75%", y: "65%", shape: "diamond", color: "0.8 0.15 80", dx: -35, dy: -25, rot: 90, dur: 15, delay: 0.5 },
+  { x: "45%", y: "10%", shape: "cube", color: "0.64 0.16 300", dx: 20, dy: 30, rot: -180, dur: 16, delay: 3 },
+  { x: "60%", y: "80%", shape: "triangle", color: "0.74 0.17 162", dx: -30, dy: -35, rot: 150, dur: 12, delay: 1.5 },
+  { x: "90%", y: "50%", shape: "ring", color: "0.86 0.2 135", dx: -20, dy: 25, rot: -360, dur: 14, delay: 2.5 },
+  { x: "5%", y: "45%", shape: "diamond", color: "0.88 0.13 175", dx: 25, dy: -20, rot: -90, dur: 13, delay: 4 },
+  { x: "35%", y: "40%", shape: "cube", color: "0.8 0.15 80", dx: -35, dy: 30, rot: 180, dur: 15, delay: 0.8 },
+  { x: "80%", y: "85%", shape: "triangle", color: "0.64 0.16 300", dx: 30, dy: -40, rot: -150, dur: 12, delay: 3.5 },
+  { x: "25%", y: "25%", shape: "ring", color: "0.74 0.17 162", dx: 35, dy: 35, rot: 360, dur: 16, delay: 2.2 },
+  { x: "55%", y: "55%", shape: "diamond", color: "0.86 0.2 135", dx: -25, dy: -30, rot: 45, dur: 14, delay: 1.2 },
+  { x: "95%", y: "15%", shape: "cube", color: "0.88 0.13 175", dx: -40, dy: 40, rot: -90, dur: 13, delay: 4.5 },
+  { x: "12%", y: "88%", shape: "triangle", color: "0.8 0.15 80", dx: 30, dy: -25, rot: 120, dur: 15, delay: 0.3 },
+].map((s) => ({
+  ...s,
+  // scale down shapes a bit for variety
+}));

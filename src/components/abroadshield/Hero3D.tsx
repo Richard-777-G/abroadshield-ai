@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion"
 import { Shield, ArrowDown, Globe2, CalendarClock, FileCheck2, BrainCircuit } from "lucide-react";
 import LanguageToggle from "./LanguageToggle";
 import HoloShield from "./HoloShield";
+import Floating3DCube from "./Floating3DCube";
 import { HERO_STRINGS, type LocaleId } from "./data";
 
 export default function Hero3D() {
@@ -158,6 +159,20 @@ export default function Hero3D() {
             className="relative flex items-center justify-center"
           >
             <HoloShield />
+
+            {/* 3D rotating cube — genuine 3D visual, floats above the hologram */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1, y: [0, -8, 0] }}
+              transition={{
+                opacity: { delay: 1.2, duration: 0.6 },
+                scale: { delay: 1.2, duration: 0.6 },
+                y: { duration: 4, repeat: Infinity, ease: "easeInOut" },
+              }}
+              className="absolute -right-4 top-[8%] hidden lg:block"
+            >
+              <Floating3DCube size={80} />
+            </motion.div>
 
             {/* floating label cards — complementary live data (not duplicating the hologram) */}
             <FloatingLabel
