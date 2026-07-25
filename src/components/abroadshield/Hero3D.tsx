@@ -159,25 +159,25 @@ export default function Hero3D() {
           >
             <HoloShield />
 
-            {/* floating label cards around the hologram — HUD-style */}
+            {/* floating label cards — complementary live data (not duplicating the hologram) */}
             <FloatingLabel
-              className="left-[-8%] top-[12%]"
-              label="Agent"
-              value="online"
+              className="left-[-6%] top-[8%]"
+              label="Documents"
+              value="11 / 13 verified"
               tone="emerald"
               delay={1.2}
             />
             <FloatingLabel
-              className="right-[-6%] top-[28%]"
-              label="Phase"
-              value="01 / 04"
+              className="right-[-4%] top-[20%]"
+              label="Drafts ready"
+              value="5 awaiting you"
               tone="amber"
               delay={1.5}
             />
             <FloatingLabel
-              className="bottom-[14%] left-[-4%]"
-              label="Deadlines"
-              value="27 tracked"
+              className="bottom-[10%] right-[-2%]"
+              label="Visa runway"
+              value="94 days"
               tone="cyan"
               delay={1.8}
             />

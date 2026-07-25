@@ -153,27 +153,40 @@ export default function JourneyExplorer() {
             className="mt-8 grid gap-6 lg:grid-cols-[1.2fr_1fr]"
           >
             {/* left: description + agentic actions */}
-            <div className={`rounded-3xl border ${accent.border} as-glass-strong p-6 sm:p-8`}>
-              <div className="flex items-start gap-4">
-                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${accent.bg} ${accent.border}`}>
-                  <active.icon className={`h-6 w-6 ${accent.text}`} />
-                </div>
-                <div>
-                  <div className={`font-mono text-[11px] uppercase tracking-wider ${accent.text}`}>
-                    Phase 0{active.index + 1} · Milestone
+            <div className={`relative overflow-hidden rounded-3xl border ${accent.border} as-glass-strong`}>
+              {/* phase image banner */}
+              <div className="relative h-32 overflow-hidden sm:h-40">
+                <img
+                  src={`/phases/${active.id}.png`}
+                  alt={`${active.name} — atmospheric visual`}
+                  className="h-full w-full object-cover opacity-60"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.22_0.028_165/0.95)] via-[oklch(0.22_0.028_165/0.5)] to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[oklch(0.22_0.028_165/0.6)] to-transparent" />
+                {/* phase title overlay on the image */}
+                <div className="absolute bottom-3 left-6 flex items-end gap-3">
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${accent.bg} ${accent.border} backdrop-blur`}>
+                    <active.icon className={`h-5 w-5 ${accent.text}`} />
                   </div>
-                  <h3 className="mt-1 text-2xl font-semibold text-[var(--shield-text)] sm:text-3xl">
-                    {active.name}
-                  </h3>
-                  <p className="mt-2 text-sm text-[oklch(0.82_0.12_200/0.85)]">
-                    {active.milestone}
-                  </p>
+                  <div>
+                    <div className={`font-mono text-[10px] uppercase tracking-wider ${accent.text}`}>
+                      Phase 0{active.index + 1} · Milestone
+                    </div>
+                    <h3 className="text-xl font-semibold text-[var(--shield-text)] sm:text-2xl">
+                      {active.name}
+                    </h3>
+                  </div>
                 </div>
               </div>
 
-              <p className="mt-5 text-sm leading-relaxed text-[var(--shield-text-dim)]">
-                {active.description}
-              </p>
+              <div className="p-6 sm:p-8">
+                <p className="text-sm text-[oklch(0.82_0.12_200/0.85)]">
+                  {active.milestone}
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-[var(--shield-text-dim)]">
+                  {active.description}
+                </p>
 
               {/* agentic actions */}
               <div className="mt-6">
@@ -209,6 +222,7 @@ export default function JourneyExplorer() {
                     </div>
                   </div>
                 ))}
+              </div>
               </div>
             </div>
 

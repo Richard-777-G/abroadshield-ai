@@ -1,34 +1,60 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { Shield } from "lucide-react";
+import { Shield, Plane, Home, BookOpen, Briefcase, CalendarClock, Zap } from "lucide-react";
+import { STUDENT, PHASES } from "./data";
 
 /**
- * Holographic shield visual — replaces the heavy 3D canvas.
+ * Purposeful holographic command-center — NOT decorative.
  *
- * Design intent:
- *  - Compact (~340px), not a giant object.
- *  - Layered translucent rings that rotate at different speeds (depth).
- *  - A central shield silhouette with a soft holographic glow.
- *  - Iridescent shimmer sweep (jade → cyan → violet → back).
- *  - Subtle scan-line texture for the "hologram" feel.
- *  - Floating particles done with pure CSS (no canvas, no GPU cost).
- *  - Hover-tilt: the whole hologram rotates toward the cursor (max ~8°).
- *  - Everything moves — but slowly and deliberately, not bouncy.
+ * Every element shows real agent state:
+ *  - Outer ring: the 4-phase journey, with the current phase (Pre-Departure)
+ *    lit and pulsing. Completed phases dimmed, future phases faint.
+ *  - Center: the student's live readiness % (72%), counting up on mount.
+ *  - Below center: the next critical deadline ("Visa appointment in 6d").
+ *  - Status badge: "Agent online" with a live pulse.
+ *  - Hover-tilt: the hologram rotates toward the cursor for a 3D feel.
+ *
+ * This earns its place on the page — it's a live dashboard, not a screensaver.
  */
+
+const PHASE_ICONS = [Plane, Home, BookOpen, Briefcase];
+
 export default function HoloShield() {
-  // hover-tilt: track pointer position relative to the center of the hologram
   const ref = useRef<HTMLDivElement>(null);
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
   const [hovering, setHovering] = useState(false);
 
-  const rotateY = useSpring(useTransform(mx, [-0.5, 0.5], [8, -8]), {
+  // count-up readiness animation
+  const [readiness, setReadiness] = useState(0);
+  const targetReadiness = STUDENT.readiness;
+  useEffect(() => {
+    let raf: number;
+    const start = performance.now();
+    const dur = 1400;
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / dur, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - t, 3);
+      setReadiness(Math.round(targetReadiness * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [targetReadiness]);
+
+  // current phase index (Pre-Departure = 0)
+  const currentPhaseIdx = PHASES.findIndex((p) => p.id === STUDENT.currentPhase);
+  // next critical deadline
+  const nextDeadline = { label: "Visa appointment", days: 6, time: "09:30 IST" };
+
+  const rotateY = useSpring(useTransform(mx, [-0.5, 0.5], [10, -10]), {
     stiffness: 150,
     damping: 20,
   });
-  const rotateX = useSpring(useTransform(my, [-0.5, 0.5], [-8, 8]), {
+  const rotateX = useSpring(useTransform(my, [-0.5, 0.5], [-10, 10]), {
     stiffness: 150,
     damping: 20,
   });
@@ -47,15 +73,38 @@ export default function HoloShield() {
     setHovering(false);
   };
 
+  // ring geometry — 4 phase arcs around the circle
+  const radius = 140;
+  const phaseArcs = PHASES.map((p, i) => {
+    const startAngle = (i / 4) * 360 - 90; // start at top
+    const endAngle = ((i + 1) / 4) * 360 - 90;
+    const isActive = i === currentPhaseIdx;
+    const isPast = i < currentPhaseIdx;
+    return { ...p, startAngle, endAngle, isActive, isPast, index: i };
+  });
+
   return (
     <div
       ref={ref}
       onMouseMove={onMove}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={onLeave}
-      className="relative flex h-[340px] w-[340px] items-center justify-center sm:h-[420px] sm:w-[420px]"
-      style={{ perspective: 800 }}
+      className="relative flex h-[360px] w-[360px] items-center justify-center sm:h-[440px] sm:w-[440px]"
+      style={{ perspective: 900 }}
     >
+      {/* ambient glow */}
+      <motion.div
+        aria-hidden
+        className="absolute inset-0 rounded-full"
+        animate={{ opacity: [0.4, 0.7, 0.4], scale: [0.96, 1.03, 0.96] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        style={{
+          background:
+            "radial-gradient(circle, oklch(0.74 0.17 162 / 0.25), transparent 65%)",
+          filter: "blur(30px)",
+        }}
+      />
+
       {/* tilt container */}
       <motion.div
         className="relative flex h-full w-full items-center justify-center"
@@ -63,186 +112,240 @@ export default function HoloShield() {
           rotateX,
           rotateY,
           transformStyle: "preserve-3d",
-          scale: hovering ? 1.03 : 1,
+          scale: hovering ? 1.02 : 1,
         }}
         transition={{ scale: { duration: 0.3 } }}
       >
-        {/* ambient glow behind the whole hologram */}
-        <motion.div
-          aria-hidden
-          className="absolute inset-0 rounded-full"
-          animate={{ opacity: [0.5, 0.85, 0.5], scale: [0.96, 1.04, 0.96] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          style={{
-            background:
-              "radial-gradient(circle, oklch(0.74 0.17 162 / 0.3), oklch(0.64 0.16 300 / 0.12) 45%, transparent 70%)",
-            filter: "blur(28px)",
-          }}
-        />
-
-      {/* outer ring — slow clockwise, holographic conic gradient */}
-      <motion.div
-        aria-hidden
-        className="absolute h-[88%] w-[88%] rounded-full"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 48, repeat: Infinity, ease: "linear" }}
-        style={{
-          background:
-            "conic-gradient(from 0deg, transparent 0%, oklch(0.62 0.09 165 / 0.5) 18%, transparent 36%, oklch(0.74 0.13 210 / 0.4) 54%, transparent 72%, oklch(0.58 0.12 295 / 0.4) 88%, transparent 100%)",
-          maskImage: "radial-gradient(circle, transparent 58%, black 60%, black 62%, transparent 64%)",
-          WebkitMaskImage: "radial-gradient(circle, transparent 58%, black 60%, black 62%, transparent 64%)",
-        }}
-      />
-
-      {/* mid ring — counter-rotating, thinner, brighter */}
-      <motion.div
-        aria-hidden
-        className="absolute h-[64%] w-[64%] rounded-full border border-[oklch(0.85_0.19_158/0.35)]"
-        animate={{ rotate: -360 }}
-        transition={{ duration: 36, repeat: Infinity, ease: "linear" }}
-        style={{
-          boxShadow:
-            "inset 0 0 24px oklch(0.62 0.09 165 / 0.18), 0 0 32px oklch(0.62 0.09 165 / 0.22)",
-        }}
-      >
-        {/* tick marks on the mid ring */}
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute left-1/2 top-1/2 h-[6px] w-[1px] origin-[0_0]"
-            style={{
-              transform: `rotate(${i * 30}deg) translateY(-46%)`,
-              transformOrigin: "center",
-              background:
-                i % 3 === 0
-                  ? "oklch(0.78 0.11 165 / 0.8)"
-                  : "oklch(0.6 0.01 220 / 0.5)",
-            }}
+        {/* SVG phase ring — the purposeful core */}
+        <svg
+          viewBox="-180 -180 360 360"
+          className="absolute inset-0 h-full w-full"
+          style={{ filter: "drop-shadow(0 0 12px oklch(0.74 0.17 162 / 0.4))" }}
+        >
+          {/* background track */}
+          <circle
+            cx="0"
+            cy="0"
+            r={radius}
+            fill="none"
+            stroke="oklch(0.4 0.03 165 / 0.25)"
+            strokeWidth="2"
           />
-        ))}
-      </motion.div>
 
-      {/* inner ring — fastest, faint */}
-      <motion.div
-        aria-hidden
-        className="absolute h-[46%] w-[46%] rounded-full border border-dashed border-[oklch(0.74 0.13 210/0.4)]"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
-      />
+          {/* 4 phase arcs */}
+          {phaseArcs.map((arc) => {
+            const startRad = (arc.startAngle * Math.PI) / 180;
+            const endRad = (arc.endAngle * Math.PI) / 180;
+            const x1 = radius * Math.cos(startRad);
+            const y1 = radius * Math.sin(startRad);
+            const x2 = radius * Math.cos(endRad);
+            const y2 = radius * Math.sin(endRad);
+            const largeArc = arc.endAngle - arc.startAngle > 180 ? 1 : 0;
+            const path = `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
 
-      {/* shimmer sweep — a diagonal light bar that crosses the shield */}
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute h-full w-full overflow-hidden rounded-full"
-        animate={{ opacity: [0, 0.7, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", repeatDelay: 2.5 }}
-      >
-        <motion.div
-          className="absolute -inset-y-4 left-0 w-[40%]"
-          animate={{ x: ["-20%", "260%"] }}
-          transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut", repeatDelay: 3.3 }}
-          style={{
-            background:
-              "linear-gradient(100deg, transparent, oklch(0.85 0.08 162 / 0.35), transparent)",
-            filter: "blur(8px)",
-          }}
-        />
-      </motion.div>
+            const color = arc.isActive
+              ? "oklch(0.74 0.17 162)"
+              : arc.isPast
+                ? "oklch(0.5 0.1 165 / 0.5)"
+                : "oklch(0.5 0.03 165 / 0.2)";
+            const width = arc.isActive ? 4 : 2;
 
-      {/* central shield emblem */}
-      <motion.div
-        className="relative flex h-[30%] w-[30%] items-center justify-center"
-        animate={{ y: [0, -6, 0] }}
-        transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
-      >
-        {/* shield backdrop */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(circle, oklch(0.62 0.09 165 / 0.18), transparent 70%)",
-            filter: "blur(12px)",
-          }}
-        />
-        {/* shield glyph */}
-        <div className="relative flex h-full w-full items-center justify-center rounded-2xl border border-[oklch(0.85_0.19_158/0.5)] bg-[oklch(0.16_0.012_235/0.6)] backdrop-blur-md">
-          <Shield
-            className="h-1/2 w-1/2 text-[oklch(0.85_0.08_170)]"
-            strokeWidth={1.4}
-          />
-          {/* iridescent border sweep */}
+            return (
+              <g key={arc.id}>
+                <path
+                  d={path}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={width}
+                  strokeLinecap="round"
+                />
+                {/* phase node at the arc midpoint */}
+                {(() => {
+                  const midAngle = (arc.startAngle + arc.endAngle) / 2;
+                  const midRad = (midAngle * Math.PI) / 180;
+                  const nx = radius * Math.cos(midRad);
+                  const ny = radius * Math.sin(midRad);
+                  return (
+                    <>
+                      {arc.isActive && (
+                        <circle
+                          cx={nx}
+                          cy={ny}
+                          r="10"
+                          fill="oklch(0.74 0.17 162 / 0.2)"
+                        >
+                          <animate
+                            attributeName="r"
+                            values="8;14;8"
+                            dur="2s"
+                            repeatCount="indefinite"
+                          />
+                          <animate
+                            attributeName="opacity"
+                            values="0.6;0.2;0.6"
+                            dur="2s"
+                            repeatCount="indefinite"
+                          />
+                        </circle>
+                      )}
+                      <circle
+                        cx={nx}
+                        cy={ny}
+                        r={arc.isActive ? 7 : 4}
+                        fill={arc.isActive ? "oklch(0.85 0.19 158)" : color}
+                        stroke="oklch(0.14 0.018 165)"
+                        strokeWidth="2"
+                      />
+                    </>
+                  );
+                })()}
+              </g>
+            );
+          })}
+
+          {/* tick marks every 30° */}
+          {Array.from({ length: 12 }).map((_, i) => {
+            const angle = (i * 30 - 90) * (Math.PI / 180);
+            const inner = radius - 12;
+            const outer = radius - 4;
+            const x1 = inner * Math.cos(angle);
+            const y1 = inner * Math.sin(angle);
+            const x2 = outer * Math.cos(angle);
+            const y2 = outer * Math.sin(angle);
+            return (
+              <line
+                key={i}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke="oklch(0.6 0.04 165 / 0.4)"
+                strokeWidth="1"
+              />
+            );
+          })}
+        </svg>
+
+        {/* center readout — the live data */}
+        <div className="relative flex flex-col items-center justify-center text-center">
+          {/* status badge */}
           <motion.div
-            aria-hidden
-            className="absolute inset-0 rounded-2xl opacity-60"
-            animate={{ opacity: [0.3, 0.7, 0.3] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            style={{
-              background:
-                "linear-gradient(135deg, oklch(0.78 0.11 165 / 0.2), transparent 30%, oklch(0.74 0.13 210 / 0.18) 60%, oklch(0.58 0.12 295 / 0.16))",
-              mixBlendMode: "screen",
-            }}
-          />
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="absolute -top-24 inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.14_0.018_165/0.7)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[oklch(0.85_0.19_158)] backdrop-blur"
+          >
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(0.74_0.17_162)] opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[oklch(0.74_0.17_162)]" />
+            </span>
+            Agent online
+          </motion.div>
+
+          {/* readiness % */}
+          <div className="flex flex-col items-center">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="text-5xl font-semibold tracking-tight text-[oklch(0.98_0.005_160)] sm:text-6xl"
+              style={{ textShadow: "0 0 24px oklch(0.74 0.17 162 / 0.5)" }}
+            >
+              {readiness}
+              <span className="text-2xl text-[oklch(0.85_0.19_158)]">%</span>
+            </motion.div>
+            <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.15em] text-[oklch(0.72_0.02_165)]">
+              Journey readiness
+            </div>
+          </div>
+
+          {/* current phase label */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="mt-4 flex items-center gap-1.5 rounded-lg border border-[oklch(0.74_0.17_162/0.3)] bg-[oklch(0.74_0.17_162/0.08)] px-2.5 py-1"
+          >
+            <Zap className="h-3 w-3 text-[oklch(0.85_0.19_158)]" />
+            <span className="text-[11px] font-semibold text-[oklch(0.85_0.19_158)]">
+              Phase {currentPhaseIdx + 1} · {PHASES[currentPhaseIdx].name}
+            </span>
+          </motion.div>
+
+          {/* next deadline */}
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="absolute -bottom-20 flex items-center gap-2 rounded-lg border border-[oklch(0.8_0.15_80/0.3)] bg-[oklch(0.14_0.018_165/0.7)] px-3 py-1.5 backdrop-blur"
+          >
+            <CalendarClock className="h-3.5 w-3.5 text-[oklch(0.86_0.17_80)]" />
+            <div className="text-left">
+              <div className="text-[9px] uppercase tracking-wide text-[oklch(0.72_0.02_165)]">
+                Next deadline
+              </div>
+              <div className="text-[11px] font-semibold text-[oklch(0.98_0.005_160)]">
+                {nextDeadline.label} · in {nextDeadline.days}d
+              </div>
+            </div>
+          </motion.div>
         </div>
-      </motion.div>
 
-      {/* scan-line overlay — holographic CRT texture */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-full opacity-30"
-        style={{
-          background:
-            "repeating-linear-gradient(0deg, transparent 0px, transparent 2px, oklch(0.85 0.08 162 / 0.08) 3px, transparent 4px)",
-          maskImage: "radial-gradient(circle, black 55%, transparent 70%)",
-          WebkitMaskImage: "radial-gradient(circle, black 55%, transparent 70%)",
-        }}
-      />
-
-      {/* floating data motes — pure CSS, lightweight */}
-      {MOTES.map((m, i) => (
-        <motion.span
-          key={i}
+        {/* rotating outer label ring (HUD style) */}
+        <motion.div
           aria-hidden
-          className="absolute h-1 w-1 rounded-full bg-[oklch(0.85_0.19_158/0.7)]"
-          style={{ left: `${m.x}%`, top: `${m.y}%` }}
-          animate={{
-            y: [0, m.dy, 0],
-            opacity: [0, 1, 0],
-            scale: [0.6, 1, 0.6],
-          }}
-          transition={{
-            duration: m.dur,
-            repeat: Infinity,
-            delay: m.delay,
-            ease: "easeInOut",
-          }}
-        />
-      ))}
+          className="absolute inset-0"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+        >
+          {PHASE_ICONS.map((Icon, i) => {
+            const angle = (i / 4) * 360 - 90 + 45; // offset to sit between arcs
+            const rad = (angle * Math.PI) / 180;
+            const r = 175;
+            const x = r * Math.cos(rad);
+            const y = r * Math.sin(rad);
+            return (
+              <div
+                key={i}
+                className="absolute flex h-8 w-8 items-center justify-center"
+                style={{
+                  left: `calc(50% + ${x}px - 16px)`,
+                  top: `calc(50% + ${y}px - 16px)`,
+                }}
+              >
+                <motion.div
+                  animate={{ rotate: -360 }}
+                  transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+                  className="flex h-7 w-7 items-center justify-center rounded-lg border border-[oklch(0.5_0.03_165/0.3)] bg-[oklch(0.14_0.018_165/0.6)] backdrop-blur"
+                >
+                  <Icon
+                    className={`h-3.5 w-3.5 ${
+                      i === currentPhaseIdx
+                        ? "text-[oklch(0.85_0.19_158)]"
+                        : "text-[oklch(0.5_0.03_165)]"
+                    }`}
+                  />
+                </motion.div>
+              </div>
+            );
+          })}
+        </motion.div>
 
-      {/* corner brackets — HUD framing */}
-      <Bracket className="left-0 top-0" />
-      <Bracket className="right-0 top-0 rotate-90" />
-      <Bracket className="bottom-0 right-0 rotate-180" />
-      <Bracket className="bottom-0 left-0 -rotate-90" />
+        {/* corner brackets */}
+        <Bracket className="left-1 top-1" />
+        <Bracket className="right-1 top-1 rotate-90" />
+        <Bracket className="bottom-1 right-1 rotate-180" />
+        <Bracket className="bottom-1 left-1 -rotate-90" />
       </motion.div>
     </div>
   );
 }
 
-const MOTES = [
-  { x: 20, y: 30, dy: -18, dur: 7, delay: 0 },
-  { x: 75, y: 25, dy: -14, dur: 6.5, delay: 1.2 },
-  { x: 30, y: 70, dy: -16, dur: 8, delay: 0.6 },
-  { x: 80, y: 65, dy: -12, dur: 7.2, delay: 2 },
-  { x: 50, y: 18, dy: -20, dur: 9, delay: 1.8 },
-  { x: 60, y: 80, dy: -10, dur: 6.8, delay: 0.3 },
-  { x: 15, y: 55, dy: -15, dur: 7.5, delay: 2.4 },
-];
-
 function Bracket({ className }: { className?: string }) {
   return (
     <span
       aria-hidden
-      className={`absolute h-5 w-5 border-l border-t border-[oklch(0.74_0.17_162/0.5)] ${className}`}
+      className={`absolute h-4 w-4 border-l border-t border-[oklch(0.74_0.17_162/0.4)] ${className}`}
     />
   );
 }
