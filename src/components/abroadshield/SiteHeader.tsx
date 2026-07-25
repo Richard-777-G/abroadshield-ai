@@ -39,12 +39,12 @@ export default function SiteHeader() {
               <Shield className="h-4.5 w-4.5 text-[oklch(0.82_0.16_165)]" />
             </span>
           </span>
-          <div className="leading-none">
+          <div className="leading-tight">
             <div className="text-sm font-semibold tracking-tight text-[var(--shield-text)]">
               AbroadShield
               <span className="ml-1 text-[oklch(0.72_0.15_165)]">AI</span>
             </div>
-            <div className="mt-0.5 text-[10px] uppercase tracking-[0.15em] text-[var(--shield-text-dim)]">
+            <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.18em] text-[oklch(0.6_0.02_200)]">
               One agent · four phases
             </div>
           </div>

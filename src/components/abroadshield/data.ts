@@ -774,3 +774,204 @@ export const ACCENT_MAP: Record<
     dot: "bg-[oklch(0.75_0.13_210)]",
   },
 };
+
+/* ----------------------------------------------------------------------------
+ *  Deadline timeline — the 27 tracked deadlines across all 4 phases.
+ *  Each has a day offset from "today" (negative = past, positive = future),
+ *  a severity, and which phase it belongs to. Plotted on an interactive rail.
+ * -------------------------------------------------------------------------- */
+
+export interface Deadline {
+  id: string;
+  phase: PhaseId;
+  label: string;
+  /** day offset from "today" in the demo timeline; negative = past */
+  day: number;
+  severity: "done" | "info" | "warning" | "critical";
+  group?: string;
+}
+
+export const DEADLINES: Deadline[] = [
+  // ---- Pre-Departure (past) ----
+  { id: "dl-1", phase: "pre-departure", label: "CAS letter received", day: -42, severity: "done", group: "University" },
+  { id: "dl-2", phase: "pre-departure", label: "TB test booked", day: -30, severity: "done", group: "Health" },
+  { id: "dl-3", phase: "pre-departure", label: "TB test result", day: -23, severity: "done", group: "Health" },
+  { id: "dl-4", phase: "pre-departure", label: "Bank statement issued", day: -14, severity: "info", group: "Finance" },
+  { id: "dl-5", phase: "pre-departure", label: "Passport photo flagged", day: -12, severity: "warning", group: "Documents" },
+  // ---- Pre-Departure (current/upcoming) ----
+  { id: "dl-6", phase: "pre-departure", label: "Sponsorship letter approved", day: 2, severity: "warning", group: "Documents" },
+  { id: "dl-7", phase: "pre-departure", label: "Forex transfer window opens", day: 4, severity: "info", group: "Finance" },
+  { id: "dl-8", phase: "pre-departure", label: "Re-upload bank page 3", day: 4, severity: "critical", group: "Documents" },
+  { id: "dl-9", phase: "pre-departure", label: "Visa appointment · 09:30 IST", day: 6, severity: "critical", group: "Visa" },
+  { id: "dl-10", phase: "pre-departure", label: "Forex & insurance shortlist", day: 9, severity: "warning", group: "Finance" },
+  { id: "dl-11", phase: "pre-departure", label: "Flight booking window", day: 14, severity: "info", group: "Travel" },
+  // ---- Arrival ----
+  { id: "dl-12", phase: "arrival", label: "Land in Manchester", day: 28, severity: "info", group: "Travel" },
+  { id: "dl-13", phase: "arrival", label: "SIM / eSIM activation", day: 28, severity: "info", group: "Setup" },
+  { id: "dl-14", phase: "arrival", label: "Bank appointment", day: 32, severity: "warning", group: "Finance" },
+  { id: "dl-15", phase: "arrival", label: "Housing viewing", day: 31, severity: "info", group: "Housing" },
+  { id: "dl-16", phase: "arrival", label: "FRRO registration (14-day window)", day: 42, severity: "critical", group: "Legal" },
+  { id: "dl-17", phase: "arrival", label: "BRP collection (10-day window)", day: 38, severity: "critical", group: "Legal" },
+  { id: "dl-18", phase: "arrival", label: "University enrollment", day: 35, severity: "warning", group: "University" },
+  // ---- Studying & Part-Time ----
+  { id: "dl-19", phase: "studying", label: "Induction week ends", day: 45, severity: "info", group: "University" },
+  { id: "dl-20", phase: "studying", label: "Bank statement (UK) due", day: 48, severity: "warning", group: "Finance" },
+  { id: "dl-21", phase: "studying", label: "Part-time role — apply", day: 52, severity: "info", group: "Work" },
+  { id: "dl-22", phase: "studying", label: "Dissertation outline due", day: 56, severity: "critical", group: "Academic" },
+  { id: "dl-23", phase: "studying", label: "Weekly budget review", day: 60, severity: "info", group: "Finance" },
+  { id: "dl-24", phase: "studying", label: "Work-hour ledger check", day: 67, severity: "warning", group: "Work" },
+  // ---- Job Success ----
+  { id: "dl-25", phase: "job-success", label: "CV tailoring — batch 2", day: 180, severity: "info", group: "Career" },
+  { id: "dl-26", phase: "job-success", label: "Alumni follow-up round", day: 195, severity: "warning", group: "Networking" },
+  { id: "dl-27", phase: "job-success", label: "Post-study visa window closes", day: 365, severity: "critical", group: "Visa" },
+];
+
+export const SEVERITY_STYLE: Record<
+  Deadline["severity"],
+  { label: string; dot: string; ring: string; text: string }
+> = {
+  done: {
+    label: "Completed",
+    dot: "bg-[oklch(0.55_0.12_200)]",
+    ring: "ring-[oklch(0.5_0.04_200/0.4)]",
+    text: "text-[oklch(0.65_0.02_200)]",
+  },
+  info: {
+    label: "Upcoming",
+    dot: "bg-[oklch(0.72_0.15_165)]",
+    ring: "ring-[oklch(0.72_0.15_165/0.5)]",
+    text: "text-[oklch(0.82_0.16_165)]",
+  },
+  warning: {
+    label: "Action needed",
+    dot: "bg-[oklch(0.78_0.16_70)]",
+    ring: "ring-[oklch(0.78_0.16_70/0.55)]",
+    text: "text-[oklch(0.82_0.16_70)]",
+  },
+  critical: {
+    label: "Critical",
+    dot: "bg-[oklch(0.68_0.2_25)]",
+    ring: "ring-[oklch(0.65_0.2_25/0.6)]",
+    text: "text-[oklch(0.72_0.2_25)]",
+  },
+};
+
+/* ----------------------------------------------------------------------------
+ *  Multilingual UI strings — the "language they trust" promise.
+ *  Only the hero + key CTAs are localized for the demo; the agent chat stays
+ *  in English by default (the LLM can reply in any language on request).
+ * -------------------------------------------------------------------------- */
+
+export type LocaleId = "en" | "hi" | "mr" | "ta";
+
+export interface Locale {
+  id: LocaleId;
+  label: string;
+  nativeLabel: string;
+  flag: string;
+}
+
+export const LOCALES: Locale[] = [
+  { id: "en", label: "English", nativeLabel: "English", flag: "🇬🇧" },
+  { id: "hi", label: "Hindi", nativeLabel: "हिन्दी", flag: "🇮🇳" },
+  { id: "mr", label: "Marathi", nativeLabel: "मराठी", flag: "🇮🇳" },
+  { id: "ta", label: "Tamil", nativeLabel: "தமிழ்", flag: "🇮🇳" },
+];
+
+export interface HeroStrings {
+  eyebrow: string;
+  titleOne: string;
+  titleMemory: string;
+  titleFour: string;
+  titleFinish: string;
+  subtitle: string;
+  ctaExplore: string;
+  ctaAgent: string;
+  stat1V: string;
+  stat1L: string;
+  stat2V: string;
+  stat2L: string;
+  stat3V: string;
+  stat3L: string;
+  stat4V: string;
+  stat4L: string;
+}
+
+export const HERO_STRINGS: Record<LocaleId, HeroStrings> = {
+  en: {
+    eyebrow: "AbroadShield AI · Agentic Student Companion",
+    titleOne: "One AI.",
+    titleMemory: "One memory.",
+    titleFour: "Four phases,",
+    titleFinish: "start to finish.",
+    subtitle:
+      "The one relationship every student going abroad can count on for the entire journey — not a tool used once and dropped, but a presence that grows more valuable the longer it stays with someone.",
+    ctaExplore: "Explore the journey",
+    ctaAgent: "Talk to the agent",
+    stat1V: "4",
+    stat1L: "Phases, end to end",
+    stat2V: "27",
+    stat2L: "Deadlines tracked",
+    stat3V: "13",
+    stat3L: "Docs gap-checked",
+    stat4V: "1",
+    stat4L: "Memory, never reset",
+  },
+  hi: {
+    eyebrow: "AbroadShield AI · सक्रिय छात्र साथी",
+    titleOne: "एक AI।",
+    titleMemory: "एक स्मृति।",
+    titleFour: "चार चरण,",
+    titleFinish: "शुरू से अंत तक।",
+    subtitle:
+      "वह एकमात्र संबंध जिस पर विदेश जाने वाला हर छात्र पूरी यात्रा के लिए भरोसा कर सके — एक बार इस्तेमाल करके छोड़ दिया जाने वाला औज़ार नहीं, बल्कि एक उपस्थिति जो जितना लंबा रहती है उतनी ही अधिक मूल्यवान होती है।",
+    ctaExplore: "यात्रा देखें",
+    ctaAgent: "एजेंट से बात करें",
+    stat1V: "4",
+    stat1L: "चरण, शुरू से अंत",
+    stat2V: "27",
+    stat2L: "समय-सीमा ट्रैक की गई",
+    stat3V: "13",
+    stat3L: "दस्तावेज़ जाँचे गए",
+    stat4V: "1",
+    stat4L: "स्मृति, कभी रीसेट नहीं",
+  },
+  mr: {
+    eyebrow: "AbroadShield AI · प्रतिभाशाली विद्यार्थी सोबती",
+    titleOne: "एक AI.",
+    titleMemory: "एक स्मृती.",
+    titleFour: "चार टप्पे,",
+    titleFinish: "सुरुवातीपासून शेवटपर्यंत.",
+    subtitle:
+      "परदेशात जाणाऱ्या प्रत्येक विद्यार्थ्यासाठी संपूर्ण प्रवासभर विसंबून असण्यासारखे एकच नाते — एकदा वापरून टाकायचे साधन नाही, तर जितका जास्त वेळ राहील तितकेच मौल्यवान होणारी उपस्थिती.",
+    ctaExplore: "प्रवास पाहा",
+    ctaAgent: "एजंटशी बोला",
+    stat1V: "4",
+    stat1L: "टप्पे, सुरुवात ते शेवट",
+    stat2V: "27",
+    stat2L: "मुदती ट्रॅक केल्या",
+    stat3V: "13",
+    stat3L: "कागदपत्रे तपासली",
+    stat4V: "1",
+    stat4L: "स्मृती, कधीच रीसेट नाही",
+  },
+  ta: {
+    eyebrow: "AbroadShield AI · செயல்படும் மாணவர் துணை",
+    titleOne: "ஒரு AI.",
+    titleMemory: "ஒரு நினைவு.",
+    titleFour: "நான்கு கட்டங்கள்,",
+    titleFinish: "தொடக்கம் முதல் முடிவு வரை.",
+    subtitle:
+      "வெளிநாட்டிற்குச் செல்லும் ஒவ்வொரு மாணவரும் முழு பயணத்திற்கும் நம்பக்கூடிய ஒரே உறவு — ஒருமுறை பயன்படுத்தி கைவிடும் கருவி அல்ல, நீண்ட காலம் இருக்க இருக்க மதிப்புமிக்கதாகும் ஒரு இருப்பு.",
+    ctaExplore: "பயணத்தைப் பார்",
+    ctaAgent: "முகவரிடம் பேசு",
+    stat1V: "4",
+    stat1L: "கட்டங்கள், முதல் இறுதி",
+    stat2V: "27",
+    stat2L: "காலக்கெடு கண்காணிப்பு",
+    stat3V: "13",
+    stat3L: "ஆவணங்கள் சரிபார்ப்பு",
+    stat4V: "1",
+    stat4L: "நினைவு, ஒருபோதும் மீட்டமைப்பு இல்லை",
+  },
+};

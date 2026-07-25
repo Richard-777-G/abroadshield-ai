@@ -79,6 +79,10 @@ export default function JourneyExplorer() {
                           : "as-glass border-[var(--shield-border)]"
                       }`}
                     >
+                      {/* active inner glow */}
+                      {isActive && (
+                        <div className="pointer-events-none absolute inset-0 [background:radial-gradient(120%_80%_at_50%_0%,oklch(0.72_0.15_165/0.18),transparent_65%)]" />
+                      )}
                       {/* phase index */}
                       <div className="flex items-center justify-between">
                         <span
@@ -218,7 +222,7 @@ export default function JourneyExplorer() {
                 </span>
               </div>
 
-              <div className="as-scroll max-h-[420px] space-y-3 overflow-y-auto pr-1">
+              <div className="as-scroll max-h-[440px] space-y-3 overflow-y-auto pr-1">
                 {active.tasks.map((task) => {
                   const TaskIcon = task.icon;
                   return (
@@ -226,38 +230,38 @@ export default function JourneyExplorer() {
                       key={task.id}
                       className="group rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.2_0.03_220/0.4)] p-4 transition hover:border-[oklch(0.72_0.15_165/0.4)] hover:bg-[oklch(0.24_0.03_220/0.6)]"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3">
-                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--shield-border)] bg-[oklch(0.16_0.02_220/0.6)]">
-                            <TaskIcon className={`h-4 w-4 ${accent.text}`} />
-                          </span>
-                          <div>
-                            <div className="text-sm font-medium text-[var(--shield-text)]">
-                              {task.title}
-                            </div>
-                            <div className="mt-1 text-xs leading-relaxed text-[var(--shield-text-dim)]">
-                              {task.detail}
-                            </div>
+                      <div className="flex items-start gap-3">
+                        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--shield-border)] bg-[oklch(0.16_0.02_220/0.6)]">
+                          <TaskIcon className={`h-4 w-4 ${accent.text}`} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold leading-snug text-[var(--shield-text)]">
+                            {task.title}
+                          </div>
+                          <div className="mt-1.5 text-xs leading-relaxed text-[oklch(0.7_0.02_200/0.95)]">
+                            {task.detail}
                           </div>
                         </div>
                       </div>
-                      <div className="mt-3 flex items-center gap-2 pl-11">
-                        <span
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STATUS_STYLE[task.status]}`}
-                        >
-                          {STATUS_LABEL[task.status]}
-                        </span>
-                        {typeof task.due === "number" && (
-                          <span className="text-[11px] text-[var(--shield-text-dim)]">
-                            {task.due < 0
-                              ? `${Math.abs(task.due)}d ago`
-                              : task.due === 0
-                                ? "today"
-                                : `in ${task.due}d`}
+                      <div className="mt-3 flex items-center justify-between gap-2 border-t border-[var(--shield-border)] pt-2.5 pl-12">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STATUS_STYLE[task.status]}`}
+                          >
+                            {STATUS_LABEL[task.status]}
                           </span>
-                        )}
+                          {typeof task.due === "number" && (
+                            <span className="text-[11px] text-[var(--shield-text-dim)]">
+                              {task.due < 0
+                                ? `${Math.abs(task.due)}d ago`
+                                : task.due === 0
+                                  ? "today"
+                                  : `in ${task.due}d`}
+                            </span>
+                          )}
+                        </div>
                         {task.agentic && (
-                          <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-medium text-[oklch(0.72_0.15_165)]">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[oklch(0.72_0.15_165)]">
                             <Sparkles className="h-3 w-3" />
                             agentic
                           </span>

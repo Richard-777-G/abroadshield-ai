@@ -74,3 +74,41 @@ Stage Summary:
   4. Add more agent-feed items and a "history" view of past approvals.
   5. Add a subtle 3D depth parallax to the journey bridge stations (currently 2.5D) for extra "cool 3D" feel.
   6. Persist a real student profile via Prisma (schema is installed but unused) so the chat can remember across sessions.
+
+---
+
+Task ID: 2
+Agent: webDevReview (cron round 2)
+Task: Assess project status, QA via agent-browser, fix bugs, and advance new features (deadline timeline, multilingual toggle, chat action buttons).
+
+Work Log:
+- Read worklog.md. Found that round 1 (Task 1 + 1-verify) built the full AbroadShield experience and verified it. The recommended next-phase priorities were: deadline-timeline visualization, multilingual toggle, chat Approve/Edit/Decline buttons, more agent-feed items, 3D depth parallax, Prisma persistence.
+- Assessed actual file state: discovered that a prior interrupted round had created `DeadlineTimeline.tsx` and `LanguageToggle.tsx` and applied a hero-overlap fix + journey task-list fix, BUT left both new components **unwired** (orphaned — not imported into page.tsx or Hero3D). The data layer already had `DEADLINES`, `SEVERITY_STYLE`, `LOCALES`, `HERO_STRINGS` appended.
+- QA pass (agent-browser): page 200, chat API 200, lint clean, no runtime errors. VLM (glm-5v-turbo) confirmed the hero-overlap fix held (3D element no longer overlaps headline; headline fully readable).
+
+Completed modifications:
+1. **Wired DeadlineTimeline into page.tsx** — placed between AgentActivityPanel and MemoryVault (natural narrative: "agent flags deadlines" → see all 27 on one rail → the vault that remembers). Verified: 4 swimlanes (Pre-Departure/Arrival/Studying/Job Success) render with colored dots, Today marker, day-axis labels, severity legend, filter chips, and a detail popover on hover/click showing the deadline label, phase, day offset, and an agent cue ("Agent nudged you" / "Agent watching" / "Logged by agent"). VLM confirmed: 4 lanes, dots, filters, legend all visible, no overlap.
+   - Fixed a dot-overlap robustness issue: made the inner dot span `pointer-events-none` and enlarged the button hit area to `h-7 w-7` so each deadline is individually hoverable. Added vertical stagger (±12px) for deadlines that share the same day so they don't render on the exact same pixel.
+2. **Wired LanguageToggle into Hero3D with full localization** — added `locale` state, replaced all hardcoded English strings with `HERO_STRINGS[locale]` (eyebrow, title parts, subtitle, both CTAs, 4 stat labels). The toggle sits top-right of the hero next to the eyebrow. Switching language triggers a Framer Motion `AnimatePresence` fade on the headline + subtitle. Verified: opened the menu (English/हिन्दी/मराठी/தமிழ் all present), selected Marathi — the entire hero localized (eyebrow "प्रतिभाशाली विद्यार्थी सोबती", headline "एक AI. एक स्मृती. चार टप्पे, सुरुवातीपासून शेवटपर्यंत.", CTAs "प्रवास पाहा" / "एजंटशी बोला"). This honors the product's "language they trust" promise for tier-2/3 town students.
+3. **Added Approve / Edit / Decline action buttons to AgentChat** — wrote an `isDraftMessage()` detector that flags assistant replies containing "Approve to send" / "Approve / Edit / Decline" cues, `Subject:`/`Dear` openings, or fenced code blocks. When a reply is detected as a draft, a `DraftActionBar` renders below the message with three buttons: "Approve & send" (emerald, glowing), "Edit" (amber), "Decline" (muted). Clicking any replaces the bar with a colored confirmation chip ("Approved — sent on your behalf" / "Marked for your edits" / "Declined — not sent") plus a Copy-to-clipboard button. Verified end-to-end: clicked the "Draft a consulate email" starter → LLM returned a full email draft → Approve/Edit/Decline buttons appeared → clicked Approve → green "Approved — sent on your behalf" chip + Copy button rendered. This makes the human-in-the-loop control tangible.
+
+QA / verification results:
+- `bun run lint` — clean (zero errors) after all changes.
+- Dev server: page 200, /api/abroadshield/chat 200 (2-3s LLM latency).
+- agent-browser fresh session: zero runtime errors, zero console errors (only the harmless THREE.Clock deprecation warning).
+- VLM hero check: no 3D/text overlap, language toggle visible top-right, headline fully readable, no visual issues.
+- VLM timeline check: 4 lanes with dots, filters + legend visible, clean layout, no overlap.
+- Interaction tests: timeline dot hover shows detail popover (verified on isolated day-365 deadline); language toggle localizes the hero (verified Marathi); chat draft triggers action buttons (verified Approve flow); mobile viewport (390×844) — language toggle + mobile menu both render.
+- Investigated a stale "Parsing ecmascript source code failed at JourneyExplorer.tsx:267:19" browser-overlay message: confirmed via a fresh browser session (close + open) that it was a stale Next.js dev overlay — the file compiles cleanly (dev.log shows no errors, the full task list including "agentic" badges renders, page returns 200). No real bug.
+
+Stage Summary:
+- Three new features shipped and wired: interactive Deadline Timeline (27 deadlines across 4 swimlanes), Multilingual hero toggle (EN/हिन्दी/मराठी/தமிழ் with animated transitions), and Approve/Edit/Decline action bars on agent draft replies (with confirmation chips + copy).
+- The page now has 10 sections (was 9): Hero3D → JourneyExplorer → AgentActivityPanel → **DeadlineTimeline** → MemoryVault → CountryRules → Pillars → AgentChat → PricingTiers → VisionCTA.
+- All previously-orphaned components are now live. Lint clean, zero runtime errors, VLM-verified visual quality, mobile-responsive.
+- Next-phase priority recommendations for the recurring agent:
+  1. Extend localization beyond the hero — localize the section headings + nav (currently only the hero is localized).
+  2. Add a "compare two countries" mode to CountryRules (side-by-side work-hour caps, post-study windows).
+  3. Add an approvals-history view — a log of every Approve/Edit/Decline the student has made (the chat already tracks `action` per message; surface it as a timeline).
+  4. Add more agent-feed items + a filter by phase on the AgentActivityPanel.
+  5. Add 3D depth parallax to the JourneyExplorer station cards (mouse-tilt) for extra "cool 3D".
+  6. Persist the student profile + chat history via Prisma so the agent remembers across sessions (schema is installed but unused).

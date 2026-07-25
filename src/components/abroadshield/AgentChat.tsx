@@ -2,15 +2,51 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Sparkles, Bot, User, RotateCcw, Loader2 } from "lucide-react";
+import {
+  Send,
+  Sparkles,
+  Bot,
+  User,
+  RotateCcw,
+  Loader2,
+  Check,
+  Pencil,
+  X,
+  Copy,
+  CheckCheck,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { CHAT_STARTERS, STUDENT } from "./data";
+
+type DraftAction = "none" | "approved" | "edited" | "declined";
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   pending?: boolean;
+  action?: DraftAction;
+}
+
+/**
+ * Detect whether an assistant reply is an actionable draft (email, letter,
+ * form) that should carry Approve / Edit / Decline controls. The system
+ * prompt tells the LLM to end drafts with "Approve / Edit / Decline" and to
+ * wrap drafted messages in fenced blocks — we detect both signals.
+ */
+function isDraftMessage(content: string): boolean {
+  if (!content) return false;
+  const lower = content.toLowerCase();
+  const hasApproveCue =
+    lower.includes("approve to send") ||
+    lower.includes("approve / edit / decline") ||
+    lower.includes("approve/edit/decline") ||
+    lower.includes("approve · edit · decline");
+  const hasDraftSignal =
+    /^subject:/im.test(content) ||
+    /^dear\b/im.test(content) ||
+    /```/.test(content);
+  return hasApproveCue || hasDraftSignal;
 }
 
 const WELCOME: Message = {
@@ -100,6 +136,12 @@ export default function AgentChat() {
     setInput("");
   };
 
+  const markAction = (id: string, action: DraftAction) => {
+    setMessages((m) =>
+      m.map((msg) => (msg.id === id ? { ...msg, action } : msg))
+    );
+  };
+
   return (
     <section
       id="agent"
@@ -159,7 +201,7 @@ export default function AgentChat() {
             className="as-scroll max-h-[460px] min-h-[340px] space-y-4 overflow-y-auto bg-[oklch(0.16_0.02_220/0.5)] p-5 sm:p-6"
           >
             {messages.map((m) => (
-              <MessageBubble key={m.id} message={m} />
+              <MessageBubble key={m.id} message={m} onAction={markAction} />
             ))}
           </div>
 
@@ -225,8 +267,29 @@ export default function AgentChat() {
   );
 }
 
-function MessageBubble({ message }: { message: Message }) {
+function MessageBubble({
+  message,
+  onAction,
+}: {
+  message: Message;
+  onAction: (id: string, action: DraftAction) => void;
+}) {
   const isUser = message.role === "user";
+  const [copied, setCopied] = useState(false);
+  const isDraft = !isUser && !message.pending && isDraftMessage(message.content);
+  const showActions = isDraft && (!message.action || message.action === "none");
+  const actionTaken = message.action && message.action !== "none";
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard may be blocked; fail silently */
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -266,33 +329,144 @@ function MessageBubble({ message }: { message: Message }) {
         ) : isUser ? (
           <span className="whitespace-pre-wrap">{message.content}</span>
         ) : (
-          <div className="prose prose-sm prose-invert max-w-none [&_a]:text-[oklch(0.82_0.16_165)] [&_a]:underline [&_code]:rounded [&_code]:bg-[oklch(0.16_0.02_220/0.8)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[oklch(0.82_0.16_70)] [&_code]:font-mono [&_code]:text-xs [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-[var(--shield-border)] [&_pre]:bg-[oklch(0.16_0.02_220/0.8)] [&_pre]:p-3 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_strong]:text-[oklch(0.82_0.16_165)] [&_ul]:my-1.5 [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-3">
-            <ReactMarkdown
-              components={{
-                code({ className, children, ...props }) {
-                  const isInline = !className?.includes("language-");
-                  if (isInline) {
+          <>
+            <div className="prose prose-sm prose-invert max-w-none [&_a]:text-[oklch(0.82_0.16_165)] [&_a]:underline [&_code]:rounded [&_code]:bg-[oklch(0.16_0.02_220/0.8)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[oklch(0.82_0.16_70)] [&_code]:font-mono [&_code]:text-xs [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-[var(--shield-border)] [&_pre]:bg-[oklch(0.16_0.02_220/0.8)] [&_pre]:p-3 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_strong]:text-[oklch(0.82_0.16_165)] [&_ul]:my-1.5 [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-3">
+              <ReactMarkdown
+                components={{
+                  code({ className, children, ...props }) {
+                    const isInline = !className?.includes("language-");
+                    if (isInline) {
+                      return (
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      );
+                    }
                     return (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
+                      <pre>
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      </pre>
                     );
-                  }
-                  return (
-                    <pre>
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    </pre>
-                  );
-                },
-              }}
-            >
-              {message.content}
-            </ReactMarkdown>
-          </div>
+                  },
+                }}
+              >
+                {message.content}
+              </ReactMarkdown>
+            </div>
+
+            {/* action bar for drafts */}
+            {isDraft && (
+              <DraftActionBar
+                showActions={showActions}
+                actionTaken={actionTaken}
+                action={message.action}
+                copied={copied}
+                onCopy={copy}
+                onApprove={() => onAction(message.id, "approved")}
+                onEdit={() => onAction(message.id, "edited")}
+                onDecline={() => onAction(message.id, "declined")}
+              />
+            )}
+          </>
         )}
       </div>
     </motion.div>
+  );
+}
+
+function DraftActionBar({
+  showActions,
+  actionTaken,
+  action,
+  copied,
+  onCopy,
+  onApprove,
+  onEdit,
+  onDecline,
+}: {
+  showActions: boolean;
+  actionTaken: boolean | "" | undefined;
+  action?: DraftAction;
+  copied: boolean;
+  onCopy: () => void;
+  onApprove: () => void;
+  onEdit: () => void;
+  onDecline: () => void;
+}) {
+  if (showActions) {
+    return (
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--shield-border)] pt-3">
+        <span className="mr-auto text-[11px] text-[var(--shield-text-dim)]">
+          The agent prepared this. You decide.
+        </span>
+        <button
+          onClick={onApprove}
+          className="inline-flex items-center gap-1.5 rounded-full bg-[oklch(0.72_0.15_165)] px-3 py-1.5 text-xs font-semibold text-[oklch(0.16_0.02_220)] transition hover:bg-[oklch(0.82_0.16_165)] as-glow-emerald"
+        >
+          <Check className="h-3.5 w-3.5" />
+          Approve &amp; send
+        </button>
+        <button
+          onClick={onEdit}
+          className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.78_0.16_70/0.45)] bg-[oklch(0.78_0.16_70/0.1)] px-3 py-1.5 text-xs font-semibold text-[oklch(0.82_0.16_70)] transition hover:bg-[oklch(0.78_0.16_70/0.18)]"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          Edit
+        </button>
+        <button
+          onClick={onDecline}
+          className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.5_0.04_200/0.3)] bg-[oklch(0.2_0.03_220/0.5)] px-3 py-1.5 text-xs font-semibold text-[var(--shield-text-dim)] transition hover:border-[oklch(0.65_0.2_25/0.5)] hover:text-[oklch(0.72_0.2_25)]"
+        >
+          <X className="h-3.5 w-3.5" />
+          Decline
+        </button>
+      </div>
+    );
+  }
+
+  // action already taken — show confirmation chip + copy
+  const label =
+    action === "approved"
+      ? "Approved — sent on your behalf"
+      : action === "edited"
+        ? "Marked for your edits"
+        : action === "declined"
+          ? "Declined — not sent"
+          : "";
+
+  const chipClass =
+    action === "approved"
+      ? "border-[oklch(0.72_0.15_165/0.45)] bg-[oklch(0.72_0.15_165/0.12)] text-[oklch(0.82_0.16_165)]"
+      : action === "edited"
+        ? "border-[oklch(0.78_0.16_70/0.45)] bg-[oklch(0.78_0.16_70/0.12)] text-[oklch(0.82_0.16_70)]"
+        : "border-[oklch(0.5_0.04_200/0.3)] bg-[oklch(0.2_0.03_220/0.5)] text-[var(--shield-text-dim)]";
+
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--shield-border)] pt-3">
+      <span
+        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${chipClass}`}
+      >
+        {action === "approved" && <CheckCheck className="h-3.5 w-3.5" />}
+        {action === "edited" && <Pencil className="h-3.5 w-3.5" />}
+        {action === "declined" && <X className="h-3.5 w-3.5" />}
+        {label}
+      </span>
+      <button
+        onClick={onCopy}
+        className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-[var(--shield-border)] bg-[oklch(0.2_0.03_220/0.5)] px-2.5 py-1 text-[11px] font-medium text-[var(--shield-text-dim)] transition hover:text-[var(--shield-text)]"
+      >
+        {copied ? (
+          <>
+            <CheckCheck className="h-3 w-3" /> Copied
+          </>
+        ) : (
+          <>
+            <Copy className="h-3 w-3" /> Copy
+          </>
+        )}
+      </button>
+    </div>
   );
 }

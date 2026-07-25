@@ -32,23 +32,25 @@ function ShieldCore() {
   return (
     <group>
       {/* glowing core */}
-      <Icosahedron ref={inner} args={[1.15, 0]}>
+      <Icosahedron ref={inner} args={[1.0, 0]}>
         <meshStandardMaterial
           color="#2dd4a7"
           emissive="#0fd4a7"
-          emissiveIntensity={0.85}
-          roughness={0.18}
-          metalness={0.55}
+          emissiveIntensity={0.7}
+          roughness={0.25}
+          metalness={0.5}
+          transparent
+          opacity={0.62}
           flatShading
         />
       </Icosahedron>
       {/* wireframe shell */}
-      <Icosahedron ref={wire} args={[1.55, 1]}>
+      <Icosahedron ref={wire} args={[1.45, 1]}>
         <meshBasicMaterial
           color="#7fffd4"
           wireframe
           transparent
-          opacity={0.22}
+          opacity={0.32}
         />
       </Icosahedron>
       {/* inner light */}
@@ -166,7 +168,7 @@ function ParallaxRig({ children }: { children: React.ReactNode }) {
 export default function Hero3DScene() {
   return (
     <Canvas
-      camera={{ position: [0, 0, 7.5], fov: 42 }}
+      camera={{ position: [0.8, 0, 7.2], fov: 42 }}
       dpr={[1, 2]}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       style={{ width: "100%", height: "100%" }}

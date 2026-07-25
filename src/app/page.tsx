@@ -3,6 +3,7 @@ import SiteFooter from "@/components/abroadshield/SiteFooter";
 import Hero3D from "@/components/abroadshield/Hero3D";
 import JourneyExplorer from "@/components/abroadshield/JourneyExplorer";
 import AgentActivityPanel from "@/components/abroadshield/AgentActivityPanel";
+import DeadlineTimeline from "@/components/abroadshield/DeadlineTimeline";
 import MemoryVault from "@/components/abroadshield/MemoryVault";
 import CountryRules from "@/components/abroadshield/CountryRules";
 import Pillars from "@/components/abroadshield/Pillars";
@@ -19,6 +20,7 @@ export default function Home() {
         <Hero3D />
         <JourneyExplorer />
         <AgentActivityPanel />
+        <DeadlineTimeline />
         <div id="memory" className="scroll-mt-20">
           <MemoryVault />
         </div>
