@@ -522,6 +522,18 @@ export interface CountryRule {
   insurance: string;
   bankAccount: string;
   highlights: string[];
+  /** official government / embassy links for visa + registration */
+  embassyLinks: { label: string; url: string }[];
+  /** official pre-departure checklist items */
+  checklist: { item: string; phase: PhaseId }[];
+  /** popular student cities */
+  cities: string[];
+  /** average tuition (international, postgrad) */
+  avgTuition: string;
+  /** average living cost per year */
+  avgLivingCost: string;
+  /** language of instruction */
+  language: string;
 }
 
 export const COUNTRIES: CountryRule[] = [
@@ -540,6 +552,23 @@ export const COUNTRIES: CountryRule[] = [
       "Switching to Graduate Route before visa expiry only",
       "Off-campus work capped even in holidays",
     ],
+    embassyLinks: [
+      { label: "UK Gov — Student Visa", url: "https://www.gov.uk/student-visa" },
+      { label: "Graduate Route", url: "https://www.gov.uk/graduate-route" },
+      { label: "BRP collection", url: "https://www.gov.uk/biometric-residence-permits" },
+    ],
+    checklist: [
+      { item: "CAS letter from university", phase: "pre-departure" },
+      { item: "IHS surcharge paid", phase: "pre-departure" },
+      { item: "TB test (if applicable)", phase: "pre-departure" },
+      { item: "Bank statement (28-day rule)", phase: "pre-departure" },
+      { item: "Collect BRP within 10 days", phase: "arrival" },
+      { item: "Register with GP surgery", phase: "arrival" },
+    ],
+    cities: ["London", "Manchester", "Edinburgh", "Birmingham"],
+    avgTuition: "£22,000–£35,000/yr",
+    avgLivingCost: "£12,000–£15,000/yr",
+    language: "English",
   },
   {
     country: "United States",
@@ -556,6 +585,23 @@ export const COUNTRIES: CountryRule[] = [
       "STEM extension locks employer to E-Verify",
       "CPT requires enrolment for a full academic year",
     ],
+    embassyLinks: [
+      { label: "US State Dept — F-1 Visa", url: "https://travel.state.gov/content/travel/en/us-visas/study/f-1.html" },
+      { label: "ICE — OPT & STEM", url: "https://www.ice.gov/sevis/opt" },
+      { label: "SEVIS check-in", url: "https://www.ice.gov/sevis" },
+    ],
+    checklist: [
+      { item: "I-20 form from university", phase: "pre-departure" },
+      { item: "SEVIS I-901 fee paid", phase: "pre-departure" },
+      { item: "DS-160 visa application", phase: "pre-departure" },
+      { item: "Visa interview at US consulate", phase: "pre-departure" },
+      { item: "SEVIS check-in within 30 days of arrival", phase: "arrival" },
+      { item: "On-campus employment authorization", phase: "studying" },
+    ],
+    cities: ["Boston", "New York", "San Francisco", "Chicago"],
+    avgTuition: "$25,000–$55,000/yr",
+    avgLivingCost: "$15,000–$20,000/yr",
+    language: "English",
   },
   {
     country: "Canada",
@@ -572,6 +618,23 @@ export const COUNTRIES: CountryRule[] = [
       "Off-campus cap moved from 20 to 24 hrs in 2024",
       "Provincial health has a coverage wait period",
     ],
+    embassyLinks: [
+      { label: "IRCC — Study Permit", url: "https://www.canada.ca/en/immigration-refugees-citizenship/services/study-canada.html" },
+      { label: "PGWP", url: "https://www.canada.ca/en/immigration-refugees-citizenship/services/study-canada/work/after-graduation.html" },
+      { label: "Service Canada — SIN", url: "https://www.canada.ca/en/employment-social-development/services/sin.html" },
+    ],
+    checklist: [
+      { item: "LOA from DLI institution", phase: "pre-departure" },
+      { item: "Proof of funds (GIC or bank)", phase: "pre-departure" },
+      { item: "Medical exam (if required)", phase: "pre-departure" },
+      { item: "Get SIN on arrival", phase: "arrival" },
+      { item: "Apply for provincial health card", phase: "arrival" },
+      { item: "Apply for PGWP before permit expiry", phase: "job-success" },
+    ],
+    cities: ["Toronto", "Vancouver", "Montreal", "Calgary"],
+    avgTuition: "CAD 20,000–40,000/yr",
+    avgLivingCost: "CAD 12,000–18,000/yr",
+    language: "English / French",
   },
   {
     country: "Australia",
@@ -588,6 +651,23 @@ export const COUNTRIES: CountryRule[] = [
       "OSHC must be active before arrival",
       "Work cap is per fortnight, not per week",
     ],
+    embassyLinks: [
+      { label: "Home Affairs — Subclass 500", url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/student-500" },
+      { label: "485 Graduate Work", url: "https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/temporary-graduate-485" },
+      { label: "OSHC providers", url: "https://www.studyaustralia.gov.au/english/live-in-australia/health-insurance" },
+    ],
+    checklist: [
+      { item: "CoE from institution", phase: "pre-departure" },
+      { item: "OSHC purchased for visa duration", phase: "pre-departure" },
+      { item: "GTE statement", phase: "pre-departure" },
+      { item: "Apply for TFN on arrival", phase: "arrival" },
+      { item: "Open student bank account", phase: "arrival" },
+      { item: "Apply for 485 visa before course end", phase: "job-success" },
+    ],
+    cities: ["Sydney", "Melbourne", "Brisbane", "Perth"],
+    avgTuition: "AUD 22,000–45,000/yr",
+    avgLivingCost: "AUD 20,000–27,000/yr",
+    language: "English",
   },
   {
     country: "Germany",
@@ -604,8 +684,191 @@ export const COUNTRIES: CountryRule[] = [
       "Blocked account proves financials at visa stage",
       "18-month job search window starts at graduation",
     ],
+    embassyLinks: [
+      { label: "German Missions — Student Visa", url: "https://www.auswaertiges-amt.de/en/visa-service/bulk-issuing-student-visas" },
+      { label: "Make it in Germany", url: "https://www.make-it-in-germany.com/en/" },
+      { label: "Anmeldung (Berlin)", url: "https://service.berlin.de/dienstleistung/120686/" },
+    ],
+    checklist: [
+      { item: "University admission letter", phase: "pre-departure" },
+      { item: "Blocked account (Sperrkonto) setup", phase: "pre-departure" },
+      { item: "Health insurance (TK/AOK)", phase: "pre-departure" },
+      { item: "Anmeldung within 14 days of arrival", phase: "arrival" },
+      { item: "Residence permit at Ausländerbehörde", phase: "arrival" },
+      { item: "Apply for 18-month job-search permit", phase: "job-success" },
+    ],
+    cities: ["Berlin", "Munich", "Frankfurt", "Hamburg"],
+    avgTuition: "€0–€3,000/yr (public universities)",
+    avgLivingCost: "€10,000–12,000/yr",
+    language: "German / English",
+  },
+  {
+    country: "Ireland",
+    flag: "🇮🇪",
+    currency: "EUR (€)",
+    studentVisa: "Long Stay (D) Visa · Stamp 2",
+    workCap: "20 hrs/week term-time · 40 hrs/week holidays",
+    postStudyWindow: "Third Level Graduate Scheme (1–2 yrs)",
+    registration: "GNIB/INIS registration within 90 days",
+    insurance: "Private insurance mandatory for visa",
+    bankAccount: "Student account · passport + college letter",
+    highlights: [
+      "Stamp 2 allows part-time work during studies",
+      "Graduate scheme requires 1+ year study in Ireland",
+      "Private health insurance needed before arrival",
+    ],
+    embassyLinks: [
+      { label: "INIS — Study in Ireland", url: "https://www.irishimmigration.ie/" },
+      { label: "Stamp 2 registration", url: "https://www.irishimmigration.ie/our-services/registration/" },
+      { label: "Education in Ireland", url: "https://www.educationinireland.com/" },
+    ],
+    checklist: [
+      { item: "University offer letter", phase: "pre-departure" },
+      { item: "Private medical insurance", phase: "pre-departure" },
+      { item: "Proof of funds", phase: "pre-departure" },
+      { item: "Register with INIS within 90 days", phase: "arrival" },
+      { item: "Open bank account", phase: "arrival" },
+      { item: "Apply for Third Level Graduate Scheme", phase: "job-success" },
+    ],
+    cities: ["Dublin", "Cork", "Galway", "Limerick"],
+    avgTuition: "€10,000–25,000/yr",
+    avgLivingCost: "€12,000–18,000/yr",
+    language: "English",
+  },
+  {
+    country: "Netherlands",
+    flag: "🇳🇱",
+    currency: "EUR (€)",
+    studentVisa: "Entry Visa (MVV) + Residence Permit (VVR)",
+    workCap: "No limit (EU students) · 16 hrs/wk non-EU",
+    postStudyWindow: "1 year Orientation Year (Zoekjaar)",
+    registration: "Municipality (BRP) within 5 days",
+    insurance: "Health insurance mandatory (AON/AOK)",
+    bankAccount: "BSN required to open account",
+    highlights: [
+      "BSN issued after BRP registration — unlocks everything",
+      "Orientation year allows work without permit for 1 year",
+      "Many English-taught programs",
+    ],
+    embassyLinks: [
+      { label: "IND — Student Visa", url: "https://ind.nl/en/study" },
+      { label: "Orientation Year (Zoekjaar)", url: "https://ind.nl/en/residence-permits/study/orientation-year-highly-educated-persons" },
+      { label: "Study in NL", url: "https://www.studyinnl.org/" },
+    ],
+    checklist: [
+      { item: "University admission", phase: "pre-departure" },
+      { item: "MVV visa application", phase: "pre-departure" },
+      { item: "TB test (if required)", phase: "pre-departure" },
+      { item: "BRP registration within 5 days", phase: "arrival" },
+      { item: "Get BSN number", phase: "arrival" },
+      { item: "Apply for Orientation Year after graduation", phase: "job-success" },
+    ],
+    cities: ["Amsterdam", "Rotterdam", "Utrecht", "Eindhoven"],
+    avgTuition: "€8,000–20,000/yr",
+    avgLivingCost: "€10,000–15,000/yr",
+    language: "English / Dutch",
+  },
+  {
+    country: "France",
+    flag: "🇫🇷",
+    currency: "EUR (€)",
+    studentVisa: "Visa Étudiant (Long Séjour) · VLS-TS",
+    workCap: "964 hrs/year (≈ 20 hrs/week)",
+    postStudyWindow: "APS — 1 year (renewable once)",
+    registration: "OFII registration within 3 months",
+    insurance: "Sécurité Sociale (free for students)",
+    bankAccount: "Student account · proof of address required",
+    highlights: [
+      "VLS-TS must be validated online within 3 months",
+      "Public universities charge very low fees",
+      "Campus France is the official portal",
+    ],
+    embassyLinks: [
+      { label: "Campus France", url: "https://www.campusfrance.org/en" },
+      { label: "France-Visas (official)", url: "https://france-visas.gouv.fr/" },
+      { label: "OFII registration", url: "https://www.ofii.fr/" },
+    ],
+    checklist: [
+      { item: "Campus France application", phase: "pre-departure" },
+      { item: "VLS-TS visa via France-Visas", phase: "pre-departure" },
+      { item: "Proof of accommodation / financials", phase: "pre-departure" },
+      { item: "Validate VLS-TS online within 3 months", phase: "arrival" },
+      { item: "Register with CPAM (Sécurité Sociale)", phase: "arrival" },
+      { item: "Apply for APS permit before visa expiry", phase: "job-success" },
+    ],
+    cities: ["Paris", "Lyon", "Toulouse", "Lille"],
+    avgTuition: "€3,000–18,000/yr (public/private)",
+    avgLivingCost: "€10,000–14,000/yr",
+    language: "French / English",
+  },
+  {
+    country: "New Zealand",
+    flag: "🇳🇿",
+    currency: "NZD ($)",
+    studentVisa: "Fee Paying Student Visa",
+    workCap: "20 hrs/week term-time · full-time holidays",
+    postStudyWindow: "Post-Study Work Visa (1–3 yrs)",
+    registration: "IRD number for tax · bank account on arrival",
+    insurance: "Health insurance mandatory",
+    bankAccount: "IRD + passport + proof of address",
+    highlights: [
+      "Post-study work visa length depends on qualification level",
+      "Pathway to skilled migrant category",
+      "Work rights clearly defined on visa",
+    ],
+    embassyLinks: [
+      { label: "INZ — Student Visa", url: "https://www.immigration.govt.nz/new-zealand-visas/visas/visa/study-visa" },
+      { label: "Post-Study Work Visa", url: "https://www.immigration.govt.nz/new-zealand-visas/visas/visa/post-study-work-visa" },
+      { label: "Study in NZ", url: "https://www.studyinnewzealand.govt.nz/" },
+    ],
+    checklist: [
+      { item: "Offer of place from institution", phase: "pre-departure" },
+      { item: "Health insurance purchased", phase: "pre-departure" },
+      { item: "Proof of funds", phase: "pre-departure" },
+      { item: "Apply for IRD number", phase: "arrival" },
+      { item: "Open student bank account", phase: "arrival" },
+      { item: "Apply for Post-Study Work Visa", phase: "job-success" },
+    ],
+    cities: ["Auckland", "Wellington", "Christchurch", "Hamilton"],
+    avgTuition: "NZD 22,000–40,000/yr",
+    avgLivingCost: "NZD 20,000–25,000/yr",
+    language: "English",
+  },
+  {
+    country: "Singapore",
+    flag: "🇸🇬",
+    currency: "SGD ($)",
+    studentVisa: "Student Pass (STP)",
+    workCap: "16 hrs/week term-time · no limit holidays",
+    postStudyWindow: "1 year LTVP for job search (qualifying unis)",
+    registration: "STP issued at ICA · FIN number for all services",
+    insurance: "University medical insurance usually included",
+    bankAccount: "Student account · passport + student pass",
+    highlights: [
+      "Student Pass requires in-person collection at ICA",
+      "LTVP allows 1 year of job search from qualifying institutions",
+      "Global hub for finance, tech, and logistics jobs",
+    ],
+    embassyLinks: [
+      { label: "ICA — Student Pass", url: "https://www.ica.gov.sg/reside/study-in-singapore/student-pass" },
+      { label: "MOM — Employment Pass", url: "https://www.mom.gov.sg/passes-and-permits/employment-pass" },
+      { label: "Study in Singapore", url: "https://www.educationsingapore.sg/" },
+    ],
+    checklist: [
+      { item: "University offer letter", phase: "pre-departure" },
+      { item: "SOLAR registration for STP", phase: "pre-departure" },
+      { item: "Medical examination (if required)", phase: "pre-departure" },
+      { item: "Collect Student Pass at ICA", phase: "arrival" },
+      { item: "Open bank account with FIN", phase: "arrival" },
+      { item: "Apply for LTVP from qualifying institution", phase: "job-success" },
+    ],
+    cities: ["Singapore (city-state)"],
+    avgTuition: "SGD 20,000–45,000/yr",
+    avgLivingCost: "SGD 15,000–25,000/yr",
+    language: "English",
   },
 ];
+
 
 /* ----------------------------------------------------------------------------
  *  Pricing — direct-to-student, agentic actions gated in paid tier

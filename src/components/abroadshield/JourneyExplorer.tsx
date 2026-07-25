@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ChevronRight, Sparkles, ArrowRight } from "lucide-react";
 import { PHASES, ACCENT_MAP, type Phase } from "./data";
@@ -25,6 +25,18 @@ const STATUS_STYLE: Record<Phase["tasks"][number]["status"], string> = {
 
 export default function JourneyExplorer() {
   const [activeId, setActiveId] = useState<Phase["id"]>("pre-departure");
+
+  // Listen for phase-selection events from the hero hologram (and anywhere
+  // else that dispatches "abroadshield:select-phase").
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as Phase["id"];
+      if (detail) setActiveId(detail);
+    };
+    window.addEventListener("abroadshield:select-phase", handler);
+    return () => window.removeEventListener("abroadshield:select-phase", handler);
+  }, []);
+
   const active = PHASES.find((p) => p.id === activeId)!;
   const accent = ACCENT_MAP[active.accent];
 

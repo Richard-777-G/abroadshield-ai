@@ -195,7 +195,24 @@ export default function HoloShield() {
                         fill={arc.isActive ? "oklch(0.85 0.19 158)" : color}
                         stroke="oklch(0.14 0.018 165)"
                         strokeWidth="2"
-                      />
+                        className="cursor-pointer"
+                        onClick={() => {
+                          // dispatch a custom event so the JourneyExplorer can
+                          // switch to the clicked phase + scroll into view
+                          window.dispatchEvent(
+                            new CustomEvent("abroadshield:select-phase", {
+                              detail: arc.id,
+                            })
+                          );
+                          document
+                            .getElementById("journey")
+                            ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }}
+                      >
+                        <title>
+                          {arc.name} — click to view phase details
+                        </title>
+                      </circle>
                     </>
                   );
                 })()}

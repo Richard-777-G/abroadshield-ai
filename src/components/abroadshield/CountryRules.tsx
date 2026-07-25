@@ -12,6 +12,9 @@ import {
   Check,
   GitCompare,
   Eye,
+  ExternalLink,
+  ArrowUpRight,
+  ListChecks,
 } from "lucide-react";
 import { COUNTRIES, type CountryRule } from "./data";
 import Reveal from "./Reveal";
@@ -225,6 +228,61 @@ export default function CountryRules() {
                         </li>
                       ))}
                     </ul>
+                  </div>
+
+                  {/* quick facts strip */}
+                  <div className="border-t border-[var(--shield-border)] grid grid-cols-2 gap-px sm:grid-cols-4">
+                    <Fact label="Avg tuition" value={active.avgTuition} />
+                    <Fact label="Living cost" value={active.avgLivingCost} />
+                    <Fact label="Language" value={active.language} />
+                    <Fact label="Student cities" value={active.cities.length.toString()} />
+                  </div>
+
+                  {/* official embassy links */}
+                  <div className="border-t border-[var(--shield-border)] px-6 py-5">
+                    <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[oklch(0.85_0.19_158)]">
+                      <Landmark className="h-3.5 w-3.5" />
+                      Official embassy &amp; gov links
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {active.embassyLinks.map((link) => (
+                        <a
+                          key={link.url}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="as-card-hover group flex items-center gap-2 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.4)] px-3 py-2.5 text-sm text-[var(--shield-text)] transition hover:border-[oklch(0.74_0.17_162/0.4)]"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0 text-[oklch(0.85_0.19_158)]" />
+                          <span className="flex-1 leading-snug">{link.label}</span>
+                          <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-[var(--shield-text-dim)] transition group-hover:text-[oklch(0.85_0.19_158)]" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* official checklist */}
+                  <div className="border-t border-[var(--shield-border)] px-6 py-5">
+                    <div className="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[oklch(0.86_0.17_80)]">
+                      <ListChecks className="h-3.5 w-3.5" />
+                      Official pre-departure checklist
+                    </div>
+                    <div className="space-y-1.5">
+                      {active.checklist.map((c, ci) => (
+                        <div
+                          key={ci}
+                          className="flex items-center gap-3 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.4)] px-3 py-2"
+                        >
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.1)] text-[9px] font-semibold text-[oklch(0.85_0.19_158)]">
+                            {ci + 1}
+                          </span>
+                          <span className="flex-1 text-sm text-[var(--shield-text)]">{c.item}</span>
+                          <span className="rounded-full border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-[var(--shield-text-dim)]">
+                            {c.phase}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </motion.div>
               ) : (
@@ -468,6 +526,17 @@ function CompareRecommendation({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="bg-[oklch(0.22_0.025_165/0.4)] px-4 py-3">
+      <div className="text-[10px] uppercase tracking-wide text-[var(--shield-text-dim)]">
+        {label}
+      </div>
+      <div className="mt-0.5 text-sm font-semibold text-[var(--shield-text)]">{value}</div>
     </div>
   );
 }
