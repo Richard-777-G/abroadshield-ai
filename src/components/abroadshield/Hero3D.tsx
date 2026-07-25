@@ -20,20 +20,17 @@ export default function Hero3D() {
   return (
     <section
       id="top"
-      className="relative min-h-[100svh] w-full overflow-hidden bg-[var(--shield-ink)]"
+      className="relative min-h-[100svh] w-full overflow-hidden bg-transparent"
     >
-      {/* ---------- atmospheric background ---------- */}
-      <div className="pointer-events-none absolute inset-0 [background:radial-gradient(120%_90%_at_70%_30%,oklch(0.2_0.02_235),oklch(0.13_0.008_235)_55%,oklch(0.11_0.006_235))]" />
+      {/* ---------- atmospheric background (hero-local, sits above the global floating layer) ---------- */}
       <motion.div
         aria-hidden
-        className="as-aurora pointer-events-none absolute right-[8%] top-[10%] h-[55vh] w-[55vh] rounded-full [background:radial-gradient(circle,oklch(0.62_0.09_165/0.2),transparent_65%)] blur-3xl"
+        className="as-aurora pointer-events-none absolute right-[8%] top-[10%] h-[55vh] w-[55vh] rounded-full [background:radial-gradient(circle,oklch(0.74_0.17_162/0.22),transparent_65%)] blur-3xl"
       />
       <motion.div
         aria-hidden
-        className="as-aurora pointer-events-none absolute bottom-[5%] left-[15%] h-[38vh] w-[38vh] rounded-full [background:radial-gradient(circle,oklch(0.74_0.11_75/0.1),transparent_65%)] blur-3xl [animation-delay:6s]"
+        className="as-aurora pointer-events-none absolute bottom-[5%] left-[15%] h-[38vh] w-[38vh] rounded-full [background:radial-gradient(circle,oklch(0.86_0.2_135/0.12),transparent_65%)] blur-3xl [animation-delay:6s]"
       />
-      <div className="as-bg-grid pointer-events-none absolute inset-0 opacity-60" />
-      <div className="as-noise pointer-events-none absolute inset-0" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[var(--shield-ink)] to-transparent" />
 
       {/* ---------- content ---------- */}
@@ -45,10 +42,10 @@ export default function Hero3D() {
           transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
           className="mt-24 flex items-center justify-between gap-3 sm:mt-28"
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.5_0.02_235/0.2)] bg-[oklch(0.185_0.014_235/0.6)] px-3 py-1.5 text-[11px] font-medium tracking-wide text-[oklch(0.82_0.03_180)] backdrop-blur">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.74_0.17_162/0.3)] bg-[oklch(0.22_0.025_165/0.6)] px-3 py-1.5 text-[11px] font-medium tracking-wide text-[oklch(0.85_0.19_158)] backdrop-blur">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(0.62_0.09_165)] opacity-60" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[oklch(0.62_0.09_165)]" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(0.74_0.17_162)] opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[oklch(0.74_0.17_162)]" />
             </span>
             {t.eyebrow}
           </span>

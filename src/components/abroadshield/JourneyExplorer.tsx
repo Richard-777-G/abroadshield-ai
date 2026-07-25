@@ -14,9 +14,9 @@ const STATUS_LABEL: Record<Phase["tasks"][number]["status"], string> = {
 };
 
 const STATUS_STYLE: Record<Phase["tasks"][number]["status"], string> = {
-  done: "text-[oklch(0.78_0.11_165)] bg-[oklch(0.62_0.09_165/0.12)] border-[oklch(0.62_0.09_165/0.35)]",
+  done: "text-[oklch(0.85_0.19_158)] bg-[oklch(0.74_0.17_162/0.12)] border-[oklch(0.74_0.17_162/0.35)]",
   active:
-    "text-[oklch(0.8_0.1_75)] bg-[oklch(0.74_0.11_75/0.12)] border-[oklch(0.74_0.11_75/0.35)]",
+    "text-[oklch(0.86_0.17_80)] bg-[oklch(0.8_0.15_80/0.12)] border-[oklch(0.8_0.15_80/0.35)]",
   queued:
     "text-[var(--shield-text-dim)] bg-[oklch(0.3_0.02_220/0.5)] border-[oklch(0.5_0.04_200/0.25)]",
   "at-risk":
@@ -29,11 +29,11 @@ export default function JourneyExplorer() {
   const accent = ACCENT_MAP[active.accent];
 
   return (
-    <section id="journey" className="relative w-full bg-[var(--shield-ink)] py-20 sm:py-28">
+    <section id="journey" className="relative w-full bg-transparent py-20 sm:py-28">
       {/* section heading */}
       <Reveal className="mx-auto mb-12 max-w-7xl px-5 sm:px-8">
-        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[oklch(0.78_0.11_165)]">
-          <span className="h-px w-8 bg-[oklch(0.62_0.09_165/0.5)]" />
+        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[oklch(0.85_0.19_158)]">
+          <span className="h-px w-8 bg-[oklch(0.74_0.17_162/0.5)]" />
           The Four-Phase Journey
         </div>
         <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-[var(--shield-text)] sm:text-5xl">
@@ -52,7 +52,7 @@ export default function JourneyExplorer() {
         <div className="as-perspective">
           <div className="as-preserve-3d relative">
             {/* connecting path */}
-            <div className="absolute left-0 right-0 top-1/2 -z-10 h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-[oklch(0.62_0.09_165/0.35)] to-transparent" />
+            <div className="absolute left-0 right-0 top-1/2 -z-10 h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-[oklch(0.74_0.17_162/0.35)] to-transparent" />
             <div className="absolute left-0 right-0 top-1/2 -z-10 h-32 -translate-y-1/2 as-bg-grid-fine opacity-30 [transform:rotateX(60deg)translateZ(-40px)]" />
 
             {/* station selector */}
@@ -82,7 +82,7 @@ export default function JourneyExplorer() {
                     >
                       {/* active inner glow */}
                       {isActive && (
-                        <div className="pointer-events-none absolute inset-0 [background:radial-gradient(120%_80%_at_50%_0%,oklch(0.62_0.09_165/0.18),transparent_65%)]" />
+                        <div className="pointer-events-none absolute inset-0 [background:radial-gradient(120%_80%_at_50%_0%,oklch(0.74_0.17_162/0.18),transparent_65%)]" />
                       )}
                       {/* phase index */}
                       <div className="flex items-center justify-between">
@@ -185,7 +185,7 @@ export default function JourneyExplorer() {
                   {active.agenticActions.map((action) => (
                     <li
                       key={action}
-                      className="flex items-start gap-2 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.4)] p-3 text-sm text-[var(--shield-text)]"
+                      className="flex items-start gap-2 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.4)] p-3 text-sm text-[var(--shield-text)]"
                     >
                       <Check className={`mt-0.5 h-4 w-4 shrink-0 ${accent.text}`} />
                       <span>{action}</span>
@@ -199,7 +199,7 @@ export default function JourneyExplorer() {
                 {active.stats.map((s) => (
                   <div
                     key={s.label}
-                    className="bg-[oklch(0.185_0.014_235/0.5)] px-3 py-3"
+                    className="bg-[oklch(0.22_0.025_165/0.5)] px-3 py-3"
                   >
                     <div className={`text-lg font-semibold ${accent.text}`}>
                       {s.value}
@@ -229,10 +229,10 @@ export default function JourneyExplorer() {
                   return (
                     <div
                       key={task.id}
-                      className="group rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.4)] p-4 transition hover:border-[oklch(0.62_0.09_165/0.4)] hover:bg-[oklch(0.2_0.014_235/0.6)]"
+                      className="group rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.4)] p-4 transition hover:border-[oklch(0.74_0.17_162/0.4)] hover:bg-[oklch(0.24_0.028_165/0.6)]"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--shield-border)] bg-[oklch(0.16_0.02_220/0.6)]">
+                        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[var(--shield-border)] bg-[oklch(0.18_0.022_165/0.6)]">
                           <TaskIcon className={`h-4 w-4 ${accent.text}`} />
                         </span>
                         <div className="min-w-0 flex-1">
@@ -262,7 +262,7 @@ export default function JourneyExplorer() {
                           )}
                         </div>
                         {task.agentic && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[oklch(0.62_0.09_165)]">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-[oklch(0.74_0.17_162)]">
                             <Sparkles className="h-3 w-3" />
                             agentic
                           </span>
@@ -274,7 +274,7 @@ export default function JourneyExplorer() {
               </div>
 
               <button
-                className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.5)] py-2.5 text-xs font-semibold text-[var(--shield-text)] transition hover:border-[oklch(0.62_0.09_165/0.4)] hover:bg-[oklch(0.2_0.014_235/0.7)]"
+                className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] py-2.5 text-xs font-semibold text-[var(--shield-text)] transition hover:border-[oklch(0.74_0.17_162/0.4)] hover:bg-[oklch(0.24_0.028_165/0.7)]"
                 onClick={() => {
                   const el = document.getElementById("agent");
                   el?.scrollIntoView({ behavior: "smooth" });

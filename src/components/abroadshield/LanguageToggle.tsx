@@ -33,7 +33,7 @@ export default function LanguageToggle({ locale, onChange }: Props) {
     <div className="relative" data-lang-toggle>
       <button
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.62_0.09_165/0.4)] bg-[oklch(0.62_0.09_165/0.08)] px-3 py-1.5 text-xs font-medium text-[oklch(0.78_0.11_165)] backdrop-blur transition hover:border-[oklch(0.62_0.09_165/0.6)] hover:bg-[oklch(0.62_0.09_165/0.15)]"
+        className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.08)] px-3 py-1.5 text-xs font-medium text-[oklch(0.85_0.19_158)] backdrop-blur transition hover:border-[oklch(0.74_0.17_162/0.6)] hover:bg-[oklch(0.74_0.17_162/0.15)]"
         aria-label="Change language"
         aria-expanded={open}
       >
@@ -54,8 +54,8 @@ export default function LanguageToggle({ locale, onChange }: Props) {
               }}
               className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm transition ${
                 l.id === locale
-                  ? "bg-[oklch(0.62_0.09_165/0.15)] text-[oklch(0.78_0.11_165)]"
-                  : "text-[var(--shield-text)] hover:bg-[oklch(0.2_0.014_235/0.6)]"
+                  ? "bg-[oklch(0.74_0.17_162/0.15)] text-[oklch(0.85_0.19_158)]"
+                  : "text-[var(--shield-text)] hover:bg-[oklch(0.24_0.028_165/0.6)]"
               }`}
             >
               <span className="flex items-center gap-2">

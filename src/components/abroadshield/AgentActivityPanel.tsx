@@ -42,16 +42,16 @@ export default function AgentActivityPanel() {
   const visible = AGENT_FEED.slice(0, 6);
 
   return (
-    <section className="relative w-full bg-[var(--shield-ink)] py-20 sm:py-28">
+    <section className="relative w-full bg-transparent py-20 sm:py-28">
       {/* top divider glow */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.62_0.09_165/0.4)] to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.74_0.17_162/0.4)] to-transparent" />
 
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="grid gap-10 lg:grid-cols-[1fr_1.3fr] lg:gap-16">
           {/* left: pitch */}
           <Reveal className="lg:sticky lg:top-24 lg:self-start">
-            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[oklch(0.74_0.11_75)]">
-              <span className="h-px w-8 bg-[oklch(0.74_0.11_75/0.5)]" />
+            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[oklch(0.8_0.15_80)]">
+              <span className="h-px w-8 bg-[oklch(0.8_0.15_80/0.5)]" />
               Proactive, not reactive
             </div>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--shield-text)] sm:text-5xl">
@@ -68,10 +68,10 @@ export default function AgentActivityPanel() {
             </p>
 
             {/* agent status */}
-            <div className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-[oklch(0.62_0.09_165/0.35)] as-glass px-4 py-3">
+            <div className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-[oklch(0.74_0.17_162/0.35)] as-glass px-4 py-3">
               <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(0.62_0.09_165)] opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[oklch(0.62_0.09_165)]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(0.74_0.17_162)] opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[oklch(0.74_0.17_162)]" />
               </span>
               <div>
                 <div className="text-sm font-semibold text-[var(--shield-text)]">
@@ -90,8 +90,8 @@ export default function AgentActivityPanel() {
                 { k: "11", v: "Docs verified" },
                 { k: "2", v: "Alerts today" },
               ].map((s) => (
-                <div key={s.v} className="bg-[oklch(0.185_0.014_235/0.4)] px-3 py-4 text-center">
-                  <div className="text-2xl font-semibold text-[oklch(0.78_0.11_165)]">
+                <div key={s.v} className="bg-[oklch(0.22_0.025_165/0.4)] px-3 py-4 text-center">
+                  <div className="text-2xl font-semibold text-[oklch(0.85_0.19_158)]">
                     {s.k}
                   </div>
                   <div className="mt-0.5 text-[11px] text-[var(--shield-text-dim)]">{s.v}</div>
@@ -104,7 +104,7 @@ export default function AgentActivityPanel() {
           <Reveal delay={0.15} className="relative">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--shield-text-dim)]">
-                <Activity className="h-3.5 w-3.5 text-[oklch(0.62_0.09_165)]" />
+                <Activity className="h-3.5 w-3.5 text-[oklch(0.74_0.17_162)]" />
                 Live agent activity
               </div>
               <span className="text-xs text-[var(--shield-text-dim)]">
@@ -151,7 +151,7 @@ export default function AgentActivityPanel() {
                               className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
                                 isHot
                                   ? `${accent.bg} ${accent.border} ${accent.text}`
-                                  : "border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.5)] text-[var(--shield-text-dim)]"
+                                  : "border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] text-[var(--shield-text-dim)]"
                               }`}
                             >
                               <Zap className="h-2.5 w-2.5" />
@@ -189,7 +189,7 @@ export default function AgentActivityPanel() {
             {/* footer note */}
             <div className="mt-4 rounded-2xl border border-dashed border-[var(--shield-border)] p-4 text-center">
               <p className="text-xs text-[var(--shield-text-dim)]">
-                <span className="font-semibold text-[oklch(0.78_0.11_165)]">Human-in-the-loop:</span>{" "}
+                <span className="font-semibold text-[oklch(0.85_0.19_158)]">Human-in-the-loop:</span>{" "}
                 the agent never sends a single thing on your behalf without your one-tap
                 approval. It does the work — you stay in control.
               </p>

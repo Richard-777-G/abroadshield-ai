@@ -146,15 +146,15 @@ export default function AgentChat() {
   return (
     <section
       id="agent"
-      className="relative w-full scroll-mt-20 bg-[var(--shield-ink)] py-20 sm:py-28"
+      className="relative w-full scroll-mt-20 bg-transparent py-20 sm:py-28"
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.62_0.09_165/0.4)] to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.74_0.17_162/0.4)] to-transparent" />
       <div className="pointer-events-none absolute inset-0 as-radial-emerald opacity-50" />
 
       <div className="relative mx-auto max-w-5xl px-5 sm:px-8">
         {/* heading */}
         <Reveal className="mb-10 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.62_0.09_165/0.4)] bg-[oklch(0.62_0.09_165/0.08)] px-3 py-1 text-[11px] font-medium tracking-wide text-[oklch(0.78_0.11_165)]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.08)] px-3 py-1 text-[11px] font-medium tracking-wide text-[oklch(0.85_0.19_158)]">
             <Sparkles className="h-3 w-3" />
             Talk to the actual agent · powered by live LLM
           </div>
@@ -170,13 +170,13 @@ export default function AgentChat() {
         </Reveal>
 
         {/* chat surface */}
-        <div className="overflow-hidden rounded-3xl border border-[oklch(0.62_0.09_165/0.3)] as-glass-strong">
+        <div className="overflow-hidden rounded-3xl border border-[oklch(0.74_0.17_162/0.3)] as-glass-strong">
           {/* header */}
-          <div className="flex items-center justify-between border-b border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.5)] px-5 py-3.5">
+          <div className="flex items-center justify-between border-b border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] px-5 py-3.5">
             <div className="flex items-center gap-3">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-[oklch(0.62_0.09_165/0.5)] bg-[oklch(0.62_0.09_165/0.12)]">
-                <Bot className="h-4.5 w-4.5 text-[oklch(0.78_0.11_165)]" />
-                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[oklch(0.185_0.014_235)] bg-[oklch(0.62_0.09_165)] as-pulse" />
+              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-[oklch(0.74_0.17_162/0.5)] bg-[oklch(0.74_0.17_162/0.12)]">
+                <Bot className="h-4.5 w-4.5 text-[oklch(0.85_0.19_158)]" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[oklch(0.22_0.025_165)] bg-[oklch(0.74_0.17_162)] as-pulse" />
               </div>
               <div>
                 <div className="text-sm font-semibold text-[var(--shield-text)]">
@@ -189,7 +189,7 @@ export default function AgentChat() {
             </div>
             <button
               onClick={reset}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.5)] px-3 py-1.5 text-[11px] font-medium text-[var(--shield-text-dim)] transition hover:text-[var(--shield-text)]"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] px-3 py-1.5 text-[11px] font-medium text-[var(--shield-text-dim)] transition hover:text-[var(--shield-text)]"
             >
               <RotateCcw className="h-3 w-3" />
               Reset
@@ -199,7 +199,7 @@ export default function AgentChat() {
           {/* messages */}
           <div
             ref={scrollRef}
-            className="as-scroll max-h-[460px] min-h-[340px] space-y-4 overflow-y-auto bg-[oklch(0.145_0.012_235/0.5)] p-5 sm:p-6"
+            className="as-scroll max-h-[460px] min-h-[340px] space-y-4 overflow-y-auto bg-[oklch(0.14_0.018_165)/0.5)] p-5 sm:p-6"
           >
             {messages.map((m) => (
               <MessageBubble key={m.id} message={m} onAction={markAction} />
@@ -208,7 +208,7 @@ export default function AgentChat() {
 
           {/* starters */}
           {messages.length <= 1 && (
-            <div className="border-t border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.4)] px-5 py-4 sm:px-6">
+            <div className="border-t border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.4)] px-5 py-4 sm:px-6">
               <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--shield-text-dim)]">
                 Try one
               </div>
@@ -218,7 +218,7 @@ export default function AgentChat() {
                     key={s.label}
                     onClick={() => send(s.prompt)}
                     disabled={sending}
-                    className="rounded-full border border-[oklch(0.62_0.09_165/0.35)] bg-[oklch(0.62_0.09_165/0.08)] px-3 py-1.5 text-xs font-medium text-[oklch(0.78_0.11_165)] transition hover:border-[oklch(0.62_0.09_165/0.6)] hover:bg-[oklch(0.62_0.09_165/0.15)] disabled:opacity-50"
+                    className="rounded-full border border-[oklch(0.74_0.17_162/0.35)] bg-[oklch(0.74_0.17_162/0.08)] px-3 py-1.5 text-xs font-medium text-[oklch(0.85_0.19_158)] transition hover:border-[oklch(0.74_0.17_162/0.6)] hover:bg-[oklch(0.74_0.17_162/0.15)] disabled:opacity-50"
                   >
                     {s.label}
                   </button>
@@ -228,7 +228,7 @@ export default function AgentChat() {
           )}
 
           {/* composer */}
-          <div className="border-t border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.5)] p-3 sm:p-4">
+          <div className="border-t border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] p-3 sm:p-4">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
@@ -242,12 +242,12 @@ export default function AgentChat() {
                 }}
                 rows={1}
                 placeholder="Draft me an email to the consulate…"
-                className="as-scroll max-h-32 flex-1 resize-none rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.145_0.012_235/0.7)] px-4 py-3 text-sm text-[var(--shield-text)] placeholder:text-[var(--shield-text-dim)] focus:border-[oklch(0.62_0.09_165/0.5)] focus:outline-none focus:ring-1 focus:ring-[oklch(0.62_0.09_165/0.4)]"
+                className="as-scroll max-h-32 flex-1 resize-none rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.14_0.018_165)/0.7)] px-4 py-3 text-sm text-[var(--shield-text)] placeholder:text-[var(--shield-text-dim)] focus:border-[oklch(0.74_0.17_162/0.5)] focus:outline-none focus:ring-1 focus:ring-[oklch(0.74_0.17_162/0.4)]"
               />
               <button
                 onClick={() => send(input)}
                 disabled={!input.trim() || sending}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[oklch(0.62_0.09_165)] text-[oklch(0.145_0.012_235)] transition hover:bg-[oklch(0.78_0.11_165)] disabled:opacity-40 disabled:hover:bg-[oklch(0.62_0.09_165)] as-glow-emerald"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[oklch(0.74_0.17_162)] text-[oklch(0.14_0.018_165))] transition hover:bg-[oklch(0.85_0.19_158)] disabled:opacity-40 disabled:hover:bg-[oklch(0.74_0.17_162)] as-glow-emerald"
                 aria-label="Send"
               >
                 {sending ? (
@@ -301,28 +301,28 @@ function MessageBubble({
       <div
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border ${
           isUser
-            ? "border-[oklch(0.5_0.04_200/0.3)] bg-[oklch(0.24_0.014_235/0.7)]"
-            : "border-[oklch(0.62_0.09_165/0.5)] bg-[oklch(0.62_0.09_165/0.12)]"
+            ? "border-[oklch(0.5_0.04_200/0.3)] bg-[oklch(0.24_0.028_165/0.7)]"
+            : "border-[oklch(0.74_0.17_162/0.5)] bg-[oklch(0.74_0.17_162/0.12)]"
         }`}
       >
         {isUser ? (
           <User className="h-4 w-4 text-[var(--shield-text-dim)]" />
         ) : (
-          <Bot className="h-4 w-4 text-[oklch(0.78_0.11_165)]" />
+          <Bot className="h-4 w-4 text-[oklch(0.85_0.19_158)]" />
         )}
       </div>
       <div
         className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
           isUser
-            ? "bg-[oklch(0.24_0.014_235/0.8)] text-[var(--shield-text)]"
-            : "border border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.7)] text-[var(--shield-text)]"
+            ? "bg-[oklch(0.24_0.028_165/0.8)] text-[var(--shield-text)]"
+            : "border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.7)] text-[var(--shield-text)]"
         }`}
       >
         {message.pending ? (
           <div className="flex items-center gap-1.5 py-0.5">
-            <span className="as-typing-dot h-2 w-2 rounded-full bg-[oklch(0.62_0.09_165)]" />
-            <span className="as-typing-dot h-2 w-2 rounded-full bg-[oklch(0.62_0.09_165)]" />
-            <span className="as-typing-dot h-2 w-2 rounded-full bg-[oklch(0.62_0.09_165)]" />
+            <span className="as-typing-dot h-2 w-2 rounded-full bg-[oklch(0.74_0.17_162)]" />
+            <span className="as-typing-dot h-2 w-2 rounded-full bg-[oklch(0.74_0.17_162)]" />
+            <span className="as-typing-dot h-2 w-2 rounded-full bg-[oklch(0.74_0.17_162)]" />
             <span className="ml-2 text-xs text-[var(--shield-text-dim)]">
               the agent is working…
             </span>
@@ -331,7 +331,7 @@ function MessageBubble({
           <span className="whitespace-pre-wrap">{message.content}</span>
         ) : (
           <>
-            <div className="prose prose-sm prose-invert max-w-none [&_a]:text-[oklch(0.78_0.11_165)] [&_a]:underline [&_code]:rounded [&_code]:bg-[oklch(0.145_0.012_235/0.8)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[oklch(0.8_0.1_75)] [&_code]:font-mono [&_code]:text-xs [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-[var(--shield-border)] [&_pre]:bg-[oklch(0.145_0.012_235/0.8)] [&_pre]:p-3 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_strong]:text-[oklch(0.78_0.11_165)] [&_ul]:my-1.5 [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-3">
+            <div className="prose prose-sm prose-invert max-w-none [&_a]:text-[oklch(0.85_0.19_158)] [&_a]:underline [&_code]:rounded [&_code]:bg-[oklch(0.14_0.018_165)/0.8)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[oklch(0.86_0.17_80)] [&_code]:font-mono [&_code]:text-xs [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-[var(--shield-border)] [&_pre]:bg-[oklch(0.14_0.018_165)/0.8)] [&_pre]:p-3 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_strong]:text-[oklch(0.85_0.19_158)] [&_ul]:my-1.5 [&_li]:my-0.5 [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-3 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-3">
               <ReactMarkdown
                 components={{
                   code({ className, children, ...props }) {
@@ -404,21 +404,21 @@ function DraftActionBar({
         </span>
         <button
           onClick={onApprove}
-          className="inline-flex items-center gap-1.5 rounded-full bg-[oklch(0.62_0.09_165)] px-3 py-1.5 text-xs font-semibold text-[oklch(0.145_0.012_235)] transition hover:bg-[oklch(0.78_0.11_165)] as-glow-emerald"
+          className="inline-flex items-center gap-1.5 rounded-full bg-[oklch(0.74_0.17_162)] px-3 py-1.5 text-xs font-semibold text-[oklch(0.14_0.018_165))] transition hover:bg-[oklch(0.85_0.19_158)] as-glow-emerald"
         >
           <Check className="h-3.5 w-3.5" />
           Approve &amp; send
         </button>
         <button
           onClick={onEdit}
-          className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.74_0.11_75/0.45)] bg-[oklch(0.74_0.11_75/0.1)] px-3 py-1.5 text-xs font-semibold text-[oklch(0.8_0.1_75)] transition hover:bg-[oklch(0.74_0.11_75/0.18)]"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.8_0.15_80/0.45)] bg-[oklch(0.8_0.15_80/0.1)] px-3 py-1.5 text-xs font-semibold text-[oklch(0.86_0.17_80)] transition hover:bg-[oklch(0.8_0.15_80/0.18)]"
         >
           <Pencil className="h-3.5 w-3.5" />
           Edit
         </button>
         <button
           onClick={onDecline}
-          className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.5_0.04_200/0.3)] bg-[oklch(0.185_0.014_235/0.5)] px-3 py-1.5 text-xs font-semibold text-[var(--shield-text-dim)] transition hover:border-[oklch(0.65_0.2_25/0.5)] hover:text-[oklch(0.72_0.2_25)]"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.5_0.04_200/0.3)] bg-[oklch(0.22_0.025_165/0.5)] px-3 py-1.5 text-xs font-semibold text-[var(--shield-text-dim)] transition hover:border-[oklch(0.65_0.2_25/0.5)] hover:text-[oklch(0.72_0.2_25)]"
         >
           <X className="h-3.5 w-3.5" />
           Decline
@@ -439,10 +439,10 @@ function DraftActionBar({
 
   const chipClass =
     action === "approved"
-      ? "border-[oklch(0.62_0.09_165/0.45)] bg-[oklch(0.62_0.09_165/0.12)] text-[oklch(0.78_0.11_165)]"
+      ? "border-[oklch(0.74_0.17_162/0.45)] bg-[oklch(0.74_0.17_162/0.12)] text-[oklch(0.85_0.19_158)]"
       : action === "edited"
-        ? "border-[oklch(0.74_0.11_75/0.45)] bg-[oklch(0.74_0.11_75/0.12)] text-[oklch(0.8_0.1_75)]"
-        : "border-[oklch(0.5_0.04_200/0.3)] bg-[oklch(0.185_0.014_235/0.5)] text-[var(--shield-text-dim)]";
+        ? "border-[oklch(0.8_0.15_80/0.45)] bg-[oklch(0.8_0.15_80/0.12)] text-[oklch(0.86_0.17_80)]"
+        : "border-[oklch(0.5_0.04_200/0.3)] bg-[oklch(0.22_0.025_165/0.5)] text-[var(--shield-text-dim)]";
 
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--shield-border)] pt-3">
@@ -456,7 +456,7 @@ function DraftActionBar({
       </span>
       <button
         onClick={onCopy}
-        className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.5)] px-2.5 py-1 text-[11px] font-medium text-[var(--shield-text-dim)] transition hover:text-[var(--shield-text)]"
+        className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] px-2.5 py-1 text-[11px] font-medium text-[var(--shield-text-dim)] transition hover:text-[var(--shield-text)]"
       >
         {copied ? (
           <>

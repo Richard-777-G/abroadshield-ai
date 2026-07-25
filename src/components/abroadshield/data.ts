@@ -746,32 +746,32 @@ export const ACCENT_MAP: Record<
   { text: string; border: string; bg: string; glow: string; dot: string }
 > = {
   emerald: {
-    text: "text-[oklch(0.78_0.11_165)]",
-    border: "border-[oklch(0.62_0.09_165/0.38)]",
-    bg: "bg-[oklch(0.62_0.09_165/0.1)]",
+    text: "text-[oklch(0.85_0.19_158)]",
+    border: "border-[oklch(0.74_0.17_162/0.45)]",
+    bg: "bg-[oklch(0.74_0.17_162/0.12)]",
     glow: "as-glow-emerald",
-    dot: "bg-[oklch(0.62_0.09_165)]",
+    dot: "bg-[oklch(0.74_0.17_162)]",
   },
   amber: {
-    text: "text-[oklch(0.8_0.1_75)]",
-    border: "border-[oklch(0.74_0.11_75/0.4)]",
-    bg: "bg-[oklch(0.74_0.11_75/0.1)]",
+    text: "text-[oklch(0.86_0.17_80)]",
+    border: "border-[oklch(0.8_0.15_80/0.45)]",
+    bg: "bg-[oklch(0.8_0.15_80/0.12)]",
     glow: "as-glow-amber",
-    dot: "bg-[oklch(0.74_0.11_75)]",
+    dot: "bg-[oklch(0.8_0.15_80)]",
   },
   violet: {
-    text: "text-[oklch(0.72_0.1_295)]",
-    border: "border-[oklch(0.58_0.12_295/0.38)]",
-    bg: "bg-[oklch(0.58_0.12_295/0.1)]",
+    text: "text-[oklch(0.78_0.16_300)]",
+    border: "border-[oklch(0.64_0.16_300/0.45)]",
+    bg: "bg-[oklch(0.64_0.16_300/0.12)]",
     glow: "as-glow-emerald",
-    dot: "bg-[oklch(0.58_0.12_295)]",
+    dot: "bg-[oklch(0.64_0.16_300)]",
   },
   cyan: {
-    text: "text-[oklch(0.78_0.07_215)]",
-    border: "border-[oklch(0.7_0.08_215/0.38)]",
-    bg: "bg-[oklch(0.7_0.08_215/0.1)]",
+    text: "text-[oklch(0.82_0.13_210)]",
+    border: "border-[oklch(0.74_0.13_210/0.45)]",
+    bg: "bg-[oklch(0.74_0.13_210/0.12)]",
     glow: "as-glow-emerald",
-    dot: "bg-[oklch(0.7_0.08_215)]",
+    dot: "bg-[oklch(0.74_0.13_210)]",
   },
 };
 
@@ -832,27 +832,27 @@ export const SEVERITY_STYLE: Record<
 > = {
   done: {
     label: "Completed",
-    dot: "bg-[oklch(0.5_0.015_235)]",
-    ring: "ring-[oklch(0.5_0.02_235/0.4)]",
-    text: "text-[oklch(0.6_0.012_220)]",
+    dot: "bg-[oklch(0.5_0.02_165)]",
+    ring: "ring-[oklch(0.6_0.04_165/0.4)]",
+    text: "text-[oklch(0.68_0.02_165)]",
   },
   info: {
     label: "Upcoming",
-    dot: "bg-[oklch(0.62_0.09_165)]",
-    ring: "ring-[oklch(0.62_0.09_165/0.45)]",
-    text: "text-[oklch(0.78_0.11_165)]",
+    dot: "bg-[oklch(0.74_0.17_162)]",
+    ring: "ring-[oklch(0.74_0.17_162/0.5)]",
+    text: "text-[oklch(0.85_0.19_158)]",
   },
   warning: {
     label: "Action needed",
-    dot: "bg-[oklch(0.74_0.11_75)]",
-    ring: "ring-[oklch(0.74_0.11_75/0.5)]",
-    text: "text-[oklch(0.8_0.1_75)]",
+    dot: "bg-[oklch(0.8_0.15_80)]",
+    ring: "ring-[oklch(0.8_0.15_80/0.55)]",
+    text: "text-[oklch(0.86_0.17_80)]",
   },
   critical: {
     label: "Critical",
-    dot: "bg-[oklch(0.64_0.16_22)]",
-    ring: "ring-[oklch(0.64_0.16_22/0.55)]",
-    text: "text-[oklch(0.7_0.16_22)]",
+    dot: "bg-[oklch(0.66_0.19_22)]",
+    ring: "ring-[oklch(0.66_0.19_22/0.6)]",
+    text: "text-[oklch(0.72_0.19_22)]",
   },
 };
 

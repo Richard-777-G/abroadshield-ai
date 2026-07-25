@@ -13,7 +13,7 @@ import VisionCTA from "@/components/abroadshield/VisionCTA";
 
 export default function Home() {
   return (
-    <div className="relative flex min-h-screen flex-col bg-[var(--shield-ink)]">
+    <div className="relative flex min-h-screen flex-col bg-transparent">
       <SiteHeader />
 
       <main className="flex-1">

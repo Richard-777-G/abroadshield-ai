@@ -69,15 +69,15 @@ export default function DeadlineTimeline() {
   const active = hovered ?? selected;
 
   return (
-    <section className="relative w-full bg-[var(--shield-ink)] py-20 sm:py-28">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.74_0.11_75/0.35)] to-transparent" />
+    <section className="relative w-full bg-transparent py-20 sm:py-28">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.8_0.15_80/0.35)] to-transparent" />
       <div className="pointer-events-none absolute inset-0 as-bg-grid-fine opacity-20" />
 
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         {/* heading */}
         <Reveal className="mb-10 max-w-2xl">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[oklch(0.74_0.11_75)]">
-            <span className="h-px w-8 bg-[oklch(0.74_0.11_75/0.5)]" />
+          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[oklch(0.8_0.15_80)]">
+            <span className="h-px w-8 bg-[oklch(0.8_0.15_80/0.5)]" />
             27 deadlines · one rail
           </div>
           <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--shield-text)] sm:text-5xl">
@@ -93,7 +93,7 @@ export default function DeadlineTimeline() {
 
         {/* filters + legend */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-1 rounded-full border border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.5)] p-1">
+          <div className="flex flex-wrap items-center gap-1 rounded-full border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] p-1">
             <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
               All phases
             </FilterChip>
@@ -154,17 +154,17 @@ export default function DeadlineTimeline() {
                   </div>
 
                   {/* lane track */}
-                  <div className="relative h-10 rounded-lg border border-[var(--shield-border)] bg-[oklch(0.145_0.012_235/0.6)]">
+                  <div className="relative h-10 rounded-lg border border-[var(--shield-border)] bg-[oklch(0.14_0.018_165)/0.6)]">
                     {/* phase tint */}
                     <div
                       className={`absolute inset-0 rounded-lg ${accent.bg} opacity-40`}
                     />
                     {/* today marker (only show on first lane visually, but keep on all) */}
                     <div
-                      className="absolute inset-y-0 z-20 w-px bg-[oklch(0.78_0.11_165)]"
+                      className="absolute inset-y-0 z-20 w-px bg-[oklch(0.85_0.19_158)]"
                       style={{ left: `${todayPct}%` }}
                     >
-                      <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-[oklch(0.78_0.11_165)] as-pulse" />
+                      <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-[oklch(0.85_0.19_158)] as-pulse" />
                     </div>
                     {/* day ticks */}
                     {[-30, 0, 30, 90, 180, 365].map((tick) => {
@@ -202,8 +202,8 @@ export default function DeadlineTimeline() {
                           aria-label={`${d.label} — ${d.day < 0 ? `${Math.abs(d.day)}d ago` : d.day === 0 ? "today" : `in ${d.day}d`}`}
                         >
                           <span
-                            className={`pointer-events-none block h-3.5 w-3.5 rounded-full ${sev.dot} ring-2 ring-offset-1 ring-offset-[oklch(0.145_0.012_235)] transition-all ${
-                              isActive ? `scale-150 ${sev.ring} ring-2` : "ring-[oklch(0.145_0.012_235)]"
+                            className={`pointer-events-none block h-3.5 w-3.5 rounded-full ${sev.dot} ring-2 ring-offset-1 ring-offset-[oklch(0.14_0.018_165))] transition-all ${
+                              isActive ? `scale-150 ${sev.ring} ring-2` : "ring-[oklch(0.14_0.018_165))]"
                             } group-hover:scale-150`}
                           />
                           {d.severity === "critical" && (
@@ -239,7 +239,7 @@ export default function DeadlineTimeline() {
                   <span
                     key={t.d}
                     className={`absolute -translate-x-1/2 ${
-                      isToday ? "font-semibold text-[oklch(0.78_0.11_165)]" : ""
+                      isToday ? "font-semibold text-[oklch(0.85_0.19_158)]" : ""
                     }`}
                     style={{ left: `${pct}%` }}
                   >
@@ -259,7 +259,7 @@ export default function DeadlineTimeline() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.2 }}
-                className="mt-5 overflow-hidden rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.85)] p-4 backdrop-blur"
+                className="mt-5 overflow-hidden rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.85)] p-4 backdrop-blur"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
@@ -278,7 +278,7 @@ export default function DeadlineTimeline() {
                         <span
                           className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
                             SEVERITY_STYLE[active.severity].text
-                          } border-current bg-[oklch(0.145_0.012_235/0.6)]`}
+                          } border-current bg-[oklch(0.14_0.018_165)/0.6)]`}
                         >
                           {SEVERITY_STYLE[active.severity].label}
                         </span>
@@ -301,7 +301,7 @@ export default function DeadlineTimeline() {
                   </div>
 
                   {/* agent cue */}
-                  <div className="flex items-center gap-1.5 rounded-full border border-[oklch(0.62_0.09_165/0.35)] bg-[oklch(0.62_0.09_165/0.08)] px-2.5 py-1 text-[10px] font-medium text-[oklch(0.78_0.11_165)]">
+                  <div className="flex items-center gap-1.5 rounded-full border border-[oklch(0.74_0.17_162/0.35)] bg-[oklch(0.74_0.17_162/0.08)] px-2.5 py-1 text-[10px] font-medium text-[oklch(0.85_0.19_158)]">
                     <Zap className="h-3 w-3" />
                     {active.severity === "done"
                       ? "Logged by agent"
@@ -329,12 +329,12 @@ export default function DeadlineTimeline() {
               return (
                 <div
                   key={s.k}
-                  className="flex items-center gap-2.5 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.185_0.014_235/0.4)] px-3 py-2.5"
+                  className="flex items-center gap-2.5 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.4)] px-3 py-2.5"
                 >
                   <span
                     className={`flex h-7 w-7 items-center justify-center rounded-lg ${SEVERITY_STYLE[s.k].dot} bg-opacity-20`}
                   >
-                    <Icon className="h-3.5 w-3.5 text-[oklch(0.145_0.012_235)]" />
+                    <Icon className="h-3.5 w-3.5 text-[oklch(0.14_0.018_165))]" />
                   </span>
                   <div>
                     <div className="text-lg font-semibold text-[var(--shield-text)]">
@@ -357,8 +357,8 @@ export default function DeadlineTimeline() {
 function SeverityIcon({ severity }: { severity: Deadline["severity"] }) {
   const cls = "h-4 w-4";
   if (severity === "done") return <CheckCircle2 className={`${cls} text-[oklch(0.65_0.02_200)]`} />;
-  if (severity === "info") return <Info className={`${cls} text-[oklch(0.78_0.11_165)]`} />;
-  if (severity === "warning") return <AlertTriangle className={`${cls} text-[oklch(0.8_0.1_75)]`} />;
+  if (severity === "info") return <Info className={`${cls} text-[oklch(0.85_0.19_158)]`} />;
+  if (severity === "warning") return <AlertTriangle className={`${cls} text-[oklch(0.86_0.17_80)]`} />;
   return <CalendarClock className={`${cls} text-[oklch(0.72_0.2_25)]`} />;
 }
 
@@ -373,17 +373,17 @@ function FilterChip({
   children: React.ReactNode;
   accent?: "emerald" | "amber" | "violet" | "cyan";
 }) {
-  const accentDot = accent ? ACCENT_MAP[accent].dot : "bg-[oklch(0.62_0.09_165)]";
+  const accentDot = accent ? ACCENT_MAP[accent].dot : "bg-[oklch(0.74_0.17_162)]";
   return (
     <button
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ${
         active
-          ? "bg-[oklch(0.62_0.09_165)] text-[oklch(0.145_0.012_235)]"
+          ? "bg-[oklch(0.74_0.17_162)] text-[oklch(0.14_0.018_165))]"
           : "text-[var(--shield-text-dim)] hover:text-[var(--shield-text)]"
       }`}
     >
-      {accent && <span className={`h-1.5 w-1.5 rounded-full ${active ? "bg-[oklch(0.145_0.012_235)]" : accentDot}`} />}
+      {accent && <span className={`h-1.5 w-1.5 rounded-full ${active ? "bg-[oklch(0.14_0.018_165))]" : accentDot}`} />}
       {children}
     </button>
   );
