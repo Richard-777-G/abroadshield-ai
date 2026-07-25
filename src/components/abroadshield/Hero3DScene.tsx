@@ -1,165 +1,122 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, Suspense } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Float, Icosahedron, Torus, Sparkles, Points, PointMaterial } from "@react-three/drei";
+import {
+  Environment,
+  MeshTransmissionMaterial,
+  ContactShadows,
+  Float,
+  Sparkles,
+} from "@react-three/drei";
 import * as THREE from "three";
-import { PHASES } from "./data";
 
 /**
- * The core shield geometry — a faceted icosahedron with an emissive
- * emerald core, wrapped in a translucent wireframe shell. Slowly
- * rotates and breathes.
+ * The hero artifact — a single polished glass torus knot.
+ *
+ * Design intent (senior-designer pass):
+ *  - ONE object, not a constellation of primitives.
+ *  - Real materiality: transmission, roughness, thickness-based tint.
+ *  - Slow, deliberate motion — no spinning screensaver energy.
+ *  - Grounded with a soft contact shadow so it has weight.
+ *  - A faint particle field for depth, not chaos.
  */
-function ShieldCore() {
-  const inner = useRef<THREE.Mesh>(null!);
-  const wire = useRef<THREE.Mesh>(null!);
+function GlassArtifact() {
+  const ref = useRef<THREE.Mesh>(null!);
 
-  useFrame((state) => {
-    const t = state.clock.getElapsedTime();
-    if (inner.current) {
-      inner.current.rotation.y = t * 0.18;
-      inner.current.rotation.x = Math.sin(t * 0.3) * 0.12;
-      const s = 1 + Math.sin(t * 0.9) * 0.025;
-      inner.current.scale.setScalar(s);
-    }
-    if (wire.current) {
-      wire.current.rotation.y = -t * 0.12;
-      wire.current.rotation.z = t * 0.05;
-    }
+  useFrame((state, delta) => {
+    if (!ref.current) return;
+    // gentle, slow rotation — deliberately unhurried
+    ref.current.rotation.y += delta * 0.12;
+    ref.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.18) * 0.12;
   });
 
   return (
-    <group>
-      {/* glowing core */}
-      <Icosahedron ref={inner} args={[1.0, 0]}>
-        <meshStandardMaterial
-          color="#2dd4a7"
-          emissive="#0fd4a7"
-          emissiveIntensity={0.7}
-          roughness={0.25}
-          metalness={0.5}
-          transparent
-          opacity={0.62}
-          flatShading
+    <Float speed={1.2} rotationIntensity={0.15} floatIntensity={0.4}>
+      <mesh ref={ref} castShadow>
+        <torusKnotGeometry args={[1.1, 0.34, 220, 32, 2, 3]} />
+        <MeshTransmissionMaterial
+          backside
+          samples={6}
+          thickness={1.2}
+          chromaticAberration={0.06}
+          anisotropicBlur={0.1}
+          distortion={0.2}
+          distortionScale={0.4}
+          temporalDistortion={0.1}
+          roughness={0.08}
+          ior={1.25}
+          color="#bfe9da"
+          attenuationColor="#5fc7a8"
+          attenuationDistance={1.4}
+          background={new THREE.Color("#0e1118")}
         />
-      </Icosahedron>
-      {/* wireframe shell */}
-      <Icosahedron ref={wire} args={[1.45, 1]}>
-        <meshBasicMaterial
-          color="#7fffd4"
-          wireframe
-          transparent
-          opacity={0.32}
-        />
-      </Icosahedron>
-      {/* inner light */}
-      <pointLight position={[0, 0, 0]} color="#2dd4a7" intensity={2.4} distance={6} />
-    </group>
+      </mesh>
+    </Float>
   );
 }
 
 /**
- * Four orbiting phase rings — one per journey phase, each tilted on a
- * different axis and tinted with its phase accent.
+ * A faint, atmospheric particle field — depth without noise.
+ * Far fewer points than before, larger and softer.
  */
-function PhaseRings() {
-  const group = useRef<THREE.Group>(null!);
-
-  useFrame((state) => {
-    const t = state.clock.getElapsedTime();
-    if (group.current) {
-      group.current.rotation.y = t * 0.08;
-      group.current.rotation.x = Math.sin(t * 0.2) * 0.04;
-    }
-  });
-
-  const rings = PHASES.map((p, i) => {
-    const radius = 2.35 + i * 0.32;
-    const tube = 0.012;
-    const tilt = (Math.PI / 2.6) + i * 0.18;
-    const yaw = (i / PHASES.length) * Math.PI * 2;
-    return (
-      <group key={p.id} rotation={[tilt, yaw, 0]}>
-        <Torus args={[radius, tube, 16, 96]}>
-          <meshBasicMaterial color={p.colorHex} transparent opacity={0.55} />
-        </Torus>
-        {/* phase node on the ring */}
-        <mesh position={[radius, 0, 0]}>
-          <sphereGeometry args={[0.075, 24, 24]} />
-          <meshStandardMaterial
-            color={p.colorHex}
-            emissive={p.colorHex}
-            emissiveIntensity={1.4}
-          />
-        </mesh>
-        {/* tiny glow halo around the node */}
-        <mesh position={[radius, 0, 0]}>
-          <sphereGeometry args={[0.14, 16, 16]} />
-          <meshBasicMaterial color={p.colorHex} transparent opacity={0.18} />
-        </mesh>
-      </group>
-    );
-  });
-
-  return <group ref={group}>{rings}</group>;
-}
-
-/**
- * Particle field — drifting motes that suggest a wider universe the
- * student is stepping into.
- */
-function ParticleField() {
-  const positions = useMemo(() => {
-    const count = 600;
-    const arr = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      const r = 4 + Math.random() * 6;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      arr[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      arr[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.6;
-      arr[i * 3 + 2] = r * Math.cos(phi);
-    }
-    return arr;
-  }, []);
-
+function Atmosphere() {
   const ref = useRef<THREE.Points>(null!);
-  useFrame((state, delta) => {
-    if (ref.current) {
-      ref.current.rotation.y += delta * 0.02;
-    }
+  useFrame((_, delta) => {
+    if (ref.current) ref.current.rotation.y += delta * 0.015;
   });
 
+  // build a thin spherical shell of points
+  const geo = useRef<THREE.BufferGeometry>(null!);
   return (
-    <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
-      <PointMaterial
+    <points ref={ref}>
+      <bufferGeometry ref={geo}>
+        <bufferAttribute
+          attach="attributes-position"
+          args={[
+            (() => {
+              const n = 240;
+              const arr = new Float32Array(n * 3);
+              for (let i = 0; i < n; i++) {
+                const r = 3.5 + Math.random() * 2;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.acos(2 * Math.random() - 1);
+                arr[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+                arr[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.7;
+                arr[i * 3 + 2] = r * Math.cos(phi);
+              }
+              return arr;
+            })(),
+            3,
+          ]}
+        />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.018}
+        color="#9fcfc0"
         transparent
-        color="#9ff5dd"
-        size={0.025}
+        opacity={0.45}
         sizeAttenuation
         depthWrite={false}
-        opacity={0.7}
       />
-    </Points>
+    </points>
   );
 }
 
 /**
- * Soft parallax: the whole scene drifts slightly with the pointer,
- * giving a real 3D feel without forcing the user to drag.
+ * Subtle pointer parallax — the whole rig drifts a few degrees with the
+ * cursor. Deliberately restrained.
  */
 function ParallaxRig({ children }: { children: React.ReactNode }) {
   const group = useRef<THREE.Group>(null!);
   const { pointer } = useThree();
 
   useFrame(() => {
-    if (group.current) {
-      group.current.rotation.y +=
-        (pointer.x * 0.35 - group.current.rotation.y) * 0.04;
-      group.current.rotation.x +=
-        (-pointer.y * 0.25 - group.current.rotation.x) * 0.04;
-    }
+    if (!group.current) return;
+    group.current.rotation.y +=
+      (pointer.x * 0.22 - group.current.rotation.y) * 0.035;
+    group.current.rotation.x +=
+      (-pointer.y * 0.16 - group.current.rotation.x) * 0.035;
   });
 
   return <group ref={group}>{children}</group>;
@@ -168,32 +125,54 @@ function ParallaxRig({ children }: { children: React.ReactNode }) {
 export default function Hero3DScene() {
   return (
     <Canvas
-      camera={{ position: [0.8, 0, 7.2], fov: 42 }}
+      camera={{ position: [0.4, 0.2, 5.2], fov: 38 }}
       dpr={[1, 2]}
-      gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+      gl={{
+        antialias: true,
+        alpha: true,
+        powerPreference: "high-performance",
+        toneMapping: THREE.ACESFilmicToneMapping,
+        toneMappingExposure: 1.05,
+      }}
       style={{ width: "100%", height: "100%" }}
     >
+      {/* lighting rig: key + rim + fill */}
       <ambientLight intensity={0.35} />
-      <directionalLight position={[5, 5, 5]} intensity={0.8} color="#9ff5dd" />
-      <directionalLight position={[-5, -2, 2]} intensity={0.4} color="#ffb454" />
+      <directionalLight position={[4, 6, 4]} intensity={1.1} color="#eaf6ef" castShadow />
+      <directionalLight position={[-5, -1, 2]} intensity={0.35} color="#f3e6cf" />
+      <spotLight position={[0, 5, 3]} intensity={2.2} angle={0.6} penumbra={1} color="#bff0d8" />
 
-      <ParallaxRig>
-        <Float speed={1.4} rotationIntensity={0.18} floatIntensity={0.5}>
-          <ShieldCore />
-        </Float>
-        <PhaseRings />
-        <Sparkles
-          count={60}
+      <Suspense fallback={null}>
+        <ParallaxRig>
+          <GlassArtifact />
+          <Atmosphere />
+          {/* sparse, slow sparkles for life */}
+          <Sparkles
+            count={28}
+            scale={6}
+            size={1.6}
+            speed={0.12}
+            opacity={0.5}
+            color="#bfe9da"
+          />
+        </ParallaxRig>
+
+        {/* ground the artifact with a soft contact shadow */}
+        <ContactShadows
+          position={[0, -1.8, 0]}
+          opacity={0.35}
           scale={9}
-          size={2.4}
-          speed={0.3}
-          opacity={0.5}
-          color="#7fffd4"
+          blur={3.2}
+          far={4}
+          resolution={512}
+          color="#000814"
         />
-        <ParticleField />
-      </ParallaxRig>
 
-      <fog attach="fog" args={["#0a0e16", 8, 18]} />
+        {/* environment for realistic reflections on the glass */}
+        <Environment preset="studio" environmentIntensity={0.45} />
+      </Suspense>
+
+      <fog attach="fog" args={["#0e1118", 7, 16]} />
     </Canvas>
   );
 }
