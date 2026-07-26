@@ -14,11 +14,24 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                   String                 @id @default(cuid())
+  email                String                 @unique
+  name                 String?
+  linkedinUrl          String?
+  targetLocation       String?
+  targetPhase          String                 @default("pre-departure") // pre-departure, arrival, studying, job_success
+  cv                   String? // URL or base64-encoded
+  profileBio           String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  
+  // Relations
+  agentMemory          AgentMemory?
+  agentTasks           AgentTask[]
+  integrationCredentials IntegrationCredential[]
+  appliedJobs          AppliedJob[]
+  networkedContacts    NetworkContact[]
+  housingInquiries     HousingInquiry[]
 }
 
 model Post {
@@ -29,4 +42,337 @@ model Post {
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ============================================================================
+// AGENT SYSTEM MODELS
+// ============================================================================
+
+model AgentMemory {
+  id                String     @id @default(cuid())
+  userId            String     @unique
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Journey context
+  currentPhase      String     @default("pre-departure")
+  
+  // Goals & preferences (JSON for flexibility)
+  goals             String     @default("{}") // { wantJob: true, targetSectors: [...], targetCompanies: [...] }
+  preferences       String     @default("{}") // { locations: [...], budget: 5000, roomType: "studio" }
+  
+  // What we've done (track to avoid duplication)
+  appliedJobIds     String     @default("") // comma-separated
+  networkedWith     String     @default("") // comma-separated LinkedIn IDs
+  inquiredHousing   String     @default("") // comma-separated property IDs
+  
+  // Performance tracking
+  successMetrics    String     @default("{}") // { jobResponseRate: 0.15, networkEngagementRate: 0.32 }
+  
+  updatedAt         DateTime   @updatedAt
+  
+  @@index([userId])
+}
+
+model AgentTask {
+  id                String     @id @default(cuid())
+  userId            String
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Task type: "job_apply", "network_message", "housing_inquiry", "visa_check", "banking_setup"
+  type              String
+  
+  // Status flow: drafted → approved → executing → completed OR drafted → declined
+  status            String     @default("drafted") // drafted, approved, executing, completed, failed, declined
+  
+  // What the agent found / drafted
+  payload           String     // JSON: { jobId, company, jobTitle, draftCV, coverLetter, ... }
+  
+  // Student actions
+  studentAction     String?    // "approved", "edited", "declined"
+  editedContent     String?    // JSON: if student modified the draft
+  
+  // Execution result
+  result            String?    // "applied", "sent", "completed", "failed"
+  resultDetails     String?    // JSON: { linkedInApplicationUrl, messageDeliveryId, ... }
+  error             String?
+  
+  // Timestamps
+  createdAt         DateTime   @default(now())
+  approvedAt        DateTime?
+  executedAt        DateTime?
+  updatedAt         DateTime   @updatedAt
+  
+  @@index([userId, status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model IntegrationCredential {
+  id                String     @id @default(cuid())
+  userId            String
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // "linkedin", "lever", "indeed", "airbnb", "rightmove", "wise", etc.
+  service           String
+  
+  // Encrypted token/API key
+  encryptedKey      String
+  
+  // Additional metadata (e.g., which account, refresh token, etc.)
+  metadata          String     @default("{}")
+  
+  expiresAt         DateTime?
+  
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  
+  @@unique([userId, service])
+  @@index([userId])
+}
+
+// ============================================================================
+// JOB APPLYING SYSTEM
+// ============================================================================
+
+model JobListing {
+  id                String     @id @default(cuid())
+  
+  // Identification
+  externalId        String     // Platform-specific ID (LinkedIn ID, Lever posting ID, etc.)
+  source            String     // "linkedin", "lever", "greenhouse", "indeed", "angellist"
+  sourceUrl         String
+  
+  // Job details
+  title             String
+  company           String
+  companyLogo       String?
+  description       String
+  location          String
+  salary            String?    // "£50,000 - £70,000"
+  
+  // Metadata
+  postedDate        DateTime?
+  applicationDeadline DateTime?
+  jobType           String?    // "full-time", "contract", "internship"
+  level             String?    // "entry", "mid", "senior"
+  
+  // For matching
+  tags              String     @default("") // comma-separated: "fintech,python,london"
+  
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  
+  @@unique([externalId, source])
+  @@index([source])
+  @@index([company])
+  @@index([postedDate])
+}
+
+model AppliedJob {
+  id                String     @id @default(cuid())
+  userId            String
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  jobId             String
+  
+  // Job details snapshot (in case original is deleted)
+  company           String
+  jobTitle          String
+  jobUrl            String
+  
+  // Application details
+  customizedCV      String?    // Base64 or URL
+  coverLetter       String?
+  applicationMethod String     // "linkedin", "lever", "email", "form"
+  
+  // Status
+  status            String     @default("applied") // applied, interviewing, rejected, accepted, withdrawn
+  
+  // Tracking
+  appliedAt         DateTime   @default(now())
+  interviewDate     DateTime?
+  responseReceived  DateTime?
+  feedback          String?
+  
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  
+  @@unique([userId, jobId])
+  @@index([userId, status])
+  @@index([company])
+}
+
+// ============================================================================
+// NETWORKING SYSTEM
+// ============================================================================
+
+model NetworkTarget {
+  id                String     @id @default(cuid())
+  
+  // External platform ID
+  linkedInId        String?
+  externalId        String?
+  
+  // Person details
+  name              String
+  title             String?
+  company           String?
+  location          String?
+  bio               String?
+  
+  // Relevance scoring
+  relevanceScore    Float      @default(0.0) // 0-1
+  relevanceTags     String     @default("") // "alumni,fintech,hiring_manager"
+  
+  // Source tracking
+  source            String     // "linkedin", "alumni_network", "company_website", "event"
+  sourceMetadata    String     @default("") // JSON: { universityName, graduationYear, ... }
+  
+  // Cache
+  profileUrl        String?
+  profileImage      String?
+  
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  
+  @@unique([linkedInId])
+  @@index([relevanceScore])
+  @@index([source])
+}
+
+model NetworkContact {
+  id                String     @id @default(cuid())
+  userId            String
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  targetId          String
+  
+  // Contact details
+  name              String
+  title             String?
+  company           String?
+  platform          String     // "linkedin", "email", "alumni"
+  platformId        String     // LinkedIn ID, email, or other
+  
+  // Engagement tracking
+  messagesSent      Int        @default(0)
+  lastMessageDate   DateTime?
+  responses         Int        @default(0)
+  engagement        String     @default("none") // none, viewed, replied, connected, meeting_scheduled
+  
+  // Follow-up schedule
+  nextFollowUp      DateTime?
+  followUpCount     Int        @default(0)
+  
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  
+  @@unique([userId, platformId])
+  @@index([userId, engagement])
+  @@index([nextFollowUp])
+}
+
+// ============================================================================
+// HOUSING SYSTEM
+// ============================================================================
+
+model HousingListing {
+  id                String     @id @default(cuid())
+  
+  externalId        String     // Platform ID
+  source            String     // "spareroom", "rightmove", "openrent", "airbnb"
+  sourceUrl         String
+  
+  // Property details
+  address           String
+  area              String
+  postcode          String
+  
+  roomType          String     // "studio", "1bed", "shared", "halls"
+  rent              Float
+  currency          String     @default("GBP")
+  
+  amenities         String     @default("") // comma-separated
+  furnished         String?    // "unfurnished", "furnished", "part-furnished"
+  
+  // Dates
+  availableFrom     DateTime
+  minimumLease      String?    // "6 months"
+  
+  // Metadata
+  commuteMins       Int?       // Minutes to uni/workplace
+  safetyScore       Float?     // 0-10
+  landlordRating    Float?     // 0-5
+  landlordName      String?
+  landlordEmail     String?
+  landlordPhone     String?
+  
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  
+  @@unique([externalId, source])
+  @@index([source])
+  @@index([area])
+  @@index([rent])
+}
+
+model HousingInquiry {
+  id                String     @id @default(cuid())
+  userId            String
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  propertyId        String
+  
+  // Property snapshot
+  address           String
+  rent              Float
+  landlordEmail     String?
+  landlordName      String?
+  
+  // Communication
+  inquiryMessage    String     // Draft inquiry sent
+  proposedViewings  String     @default("") // JSON: [ "2024-02-15 10:00", ... ]
+  
+  // Status
+  status            String     @default("inquiry_sent") // inquiry_sent, landlord_responded, viewing_scheduled, application_submitted, declined
+  
+  landlordResponse  String?
+  viewingDate       DateTime?
+  applicationStatus String?    // "pending", "approved", "rejected"
+  
+  createdAt         DateTime   @default(now())
+  inquiredAt        DateTime   @default(now())
+  respondedAt       DateTime?
+  updatedAt         DateTime   @updatedAt
+  
+  @@unique([userId, propertyId])
+  @@index([userId, status])
+  @@index([viewingDate])
+}
+
+// ============================================================================
+// VISA & DOCUMENTATION TRACKING
+// ============================================================================
+
+model VisaApplication {
+  id                String     @id @default(cuid())
+  userId            String
+  
+  applicationType   String     // "student_visa", "work_visa", "dependant"
+  country           String     // "UK", "USA", "Canada"
+  
+  // Timeline
+  applicationDate   DateTime
+  appointmentDate   DateTime?
+  decisionDate      DateTime?
+  expiryDate        DateTime?
+  
+  status            String     @default("not_started") // not_started, submitted, biometrics, interview, approved, rejected, expired
+  
+  // Tracking
+  biometricsBooked  Boolean    @default(false)
+  documentsSubmitted String    @default("") // JSON: { passport: true, ielts: true, ... }
+  
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 }
