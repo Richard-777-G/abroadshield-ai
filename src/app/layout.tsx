@@ -1,65 +1,28 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
-import FloatingBackground from "@/components/abroadshield/ClientFloatingBackground";
-import ScrollProgress from "@/components/abroadshield/ScrollProgress";
+/**
+ * Root Layout with Auth Provider
+ */
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import type { Metadata } from 'next';
+import { SessionProvider } from 'next-auth/react';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "AbroadShield AI — One Agent. Four Phases. The Whole Journey.",
-  description:
-    "AbroadShield AI is an agentic AI that walks a student through the entire journey abroad — Pre-Departure, Arrival, Studying & Part-Time, and Job Success — with one continuous memory, proactive nudges, and real task execution.",
-  keywords: [
-    "AbroadShield",
-    "study abroad",
-    "agentic AI",
-    "visa assistant",
-    "international student",
-    "Pre-Departure",
-    "Job Success",
-  ],
-  authors: [{ name: "AbroadShield AI" }],
+  title: 'AbroadShield - AI Agent for Global Students',
+  description: 'Autonomous AI agent for job hunting, networking, and housing',
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
-  },
-  openGraph: {
-    title: "AbroadShield AI — One Agent. Four Phases. The Whole Journey.",
-    description:
-      "The one relationship every student going abroad can count on for the entire journey.",
-    siteName: "AbroadShield AI",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "AbroadShield AI",
-    description: "One AI. One memory. Four phases, start to finish.",
+    icon: '/favicon.ico',
   },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" suppressHydrationWarning className="dark">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <FloatingBackground />
-        <ScrollProgress />
-        {children}
-        <Toaster />
+    <html lang="en">
+      <body>
+        <SessionProvider>{children}</SessionProvider>
       </body>
     </html>
   );
