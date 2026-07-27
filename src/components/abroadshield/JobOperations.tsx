@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BriefcaseBusiness,
   CheckCircle2,
@@ -14,7 +14,16 @@ import Reveal from "./Reveal";
 
 type PermissionMode = "review" | "batch";
 
-const STARTER_QUEUE = [
+type QueueItem = {
+  id: string;
+  role: string;
+  company: string;
+  status: string;
+};
+
+const STORAGE_KEY = "abroadshield-job-operations-v1";
+
+const STARTER_QUEUE: QueueItem[] = [
   {
     id: "job-1",
     role: "Data Analyst Graduate Scheme",
@@ -40,6 +49,52 @@ export default function JobOperations() {
   const [location, setLocation] = useState("Manchester, United Kingdom");
   const [permission, setPermission] = useState<PermissionMode>("review");
   const [queueStarted, setQueueStarted] = useState(false);
+  const [queue, setQueue] = useState<QueueItem[]>(STARTER_QUEUE);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved) as {
+          roles?: string;
+          location?: string;
+          permission?: PermissionMode;
+          queueStarted?: boolean;
+          queue?: QueueItem[];
+        };
+        if (typeof data.roles === "string") setRoles(data.roles);
+        if (typeof data.location === "string") setLocation(data.location);
+        if (data.permission === "review" || data.permission === "batch") setPermission(data.permission);
+        if (typeof data.queueStarted === "boolean") setQueueStarted(data.queueStarted);
+        if (Array.isArray(data.queue)) setQueue(data.queue);
+      } catch {
+        window.localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+    setIsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ roles, location, permission, queueStarted, queue }),
+    );
+  }, [isLoaded, location, permission, queue, queueStarted, roles]);
+
+  const startQueue = () => {
+    setQueue((current) =>
+      current.map((item) => ({ ...item, status: "Ready for review" })),
+    );
+    setQueueStarted(true);
+  };
+
+  const updateTask = (id: string, status: "Approved" | "Declined") => {
+    setQueue((current) =>
+      current.map((item) => (item.id === id ? { ...item, status } : item)),
+    );
+  };
 
   return (
     <section className="relative w-full bg-transparent py-12 sm:py-16">
@@ -113,7 +168,7 @@ export default function JobOperations() {
               </div>
 
               <button
-                onClick={() => setQueueStarted(true)}
+                onClick={startQueue}
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[oklch(0.74_0.17_162)] px-4 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)] transition hover:bg-[oklch(0.85_0.19_158)]"
               >
                 <Sparkles className="h-4 w-4" />
@@ -158,7 +213,7 @@ export default function JobOperations() {
                     Research queue created
                   </div>
                   <p className="mt-1 text-xs text-[var(--shield-text-dim)]">
-                    This first milestone records the job brief and approval policy. Live search connections come next.
+                    Your preferences and approval decisions are saved in this browser. Live job-source connections come next.
                   </p>
                 </div>
                 <span className="rounded-full border border-[oklch(0.74_0.17_162/0.35)] px-3 py-1 text-xs font-medium text-[oklch(0.85_0.19_158)]">
@@ -166,12 +221,28 @@ export default function JobOperations() {
                 </span>
               </div>
               <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                {STARTER_QUEUE.map((item) => (
+                {queue.map((item) => (
                   <div key={item.id} className="rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.14_0.018_165/0.45)] p-3">
                     <FileText className="h-4 w-4 text-[oklch(0.82_0.13_210)]" />
                     <p className="mt-2 text-sm font-semibold text-[var(--shield-text)]">{item.role}</p>
                     <p className="mt-1 text-xs text-[var(--shield-text-dim)]">{item.company}</p>
                     <p className="mt-2 text-[11px] text-[oklch(0.85_0.19_158)]">{item.status}</p>
+                    {item.status === "Ready for review" && (
+                      <div className="mt-3 flex gap-2">
+                        <button
+                          onClick={() => updateTask(item.id, "Approved")}
+                          className="rounded-lg bg-[oklch(0.74_0.17_162)] px-2 py-1 text-[10px] font-semibold text-[oklch(0.14_0.018_165)]"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => updateTask(item.id, "Declined")}
+                          className="rounded-lg border border-[var(--shield-border)] px-2 py-1 text-[10px] font-medium text-[var(--shield-text-dim)]"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
