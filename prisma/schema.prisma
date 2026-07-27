@@ -14,11 +14,14 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String           @id @default(cuid())
+  email          String           @unique
+  name           String?
+  jobPreferences JobPreference?
+  agentTasks     AgentTask[]
+  jobApplications JobApplication[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
 
 model Post {
@@ -29,4 +32,55 @@ model Post {
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Job Operations Agent: the student sets one search brief and the agent
+// creates auditable tasks. Sending is always approval-gated.
+model JobPreference {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetRoles           String   @default("")
+  targetLocations       String   @default("")
+  skills                String   @default("")
+  workAuthorisation     String   @default("")
+  approvalMode          String   @default("review") // review | controlled_batch
+  maxApplicationsPerDay Int      @default(5)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model AgentTask {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type             String   // job_research | application_draft | application_submit
+  status           String   @default("queued") // queued | researching | ready_for_review | approved | submitted | declined | failed
+  payload          String   // JSON with the job, draft, and research details
+  approvalRequired Boolean  @default(true)
+  approvedAt       DateTime?
+  executedAt       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([type, status])
+}
+
+model JobApplication {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  externalJobId String
+  source        String
+  sourceUrl     String
+  company       String
+  role          String
+  status        String   @default("draft") // draft | approved | submitted | interview | rejected | offer
+  appliedAt     DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, externalJobId])
+  @@index([userId, status])
 }
