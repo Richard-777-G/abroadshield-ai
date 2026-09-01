@@ -2,46 +2,76 @@ import type { AgentCapability } from "./tool-registry";
 
 type LiveToolResult = {
   capability: AgentCapability;
-  status: "unconfigured" | "ready";
+  status: "unconfigured" | "ready" | "failed";
   query: string;
-  sources: Array<{ title: string; url: string; source: string }>;
+  sources: Array<{ title: string; url: string; source: string; snippet?: string }>;
   message?: string;
 };
 
-/**
- * Server-side boundary for capabilities that require current external data.
- * It deliberately returns an explicit unconfigured state until a real search
- * provider is installed and configured; it never manufactures search results.
- */
+const BRAVE_ENDPOINT = "https://api.search.brave.com/res/v1/web/search";
+
+/** Execute current-data capabilities through the configured Brave Search API. */
 export async function executeLiveTool(
   capability: AgentCapability,
   query: string,
 ): Promise<LiveToolResult> {
-  if (!query.trim()) {
-    return { capability, status: "unconfigured", query, sources: [], message: "A search query is required." };
+  const normalizedQuery = query.trim().slice(0, 400);
+  if (!normalizedQuery) {
+    return { capability, status: "failed", query, sources: [], message: "A search query is required." };
   }
 
-  const provider = process.env.ABROADSHIELD_SEARCH_PROVIDER?.trim();
-  const apiKey = process.env.ABROADSHIELD_SEARCH_API_KEY?.trim();
-
-  if (!provider || !apiKey) {
+  const apiKey = process.env.BRAVE_SEARCH_API_KEY?.trim();
+  if (!apiKey) {
     return {
       capability,
       status: "unconfigured",
-      query,
+      query: normalizedQuery,
       sources: [],
-      message:
-        "Live search is not configured for this deployment. No jobs, housing listings, or current external results were claimed.",
+      message: "Live search is not configured for this deployment. No external results were claimed.",
     };
   }
 
-  // Provider-specific execution belongs behind this boundary. Do not silently
-  // guess an API contract or scrape third-party sites without an approved adapter.
-  return {
-    capability,
-    status: "unconfigured",
-    query,
-    sources: [],
-    message: `Search provider "${provider}" is configured but has no approved adapter yet. No external result was claimed.`,
-  };
+  const url = new URL(BRAVE_ENDPOINT);
+  url.searchParams.set("q", normalizedQuery);
+  url.searchParams.set("count", "10");
+  url.searchParams.set("search_lang", "en");
+  url.searchParams.set("safesearch", "moderate");
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "X-Subscription-Token": apiKey,
+      },
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) {
+      return { capability, status: "failed", query: normalizedQuery, sources: [], message: `Live search provider returned HTTP ${response.status}.` };
+    }
+
+    const payload = (await response.json()) as {
+      web?: { results?: Array<{ title?: string; url?: string; description?: string }> };
+    };
+    const sources = (payload.web?.results ?? [])
+      .filter((item) => typeof item.title === "string" && typeof item.url === "string")
+      .map((item) => ({
+        title: item.title!,
+        url: item.url!,
+        source: new URL(item.url!).hostname,
+        snippet: item.description,
+      }));
+
+    return {
+      capability,
+      status: "ready",
+      query: normalizedQuery,
+      sources,
+      message: sources.length ? `Found ${sources.length} current web results.` : "The live search returned no results.",
+    };
+  } catch (error) {
+    console.error("[abroadshield/live-search] error", error);
+    return { capability, status: "failed", query: normalizedQuery, sources: [], message: "Live search could not be completed. Please retry." };
+  }
 }
