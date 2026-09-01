@@ -7,6 +7,7 @@ import { buildAgentContext, type AgentProfile } from "@/lib/abroadshield/task-co
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const CHAT_TIMEOUT_MS = 25_000;
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
 const SYSTEM_RULES = `You are AbroadShield AI, an agentic study-abroad execution assistant.
@@ -28,6 +29,15 @@ async function resolveUser() {
   return { user, session };
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error("AGENT_TIMEOUT")), ms);
+  });
+  try { return await Promise.race([promise, timeout]); }
+  finally { if (timer) clearTimeout(timer); }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const resolved = await resolveUser();
@@ -38,8 +48,10 @@ export async function POST(req: NextRequest) {
     if (!userMessage.trim()) return NextResponse.json({ ok: false, error: "Message is required." }, { status: 400 });
 
     const journey = await db.journeyProfile.findUnique({ where: { userId: resolved.user.id } });
-    const recentEvents = await db.journeyEvent.findMany({ where: { userId: resolved.user.id }, orderBy: { createdAt: "desc" }, take: 12 });
-    const recentTasks = await db.journeyTask.findMany({ where: { userId: resolved.user.id }, orderBy: { updatedAt: "desc" }, take: 12 });
+    const [recentEvents, recentTasks] = await Promise.all([
+      db.journeyEvent.findMany({ where: { userId: resolved.user.id }, orderBy: { createdAt: "desc" }, take: 8 }),
+      db.journeyTask.findMany({ where: { userId: resolved.user.id }, orderBy: { updatedAt: "desc" }, take: 8 }),
+    ]);
     const profile: AgentProfile = {
       name: journey?.userId ? resolved.user.name ?? resolved.session?.user?.name ?? undefined : resolved.session?.user?.name ?? undefined,
       email: resolved.user.email,
@@ -56,15 +68,19 @@ export async function POST(req: NextRequest) {
       homeLanguage: journey?.homeLanguage ?? undefined,
     };
     const memory = `\nPERSISTENT JOURNEY:\n${buildAgentContext(profile)}\nRECENT EVENTS:\n${recentEvents.map((e) => `- [${e.phase}] ${e.type}: ${e.title}${e.detail ? ` — ${e.detail}` : ""}`).join("\n") || "none yet"}\nRECENT TASKS:\n${recentTasks.map((t) => `- [${t.phase}] ${t.status}: ${t.title}`).join("\n") || "none yet"}`;
-    const history = messages.slice(-8).map((m) => ({ role: m.role, content: m.content }));
-    const zai = await ZAI.create();
-    const completion = await zai.chat.completions.create({ messages: [{ role: "assistant", content: SYSTEM_RULES + memory }, ...history, { role: "user", content: userMessage }], thinking: { type: "disabled" } });
+    const history = messages.slice(-6).map((m) => ({ role: m.role, content: String(m.content).slice(0, 4000) }));
+    const zai = await withTimeout(ZAI.create(), 8_000);
+    const completion = await withTimeout(
+      zai.chat.completions.create({ messages: [{ role: "assistant", content: SYSTEM_RULES + memory }, ...history, { role: "user", content: userMessage }], thinking: { type: "disabled" } }),
+      CHAT_TIMEOUT_MS,
+    );
     const reply = completion.choices[0]?.message?.content?.trim() ?? "";
     if (!reply) return NextResponse.json({ ok: false, error: "The agent returned an empty result." }, { status: 502 });
     await db.agentMessage.createMany({ data: [{ userId: resolved.user.id, role: "user", content: userMessage, phase: journey?.currentPhase || "pre-departure" }, { userId: resolved.user.id, role: "assistant", content: reply, phase: journey?.currentPhase || "pre-departure" }] });
     return NextResponse.json({ ok: true, reply, phase: journey?.currentPhase || "pre-departure" });
   } catch (error) {
     console.error("[abroadshield/chat] error", error);
+    if (error instanceof Error && error.message === "AGENT_TIMEOUT") return NextResponse.json({ ok: false, error: "The agent took too long to respond. Please retry." }, { status: 504 });
     return NextResponse.json({ ok: false, error: "The agent hit an error. Please try again." }, { status: 500 });
   }
 }
