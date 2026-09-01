@@ -11,6 +11,13 @@ const GOOGLE_SCOPE = [
   "https://www.googleapis.com/auth/gmail.send",
 ].join(" ");
 
+type GoogleToken = {
+  googleAccessToken?: string;
+  googleRefreshToken?: string;
+  googleScope?: string;
+  googleAccessTokenExpires?: number;
+};
+
 const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET ?? "abroadshield-dev-secret-change-in-production",
   session: { strategy: "jwt" },
@@ -63,21 +70,31 @@ const handler = NextAuth({
 
   callbacks: {
     async jwt({ token, account }) {
+      const googleToken = token as typeof token & GoogleToken;
+
       if (account?.provider === "google") {
-        token.googleAccessToken = account.access_token;
-        token.googleScope = account.scope;
+        googleToken.googleAccessToken = account.access_token;
+        googleToken.googleScope = account.scope;
+        googleToken.googleAccessTokenExpires = account.expires_at
+          ? account.expires_at * 1000
+          : undefined;
+        if (account.refresh_token) {
+          googleToken.googleRefreshToken = account.refresh_token;
+        }
       }
-      return token;
+
+      return googleToken;
     },
     async session({ session, token }) {
+      const googleToken = token as typeof token & GoogleToken;
       if (session.user && token.sub) {
         (session.user as { id?: string }).id = token.sub;
       }
       (session as typeof session & { gmailConnected?: boolean }).gmailConnected =
         Boolean(
-          token.googleAccessToken &&
-            token.googleScope?.includes("gmail.compose") &&
-            token.googleScope?.includes("gmail.send")
+          googleToken.googleAccessToken &&
+            googleToken.googleScope?.includes("https://www.googleapis.com/auth/gmail.compose") &&
+            googleToken.googleScope?.includes("https://www.googleapis.com/auth/gmail.send")
         );
       return session;
     },
