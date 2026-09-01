@@ -12,12 +12,10 @@ import AuthModal from "@/components/abroadshield/AuthModal";
 import AppShell, { type WorkspaceView } from "@/components/abroadshield/AppShell";
 import { useProfileStore } from "@/components/abroadshield/profileStore";
 
-const ViewHero = dynamic(() => import("@/components/abroadshield/ViewHero"));
 const JourneyExplorer = dynamic(() => import("@/components/abroadshield/JourneyExplorer"));
 const DeadlineTimeline = dynamic(() => import("@/components/abroadshield/DeadlineTimeline"));
 const MemoryVault = dynamic(() => import("@/components/abroadshield/MemoryVault"));
 const CountryRules = dynamic(() => import("@/components/abroadshield/CountryRules"));
-const Pillars = dynamic(() => import("@/components/abroadshield/Pillars"));
 const AgentChat = dynamic(() => import("@/components/abroadshield/AgentChat"), { loading: () => <FeatureLoading label="Loading agent…" /> });
 const NetworkingJobs = dynamic(() => import("@/components/abroadshield/NetworkingJobs"));
 const Connectors = dynamic(() => import("@/components/abroadshield/Connectors"));
@@ -28,67 +26,97 @@ const StageWorkspace = dynamic(() => import("@/components/abroadshield/StageWork
 const StageRequirements = dynamic(() => import("@/components/abroadshield/StageRequirements"));
 const OnboardingWizard = dynamic(() => import("@/components/abroadshield/OnboardingWizard"), { ssr: false });
 
-type View = "home" | "dashboard" | "journey" | "agent" | "countries" | "network" | "connectors" | "pricing";
-const VIEWS: { id: View; label: string }[] = [
-  { id: "home", label: "Home" }, { id: "dashboard", label: "Dashboard" }, { id: "journey", label: "Journey" }, { id: "agent", label: "Agent" },
-  { id: "countries", label: "Countries" }, { id: "network", label: "Network" }, { id: "connectors", label: "Connect" }, { id: "pricing", label: "Pricing" },
+type PublicView = "home" | "journey" | "agent" | "countries" | "pricing";
+type WorkspaceRoute = WorkspaceView;
+type Route = PublicView | WorkspaceRoute;
+
+const PUBLIC_VIEWS: { id: PublicView; label: string }[] = [
+  { id: "home", label: "Home" },
+  { id: "journey", label: "Journey" },
+  { id: "agent", label: "Agent" },
+  { id: "countries", label: "Countries" },
+  { id: "pricing", label: "Pricing" },
 ];
 const WORKSPACE_VIEWS: WorkspaceView[] = ["dashboard", "agent", "journey", "connectors", "network"];
 
 export default function Home() {
   const { data: session, status } = useSession();
   const { profile, hydrateFromServer } = useProfileStore();
-  const [activeView, setActiveView] = useState<View>("home");
+  const [activeRoute, setActiveRoute] = useState<Route>("home");
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showAuthForDashboard, setShowAuthForDashboard] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
 
   useEffect(() => { if (status === "authenticated") void hydrateFromServer(); }, [status, hydrateFromServer]);
 
   const navigateTo = useCallback((id: string) => {
-    if (!VIEWS.some((v) => v.id === id)) return;
-    const view = id as View;
-    setActiveView(view);
-    window.history.replaceState(null, "", `#${view}`);
+    const route = id as Route;
+    const valid = PUBLIC_VIEWS.some(v => v.id === route) || WORKSPACE_VIEWS.includes(route as WorkspaceView);
+    if (!valid) return;
+    setActiveRoute(route);
+    window.history.replaceState(null, "", `#${route}`);
     window.scrollTo({ top: 0, behavior: "auto" });
   }, []);
 
   useEffect(() => {
-    const fromHash = () => { const h = window.location.hash.replace("#", "") as View; if (VIEWS.some((v) => v.id === h)) setActiveView(h); };
+    const fromHash = () => {
+      const hash = window.location.hash.slice(1) as Route;
+      if (PUBLIC_VIEWS.some(v => v.id === hash) || WORKSPACE_VIEWS.includes(hash as WorkspaceView)) setActiveRoute(hash);
+    };
     fromHash();
     window.addEventListener("hashchange", fromHash);
     return () => window.removeEventListener("hashchange", fromHash);
   }, []);
 
   useEffect(() => {
-    const handler = (e: Event) => { const view = (e as CustomEvent<string>).detail; if (view) navigateTo(view); };
+    const handler = (e: Event) => { const route = (e as CustomEvent<string>).detail; if (route) navigateTo(route); };
     window.addEventListener("abroadshield:navigate", handler);
     return () => window.removeEventListener("abroadshield:navigate", handler);
   }, [navigateTo]);
 
-  useEffect(() => {
-    if (status === "authenticated" && activeView === "home" && !window.location.hash) navigateTo("dashboard");
-  }, [status, activeView, navigateTo]);
+  const enterWorkspace = useCallback((view: WorkspaceView = "dashboard") => {
+    if (!session) { setShowAuth(true); return; }
+    navigateTo(view);
+  }, [session, navigateTo]);
 
-  const isWorkspace = status === "authenticated" && WORKSPACE_VIEWS.includes(activeView as WorkspaceView);
+  const isWorkspace = status === "authenticated" && WORKSPACE_VIEWS.includes(activeRoute as WorkspaceView);
+
   const content = (
     <AnimatePresence mode="wait">
-      <motion.div key={activeView} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.12 }}>
-        {activeView === "home" && <><Hero3D onNavigate={navigateTo} /><HomeShowcase onNavigate={navigateTo} /></>}
-        {activeView === "dashboard" && (session ? <DashboardView onNavigate={navigateTo} /> : <SignInPanel onSignIn={() => setShowAuthForDashboard(true)} />)}
-        {activeView === "journey" && <><StageRequirements /><StageWorkspace onNavigate={navigateTo} /><JourneyExplorer /><DeadlineTimeline /><MemoryVault /></>}
-        {activeView === "agent" && <AgentChat />}
-        {activeView === "countries" && <><ViewHero viewId="countries" /><CountryRules /></>}
-        {activeView === "network" && <><ViewHero viewId="network" /><NetworkingJobs /></>}
-        {activeView === "connectors" && <><ViewHero viewId="connectors" /><Connectors /></>}
-        {activeView === "pricing" && <><ViewHero viewId="pricing" /><Pillars /><PricingTiers /><VisionCTA /></>}
+      <motion.div key={activeRoute} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
+        {activeRoute === "home" && <><Hero3D onNavigate={navigateTo} /><HomeShowcase onNavigate={navigateTo} /></>}
+        {activeRoute === "journey" && <><StageRequirements /><StageWorkspace onNavigate={navigateTo} /><JourneyExplorer /><DeadlineTimeline /><MemoryVault /></>}
+        {activeRoute === "agent" && <AgentChat />}
+        {activeRoute === "countries" && <CountryRules />}
+        {activeRoute === "pricing" && <><PricingTiers /><VisionCTA /></>}
+        {activeRoute === "dashboard" && (session ? <DashboardView onNavigate={navigateTo} /> : <SignInPanel onSignIn={() => setShowAuth(true)} />)}
+        {activeRoute === "network" && <NetworkingJobs />}
+        {activeRoute === "connectors" && <Connectors />}
       </motion.div>
     </AnimatePresence>
   );
 
   return <div className="relative flex min-h-screen flex-col bg-transparent">
-    <AuthModal open={showAuthForDashboard} onClose={() => setShowAuthForDashboard(false)} mode="signup" />
+    <AuthModal open={showAuth} onClose={() => setShowAuth(false)} mode="signup" />
     <AnimatePresence>{showOnboarding && <OnboardingWizard onComplete={() => { setShowOnboarding(false); navigateTo("dashboard"); }} />}</AnimatePresence>
-    {isWorkspace ? <AppShell activeView={activeView as WorkspaceView} onNavigate={navigateTo as (v: WorkspaceView) => void}>{content}</AppShell> : <><SiteHeader activeView={activeView} onViewChange={navigateTo} views={VIEWS} onTryAgent={() => { if (session) setShowOnboarding(!profile.onboarded); else setShowAuthForDashboard(true); }} /><main className="flex-1">{content}</main><SiteFooter /></>}
+
+    {isWorkspace ? (
+      <AppShell activeView={activeRoute as WorkspaceView} onNavigate={navigateTo as (v: WorkspaceView) => void}>{content}</AppShell>
+    ) : (
+      <>
+        <SiteHeader
+          activeView={activeRoute}
+          onViewChange={navigateTo}
+          views={PUBLIC_VIEWS}
+          onTryAgent={() => {
+            if (!session) { setShowAuth(true); return; }
+            if (profile.onboarded) navigateTo("agent");
+            else setShowOnboarding(true);
+          }}
+        />
+        <main className="flex-1">{content}</main>
+        <SiteFooter />
+      </>
+    )}
   </div>;
 }
 
