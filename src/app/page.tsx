@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSession } from "next-auth/react";
 import dynamic from "next/dynamic";
 import SiteHeader from "@/components/abroadshield/SiteHeader";
 import SiteFooter from "@/components/abroadshield/SiteFooter";
@@ -21,6 +22,7 @@ import Connectors from "@/components/abroadshield/Connectors";
 import PricingTiers from "@/components/abroadshield/PricingTiers";
 import VisionCTA from "@/components/abroadshield/VisionCTA";
 import DashboardView from "@/components/abroadshield/DashboardView";
+import AuthModal from "@/components/abroadshield/AuthModal";
 
 // Onboarding wizard — client-only, heavy, load lazily
 const OnboardingWizard = dynamic(
@@ -50,8 +52,10 @@ const VIEWS: { id: View; label: string }[] = [
 ];
 
 export default function Home() {
+  const { data: session } = useSession();
   const [activeView, setActiveView] = useState<View>("home");
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showAuthForDashboard, setShowAuthForDashboard] = useState(false);
 
   const navigateTo = useCallback((id: string) => {
     const view = id as View;
@@ -85,8 +89,23 @@ export default function Home() {
     return () => window.removeEventListener("abroadshield:navigate", handler);
   }, [navigateTo]);
 
+  // When session appears (login just happened), bounce to dashboard
+  useEffect(() => {
+    if (session && activeView === "home") {
+      const hash = window.location.hash.replace("#", "");
+      if (!hash || hash === "home") navigateTo("dashboard");
+    }
+  }, [session, activeView, navigateTo]);
+
   return (
     <div className="relative flex min-h-screen flex-col bg-transparent">
+      {/* Auth modal shown when unauthenticated user tries to access dashboard */}
+      <AuthModal
+        open={showAuthForDashboard}
+        onClose={() => setShowAuthForDashboard(false)}
+        mode="signup"
+      />
+
       {/* Onboarding wizard — shows when user clicks "Try the agent" if not yet onboarded */}
       <AnimatePresence>
         {showOnboarding && (
@@ -123,7 +142,26 @@ export default function Home() {
             )}
 
             {activeView === "dashboard" && (
-              <DashboardView onNavigate={navigateTo} />
+              session ? (
+                <DashboardView onNavigate={navigateTo} />
+              ) : (
+                /* Gate: show sign-in prompt instead of blank dashboard */
+                <div className="flex min-h-[80vh] flex-col items-center justify-center px-6 text-center">
+                  <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.1)]">
+                    <span className="text-3xl">🛡️</span>
+                  </div>
+                  <h2 className="text-2xl font-semibold text-[var(--shield-text)]">Sign in to access your dashboard</h2>
+                  <p className="mt-3 max-w-sm text-sm text-[var(--shield-text-dim)]">
+                    Your agent, deadlines, documents and tasks are waiting. Any email + password works instantly.
+                  </p>
+                  <button
+                    onClick={() => setShowAuthForDashboard(true)}
+                    className="mt-6 inline-flex items-center gap-2 rounded-full bg-[oklch(0.98_0.005_160)] px-6 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)] transition hover:bg-white"
+                  >
+                    Sign in / Create account
+                  </button>
+                </div>
+              )
             )}
 
             {activeView === "journey" && (

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import FloatingBackground from "@/components/abroadshield/ClientFloatingBackground";
 import ScrollProgress from "@/components/abroadshield/ScrollProgress";
+import Providers from "@/components/abroadshield/Providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -56,10 +57,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <FloatingBackground />
-        <ScrollProgress />
-        {children}
-        <Toaster />
+        <Providers>
+          <FloatingBackground />
+          <ScrollProgress />
+          {children}
+          <Toaster />
+        </Providers>
       </body>
     </html>
   );

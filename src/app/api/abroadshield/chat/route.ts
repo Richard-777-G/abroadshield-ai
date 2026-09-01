@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import ZAI from "z-ai-web-dev-sdk";
+import { getServerSession } from "next-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,6 +67,11 @@ export async function POST(req: NextRequest) {
         ? body.message
         : messages.find((m) => m.role === "user")?.content ?? "";
 
+    // Pull real session — personalise the system prompt to the actual user
+    const session = await getServerSession().catch(() => null);
+    const userName = session?.user?.name ?? body.studentName ?? "Aarav Mehta";
+    const userEmail = session?.user?.email ?? body.studentEmail ?? null;
+
     if (!userMessage.trim()) {
       return NextResponse.json(
         { ok: false, error: "Message is required." },
@@ -79,11 +85,19 @@ export async function POST(req: NextRequest) {
       content: m.content,
     }));
 
+    // Build a personalised system prompt when the user is real (not just demo)
+    const personalised = userName !== "Aarav Mehta"
+      ? SYSTEM_PROMPT.replace(
+          "- Name: Aarav Mehta\n- Origin: Pune, India (home language: Marathi; family currency: INR)",
+          `- Name: ${userName}${userEmail ? ` (${userEmail})` : ""}\n- Origin: (provided by student during onboarding)`
+        )
+      : SYSTEM_PROMPT;
+
     const zai = await ZAI.create();
 
     const completion = await zai.chat.completions.create({
       messages: [
-        { role: "assistant", content: SYSTEM_PROMPT },
+        { role: "assistant", content: personalised },
         ...history,
         { role: "user", content: userMessage },
       ],

@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Menu, X, Zap, LogIn } from "lucide-react";
+import { Shield, Menu, X, Zap, LogIn, LogOut } from "lucide-react";
+import { useSession, signOut } from "next-auth/react";
 import AuthModal from "./AuthModal";
 
 interface NavItem {
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function SiteHeader({ activeView, onViewChange, views, onTryAgent }: Props) {
+  const { data: session } = useSession();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -97,7 +99,7 @@ export default function SiteHeader({ activeView, onViewChange, views, onTryAgent
 
           {/* right side */}
           <div className="flex items-center gap-2">
-            {/* agent status */}
+            {/* agent live badge */}
             <span className="hidden items-center gap-1.5 rounded-full border border-[oklch(0.74_0.17_162/0.3)] bg-[oklch(0.74_0.17_162/0.08)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-[oklch(0.85_0.19_158)] sm:inline-flex">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[oklch(0.74_0.17_162)] opacity-75" />
@@ -105,22 +107,45 @@ export default function SiteHeader({ activeView, onViewChange, views, onTryAgent
               </span>
               Agent live
             </span>
-            {/* sign in */}
-            <button
-              onClick={() => { setAuthMode("login"); setAuthOpen(true); }}
-              className="hidden items-center gap-1.5 rounded-full border border-[var(--shield-border)] px-3 py-1.5 text-[12.5px] font-medium text-[oklch(0.9_0.01_160)] transition hover:border-[oklch(0.74_0.17_162/0.4)] hover:bg-[oklch(0.24_0.028_165/0.5)] sm:inline-flex"
-            >
-              <LogIn className="h-3.5 w-3.5" />
-              Sign in
-            </button>
-            {/* primary CTA */}
-            <button
-              onClick={() => onTryAgent ? onTryAgent() : (setAuthMode("signup"), setAuthOpen(true))}
-              className="hidden items-center gap-1.5 rounded-full bg-[oklch(0.98_0.005_160)] px-3.5 py-1.5 text-[12.5px] font-semibold text-[oklch(0.14_0.018_165)] transition hover:bg-white sm:inline-flex"
-            >
-              <Zap className="h-3.5 w-3.5" />
-              Try the agent
-            </button>
+
+            {session ? (
+              /* ── logged in ── */
+              <>
+                <button
+                  onClick={() => handleNav("dashboard")}
+                  className="hidden items-center gap-1.5 rounded-full border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.1)] px-3 py-1.5 text-[12.5px] font-medium text-[oklch(0.85_0.19_158)] transition hover:bg-[oklch(0.74_0.17_162/0.18)] sm:inline-flex"
+                >
+                  <Zap className="h-3.5 w-3.5" />
+                  {session.user?.name?.split(" ")[0] ?? "Dashboard"}
+                </button>
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="hidden items-center gap-1.5 rounded-full border border-[var(--shield-border)] px-3 py-1.5 text-[12.5px] font-medium text-[oklch(0.9_0.01_160)] transition hover:border-[oklch(0.74_0.17_162/0.4)] sm:inline-flex"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sign out
+                </button>
+              </>
+            ) : (
+              /* ── logged out ── */
+              <>
+                <button
+                  onClick={() => { setAuthMode("login"); setAuthOpen(true); }}
+                  className="hidden items-center gap-1.5 rounded-full border border-[var(--shield-border)] px-3 py-1.5 text-[12.5px] font-medium text-[oklch(0.9_0.01_160)] transition hover:border-[oklch(0.74_0.17_162/0.4)] hover:bg-[oklch(0.24_0.028_165/0.5)] sm:inline-flex"
+                >
+                  <LogIn className="h-3.5 w-3.5" />
+                  Sign in
+                </button>
+                <button
+                  onClick={() => onTryAgent ? onTryAgent() : (setAuthMode("signup"), setAuthOpen(true))}
+                  className="hidden items-center gap-1.5 rounded-full bg-[oklch(0.98_0.005_160)] px-3.5 py-1.5 text-[12.5px] font-semibold text-[oklch(0.14_0.018_165)] transition hover:bg-white sm:inline-flex"
+                >
+                  <Zap className="h-3.5 w-3.5" />
+                  Try the agent
+                </button>
+              </>
+            )}
+
             {/* mobile toggle */}
             <button
               onClick={() => setOpen((o) => !o)}
