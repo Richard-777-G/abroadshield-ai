@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import dynamic from "next/dynamic";
 import SiteHeader from "@/components/abroadshield/SiteHeader";
 import SiteFooter from "@/components/abroadshield/SiteFooter";
 import Hero3D from "@/components/abroadshield/Hero3D";
@@ -19,11 +20,27 @@ import NetworkingJobs from "@/components/abroadshield/NetworkingJobs";
 import Connectors from "@/components/abroadshield/Connectors";
 import PricingTiers from "@/components/abroadshield/PricingTiers";
 import VisionCTA from "@/components/abroadshield/VisionCTA";
+import DashboardView from "@/components/abroadshield/DashboardView";
 
-type View = "home" | "journey" | "agent" | "countries" | "network" | "connectors" | "pricing";
+// Onboarding wizard — client-only, heavy, load lazily
+const OnboardingWizard = dynamic(
+  () => import("@/components/abroadshield/OnboardingWizard"),
+  { ssr: false }
+);
+
+type View =
+  | "home"
+  | "dashboard"
+  | "journey"
+  | "agent"
+  | "countries"
+  | "network"
+  | "connectors"
+  | "pricing";
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "home", label: "Home" },
+  { id: "dashboard", label: "Dashboard" },
   { id: "journey", label: "Journey" },
   { id: "agent", label: "Agent" },
   { id: "countries", label: "Countries" },
@@ -34,6 +51,14 @@ const VIEWS: { id: View; label: string }[] = [
 
 export default function Home() {
   const [activeView, setActiveView] = useState<View>("home");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  const navigateTo = useCallback((id: string) => {
+    const view = id as View;
+    setActiveView(view);
+    window.location.hash = `#${view}`;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
 
   // sync with URL hash on mount + hash changes (deep linking)
   useEffect(() => {
@@ -48,12 +73,37 @@ export default function Home() {
     return () => window.removeEventListener("hashchange", fromHash);
   }, []);
 
+  // Listen for custom navigation events (dispatched by child components)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const view = (e as CustomEvent<string>).detail;
+      if (view && VIEWS.some((v) => v.id === view)) {
+        navigateTo(view);
+      }
+    };
+    window.addEventListener("abroadshield:navigate", handler);
+    return () => window.removeEventListener("abroadshield:navigate", handler);
+  }, [navigateTo]);
+
   return (
     <div className="relative flex min-h-screen flex-col bg-transparent">
+      {/* Onboarding wizard — shows when user clicks "Try the agent" if not yet onboarded */}
+      <AnimatePresence>
+        {showOnboarding && (
+          <OnboardingWizard
+            onComplete={() => {
+              setShowOnboarding(false);
+              navigateTo("dashboard");
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       <SiteHeader
         activeView={activeView as string}
-        onViewChange={(id) => setActiveView(id as View)}
+        onViewChange={(id) => navigateTo(id)}
         views={VIEWS}
+        onTryAgent={() => setShowOnboarding(true)}
       />
 
       <main className="flex-1">
@@ -67,9 +117,13 @@ export default function Home() {
           >
             {activeView === "home" && (
               <>
-                <Hero3D />
-                <HomeShowcase />
+                <Hero3D onNavigate={navigateTo} />
+                <HomeShowcase onNavigate={navigateTo} />
               </>
+            )}
+
+            {activeView === "dashboard" && (
+              <DashboardView onNavigate={navigateTo} />
             )}
 
             {activeView === "journey" && (

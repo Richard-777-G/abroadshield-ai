@@ -7,7 +7,7 @@ import LanguageToggle from "./LanguageToggle";
 import AIPrimeCore from "./AIPrimeCore";
 import { HERO_STRINGS, type LocaleId } from "./data";
 
-export default function Hero3D() {
+export default function Hero3D({ onNavigate }: { onNavigate?: (view: string) => void }) {
   const [locale, setLocale] = useState<LocaleId>("en");
   const t = HERO_STRINGS[locale];
 
@@ -100,21 +100,21 @@ export default function Hero3D() {
               transition={{ duration: 0.7, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
               className="mt-8 flex flex-wrap items-center gap-3"
             >
-              <a
-                href="#journey"
+              <button
+                onClick={() => onNavigate?.("journey")}
                 className="group inline-flex items-center gap-2 rounded-full bg-[oklch(0.98_0.005_160)] px-5 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)] transition hover:-translate-y-0.5 hover:bg-white"
               >
                 <Shield className="h-4 w-4" />
                 {t.ctaExplore}
                 <ArrowDown className="h-3.5 w-3.5 transition group-hover:translate-y-0.5" />
-              </a>
-              <a
-                href="#agent"
+              </button>
+              <button
+                onClick={() => onNavigate?.("agent")}
                 className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.6_0.04_165/0.22)] px-5 py-3 text-sm font-semibold text-[oklch(0.88_0.005_180)] backdrop-blur transition hover:border-[oklch(0.6_0.03_235/0.4)] hover:bg-[oklch(0.24_0.028_165/0.5)] hover:-translate-y-0.5"
               >
                 <BrainCircuit className="h-4 w-4 text-[oklch(0.78_0.09_165)]" />
                 {t.ctaAgent}
-              </a>
+              </button>
             </motion.div>
 
             {/* trust strip */}
@@ -184,10 +184,10 @@ export default function Hero3D() {
           transition={{ duration: 0.7, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4"
         >
-          <StatCard icon={Shield} value={t.stat1V} label={t.stat1L} flag="🛡️" href="#journey" delay={0.8} />
-          <StatCard icon={CalendarClock} value={t.stat2V} label={t.stat2L} flag="📅" href="#timeline" delay={0.88} />
-          <StatCard icon={FileCheck2} value={t.stat3V} label={t.stat3L} flag="📄" href="#memory" delay={0.96} />
-          <StatCard icon={BrainCircuit} value={t.stat4V} label={t.stat4L} flag="🧠" href="#agent" delay={1.04} />
+          <StatCard icon={Shield} value={t.stat1V} label={t.stat1L} flag="🛡️" href="#journey" delay={0.8} onClick={() => onNavigate?.("journey")} />
+          <StatCard icon={CalendarClock} value={t.stat2V} label={t.stat2L} flag="📅" href="#journey" delay={0.88} onClick={() => onNavigate?.("journey")} />
+          <StatCard icon={FileCheck2} value={t.stat3V} label={t.stat3L} flag="📄" href="#journey" delay={0.96} onClick={() => onNavigate?.("journey")} />
+          <StatCard icon={BrainCircuit} value={t.stat4V} label={t.stat4L} flag="🧠" href="#agent" delay={1.04} onClick={() => onNavigate?.("agent")} />
         </motion.div>
       </div>
     </section>
@@ -241,6 +241,7 @@ function StatCard({
   flag,
   href,
   delay,
+  onClick,
 }: {
   icon: typeof Shield;
   value: string;
@@ -248,10 +249,12 @@ function StatCard({
   flag: string;
   href: string;
   delay: number;
+  onClick?: () => void;
 }) {
   return (
     <motion.a
       href={href}
+      onClick={(e) => { if (onClick) { e.preventDefault(); onClick(); } }}
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.5 }}

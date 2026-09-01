@@ -14,9 +14,10 @@ interface Props {
   activeView: string;
   onViewChange: (id: string) => void;
   views: NavItem[];
+  onTryAgent?: () => void;
 }
 
-export default function SiteHeader({ activeView, onViewChange, views }: Props) {
+export default function SiteHeader({ activeView, onViewChange, views, onTryAgent }: Props) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -114,7 +115,7 @@ export default function SiteHeader({ activeView, onViewChange, views }: Props) {
             </button>
             {/* primary CTA */}
             <button
-              onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}
+              onClick={() => onTryAgent ? onTryAgent() : (setAuthMode("signup"), setAuthOpen(true))}
               className="hidden items-center gap-1.5 rounded-full bg-[oklch(0.98_0.005_160)] px-3.5 py-1.5 text-[12.5px] font-semibold text-[oklch(0.14_0.018_165)] transition hover:bg-white sm:inline-flex"
             >
               <Zap className="h-3.5 w-3.5" />
@@ -167,7 +168,7 @@ export default function SiteHeader({ activeView, onViewChange, views }: Props) {
                   Sign in
                 </button>
                 <button
-                  onClick={() => { setOpen(false); setAuthMode("signup"); setAuthOpen(true); }}
+                  onClick={() => { setOpen(false); onTryAgent ? onTryAgent() : (setAuthMode("signup"), setAuthOpen(true)); }}
                   className="flex items-center justify-center gap-2 rounded-xl bg-[oklch(0.98_0.005_160)] px-4 py-2.5 text-sm font-semibold text-[oklch(0.14_0.018_165)]"
                 >
                   <Zap className="h-4 w-4" />

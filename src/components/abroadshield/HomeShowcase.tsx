@@ -21,7 +21,7 @@ import Reveal from "./Reveal";
  * Home enrichment — content below the hero so the home view doesn't feel empty.
  * 3 sections: "What the agent does" showcase, "How it works" 3-step, quick stats.
  */
-export default function HomeShowcase() {
+export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: string) => void }) {
   return (
     <>
       {/* ---------- How it works — 3 steps ---------- */}
@@ -155,14 +155,14 @@ export default function HomeShowcase() {
               </div>
 
               {/* CTA */}
-              <a
-                href="#agent"
+              <button
+                onClick={() => onNavigate?.("agent")}
                 className="group mt-8 inline-flex items-center gap-2 rounded-full bg-[oklch(0.98_0.005_160)] px-5 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)] transition hover:-translate-y-0.5 hover:bg-white"
               >
                 <Bot className="h-4 w-4" />
                 Talk to the agent
                 <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
-              </a>
+              </button>
             </Reveal>
           </div>
         </div>

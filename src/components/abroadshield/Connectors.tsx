@@ -232,6 +232,15 @@ export default function Connectors() {
   const [filter, setFilter] = useState<string>("all");
   const [openId, setOpenId] = useState<string | null>(null);
 
+  const askAgentToAct = (connector: { name: string; agentAction: string; phase: string }) => {
+    // Dispatch a custom event that the AgentChat can listen to for pre-filling
+    const prompt = `Act on ${connector.name}: ${connector.agentAction}. Phase: ${connector.phase}.`;
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("abroadshield:prefill-chat", { detail: prompt }));
+      window.dispatchEvent(new CustomEvent("abroadshield:navigate", { detail: "agent" }));
+    }
+  };
+
   const visible = filter === "all" ? CONNECTORS : CONNECTORS.filter((c) => c.category === filter);
 
   return (
@@ -369,7 +378,10 @@ export default function Connectors() {
                                   <ExternalLink className="h-3.5 w-3.5" />
                                   Open {c.name}
                                 </a>
-                                <button className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.1)] px-3 py-1.5 text-xs font-semibold text-[oklch(0.85_0.19_158)] transition hover:bg-[oklch(0.74_0.17_162/0.18)]">
+                                <button
+                                  onClick={() => askAgentToAct(c)}
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.1)] px-3 py-1.5 text-xs font-semibold text-[oklch(0.85_0.19_158)] transition hover:bg-[oklch(0.74_0.17_162/0.18)]"
+                                >
                                   <CheckCircle2 className="h-3.5 w-3.5" />
                                   Ask agent to act
                                 </button>

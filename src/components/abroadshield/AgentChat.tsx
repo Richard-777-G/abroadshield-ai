@@ -70,6 +70,19 @@ export default function AgentChat() {
     }
   }, [messages, sending]);
 
+  // Listen for pre-fill events dispatched by Connectors "Ask agent to act"
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const prompt = (e as CustomEvent<string>).detail;
+      if (prompt) {
+        setInput(prompt);
+        setTimeout(() => inputRef.current?.focus(), 100);
+      }
+    };
+    window.addEventListener("abroadshield:prefill-chat", handler);
+    return () => window.removeEventListener("abroadshield:prefill-chat", handler);
+  }, []);
+
   const send = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
