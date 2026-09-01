@@ -29,9 +29,8 @@ export const metadata: Metadata = {
     "Pre-Departure",
     "Job Success",
   ],
-  authors: [{ name: "AbroadShield AI" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/logo.svg",
   },
   openGraph: {
     title: "AbroadShield AI — One Agent. Four Phases. The Whole Journey.",
