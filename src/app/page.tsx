@@ -25,6 +25,7 @@ import DashboardView from "@/components/abroadshield/DashboardView";
 import AuthModal from "@/components/abroadshield/AuthModal";
 import AppShell, { type WorkspaceView } from "@/components/abroadshield/AppShell";
 import StageWorkspace from "@/components/abroadshield/StageWorkspace";
+import StageRequirements from "@/components/abroadshield/StageRequirements";
 import { useProfileStore } from "@/components/abroadshield/profileStore";
 
 const OnboardingWizard = dynamic(() => import("@/components/abroadshield/OnboardingWizard"), { ssr: false });
@@ -41,20 +42,16 @@ export default function Home() {
   const [activeView, setActiveView] = useState<View>("home");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showAuthForDashboard, setShowAuthForDashboard] = useState(false);
-
   useEffect(() => { if (status === "authenticated") void hydrateFromServer(); }, [status, hydrateFromServer]);
-  const navigateTo = useCallback((id: string) => {
-    if (!VIEWS.some((v) => v.id === id)) return;
-    const view = id as View; setActiveView(view); window.history.replaceState(null, "", `#${view}`); window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  const navigateTo = useCallback((id: string) => { if (!VIEWS.some((v) => v.id === id)) return; const view = id as View; setActiveView(view); window.history.replaceState(null, "", `#${view}`); window.scrollTo({ top: 0, behavior: "smooth" }); }, []);
   useEffect(() => { const fromHash = () => { const h = window.location.hash.replace("#", "") as View; if (VIEWS.some((v) => v.id === h)) setActiveView(h); }; fromHash(); window.addEventListener("hashchange", fromHash); return () => window.removeEventListener("hashchange", fromHash); }, []);
   useEffect(() => { const handler = (e: Event) => { const view = (e as CustomEvent<string>).detail; if (view) navigateTo(view); }; window.addEventListener("abroadshield:navigate", handler); return () => window.removeEventListener("abroadshield:navigate", handler); }, [navigateTo]);
   useEffect(() => { if (status === "authenticated" && activeView === "home" && !window.location.hash) navigateTo("dashboard"); }, [status, activeView, navigateTo]);
   const isWorkspace = status === "authenticated" && WORKSPACE_VIEWS.includes(activeView as WorkspaceView);
   const content = <AnimatePresence mode="wait"><motion.div key={activeView} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
     {activeView === "home" && <><Hero3D onNavigate={navigateTo} /><HomeShowcase onNavigate={navigateTo} /></>}
-    {activeView === "dashboard" && (session ? <><DashboardView onNavigate={navigateTo} /><StageWorkspace onNavigate={navigateTo} /></> : <div className="flex min-h-[80vh] flex-col items-center justify-center px-6 text-center"><div className="mb-6 text-4xl">🛡️</div><h2 className="text-2xl font-semibold">Sign in to access your workspace</h2><p className="mt-3 max-w-sm text-sm text-[var(--shield-text-dim)]">Your agent, journey, documents and tasks are private to your account.</p><button onClick={() => setShowAuthForDashboard(true)} className="mt-6 rounded-full bg-[oklch(0.98_0.005_160)] px-6 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)]">Sign in / Create account</button></div>)}
-    {activeView === "journey" && <><ViewHero viewId="journey" /><StageWorkspace onNavigate={navigateTo} /><JourneyExplorer /><DeadlineTimeline /><MemoryVault /></>}
+    {activeView === "dashboard" && (session ? <><DashboardView onNavigate={navigateTo} /><StageRequirements /><StageWorkspace onNavigate={navigateTo} /></> : <div className="flex min-h-[80vh] flex-col items-center justify-center px-6 text-center"><div className="mb-6 text-4xl">🛡️</div><h2 className="text-2xl font-semibold">Sign in to access your workspace</h2><p className="mt-3 max-w-sm text-sm text-[var(--shield-text-dim)]">Your agent, journey, documents and tasks are private to your account.</p><button onClick={() => setShowAuthForDashboard(true)} className="mt-6 rounded-full bg-[oklch(0.98_0.005_160)] px-6 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)]">Sign in / Create account</button></div>)}
+    {activeView === "journey" && <><ViewHero viewId="journey" /><StageRequirements /><StageWorkspace onNavigate={navigateTo} /><JourneyExplorer /><DeadlineTimeline /><MemoryVault /></>}
     {activeView === "agent" && <><ViewHero viewId="agent" /><AgentActivityPanel /><AgentChat /><ApprovalsHistory /></>}
     {activeView === "countries" && <><ViewHero viewId="countries" /><CountryRules /></>}
     {activeView === "network" && <><ViewHero viewId="network" /><NetworkingJobs /></>}
