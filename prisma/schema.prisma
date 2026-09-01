@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// AbroadShield persistent journey data model
+// SQLite for the current deployment; keep domain entities provider-neutral.
 
 generator client {
   provider = "prisma-client-js"
@@ -14,11 +11,15 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String          @id @default(cuid())
+  email     String          @unique
   name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  journey   JourneyProfile?
+  events    JourneyEvent[]
+  tasks     JourneyTask[]
+  messages  AgentMessage[]
 }
 
 model Post {
@@ -29,4 +30,68 @@ model Post {
   authorId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model JourneyProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  origin            String   @default("")
+  destination       String   @default("")
+  course            String   @default("")
+  university        String   @default("")
+  intake            String   @default("")
+  currentPhase      String   @default("pre-departure")
+  readiness         Int      @default(0)
+  onboarded         Boolean  @default(false)
+  documentsTotal    Int      @default(0)
+  documentsVerified Int      @default(0)
+  visaAppointment   String?
+  funding           String?
+  homeLanguage      String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model JourneyEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  phase     String
+  type      String
+  title     String
+  detail    String?
+  metadata  String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+  @@index([userId, phase])
+}
+
+model JourneyTask {
+  id          String    @id @default(cuid())
+  userId      String
+  phase       String
+  type        String
+  title       String
+  status      String    @default("queued")
+  priority    String    @default("medium")
+  dueAt       DateTime?
+  completedAt DateTime?
+  result      String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, phase, status])
+  @@index([userId, dueAt])
+}
+
+model AgentMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String
+  content   String
+  phase     String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
 }
