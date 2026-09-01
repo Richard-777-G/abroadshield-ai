@@ -2,21 +2,16 @@
 
 import { create } from "zustand";
 
-/* ---------------------------------------------------------------------------
- * Student Profile Store
- * Persists in localStorage so the agent remembers the student across sessions.
- * --------------------------------------------------------------------------- */
-
 export interface StudentProfile {
   name: string;
   email: string;
-  origin: string;          // e.g. "Pune, India"
-  destination: string;     // e.g. "United Kingdom"
-  course: string;          // e.g. "MSc Data Science"
-  university: string;      // e.g. "University of Manchester"
-  intake: string;          // e.g. "September 2026"
+  origin: string;
+  destination: string;
+  course: string;
+  university: string;
+  intake: string;
   currentPhase: "pre-departure" | "arrival" | "studying" | "job-success";
-  readiness: number;       // 0–100
+  readiness: number;
   onboarded: boolean;
   documentsTotal: number;
   documentsVerified: number;
@@ -26,21 +21,18 @@ export interface StudentProfile {
 }
 
 const DEFAULT_PROFILE: StudentProfile = {
-  name: "Aarav Mehta",
+  name: "",
   email: "",
-  origin: "Pune, India",
-  destination: "United Kingdom",
-  course: "MSc Data Science",
-  university: "University of Manchester",
-  intake: "September 2026",
+  origin: "",
+  destination: "",
+  course: "",
+  university: "",
+  intake: "",
   currentPhase: "pre-departure",
-  readiness: 72,
-  onboarded: true,           // default profile is pre-filled
-  documentsTotal: 13,
-  documentsVerified: 11,
-  visaAppointment: "28 Aug 2026, 09:30 IST",
-  funding: "£28,500",
-  homeLanguage: "Marathi",
+  readiness: 0,
+  onboarded: false,
+  documentsTotal: 0,
+  documentsVerified: 0,
 };
 
 interface ProfileStore {
@@ -49,17 +41,24 @@ interface ProfileStore {
   resetProfile: () => void;
 }
 
+function persistProfile(profile: StudentProfile) {
+  if (typeof window === "undefined") return;
+  const serialized = JSON.stringify(profile);
+  localStorage.setItem("abroadshield-profile", serialized);
+  // A short-lived, non-authentication cookie lets server-side task execution
+  // use the same onboarding profile without treating browser storage as a
+  // credential. Authentication still comes exclusively from NextAuth.
+  document.cookie = `abroadshield-profile=${encodeURIComponent(serialized)}; Path=/; Max-Age=2592000; SameSite=Lax`;
+}
+
 export const useProfileStore = create<ProfileStore>((set) => {
-  // Load from localStorage on init
   let initial = DEFAULT_PROFILE;
   if (typeof window !== "undefined") {
     try {
       const saved = localStorage.getItem("abroadshield-profile");
-      if (saved) {
-        initial = { ...DEFAULT_PROFILE, ...JSON.parse(saved) };
-      }
+      if (saved) initial = { ...DEFAULT_PROFILE, ...JSON.parse(saved) };
     } catch {
-      // ignore
+      // ignore malformed local state and use the clean profile
     }
   }
 
@@ -68,14 +67,13 @@ export const useProfileStore = create<ProfileStore>((set) => {
     setProfile: (partial) =>
       set((state) => {
         const updated = { ...state.profile, ...partial };
-        if (typeof window !== "undefined") {
-          localStorage.setItem("abroadshield-profile", JSON.stringify(updated));
-        }
+        persistProfile(updated);
         return { profile: updated };
       }),
     resetProfile: () => {
       if (typeof window !== "undefined") {
         localStorage.removeItem("abroadshield-profile");
+        document.cookie = "abroadshield-profile=; Path=/; Max-Age=0; SameSite=Lax";
       }
       set({ profile: DEFAULT_PROFILE });
     },
