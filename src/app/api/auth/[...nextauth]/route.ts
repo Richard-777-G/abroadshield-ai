@@ -18,6 +18,41 @@ type GoogleToken = {
   googleAccessTokenExpires?: number;
 };
 
+async function refreshGoogleAccessToken(token: GoogleToken) {
+  if (!token.googleRefreshToken || !process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return token;
+  }
+
+  try {
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        grant_type: "refresh_token",
+        refresh_token: token.googleRefreshToken,
+      }),
+    });
+
+    const refreshed = await response.json();
+    if (!response.ok || !refreshed.access_token) {
+      console.error("[auth] Google token refresh failed", response.status, refreshed.error);
+      return { ...token, googleRefreshError: true };
+    }
+
+    return {
+      ...token,
+      googleAccessToken: refreshed.access_token,
+      googleAccessTokenExpires: Date.now() + (Number(refreshed.expires_in) || 3600) * 1000,
+      googleScope: refreshed.scope ?? token.googleScope,
+    };
+  } catch (error) {
+    console.error("[auth] Google token refresh error", error);
+    return { ...token, googleRefreshError: true };
+  }
+}
+
 const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET ?? "abroadshield-dev-secret-change-in-production",
   session: { strategy: "jwt" },
@@ -70,7 +105,7 @@ const handler = NextAuth({
 
   callbacks: {
     async jwt({ token, account }) {
-      const googleToken = token as typeof token & GoogleToken;
+      let googleToken = token as typeof token & GoogleToken;
 
       if (account?.provider === "google") {
         googleToken.googleAccessToken = account.access_token;
@@ -83,19 +118,29 @@ const handler = NextAuth({
         }
       }
 
+      if (
+        googleToken.googleRefreshToken &&
+        googleToken.googleAccessTokenExpires &&
+        Date.now() > googleToken.googleAccessTokenExpires - 60_000
+      ) {
+        googleToken = (await refreshGoogleAccessToken(googleToken)) as typeof googleToken;
+      }
+
       return googleToken;
     },
     async session({ session, token }) {
-      const googleToken = token as typeof token & GoogleToken;
+      const googleToken = token as typeof token & GoogleToken & { googleRefreshError?: boolean };
       if (session.user && token.sub) {
         (session.user as { id?: string }).id = token.sub;
       }
-      (session as typeof session & { gmailConnected?: boolean }).gmailConnected =
+      (session as typeof session & { gmailConnected?: boolean; gmailRefreshError?: boolean }).gmailConnected =
         Boolean(
           googleToken.googleAccessToken &&
             googleToken.googleScope?.includes("https://www.googleapis.com/auth/gmail.compose") &&
             googleToken.googleScope?.includes("https://www.googleapis.com/auth/gmail.send")
         );
+      (session as typeof session & { gmailRefreshError?: boolean }).gmailRefreshError =
+        Boolean(googleToken.googleRefreshError);
       return session;
     },
   },
