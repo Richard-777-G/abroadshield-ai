@@ -1,26 +1,75 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowRight, Bot, BrainCircuit, CalendarClock, CheckCircle2, FileCheck2, Globe2, Plug, Shield, Users, Briefcase, Zap } from "lucide-react";
+import { ArrowRight, Bot, CalendarClock, CheckCircle2, FileCheck2, Globe2, Plug, Shield, Briefcase } from "lucide-react";
 import Reveal from "./Reveal";
+
+const PHASES = [
+  { n: "01", title: "Pre-Departure", icon: Globe2, detail: "Choose the route, prepare requirements, complete applications and get ready to leave." },
+  { n: "02", title: "Arrival", icon: CalendarClock, detail: "Settle in, handle immediate formalities, find what you need and keep the first weeks organized." },
+  { n: "03", title: "Studying & Part-Time", icon: FileCheck2, detail: "Stay on top of academic work, money, work limits and the obligations that come with your status." },
+  { n: "04", title: "Job Success", icon: Briefcase, detail: "Build the network, find relevant roles, tailor applications and work toward the next visa-safe step." },
+];
 
 export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: string) => void }) {
   return <>
     <section className="relative w-full py-24 sm:py-32">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <Reveal className="max-w-2xl"><Eyebrow>One persistent agent</Eyebrow><h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--shield-text)] sm:text-5xl">Your move is a system.<br /><span className="as-text-gradient">Not a pile of tasks.</span></h2><p className="mt-4 text-sm leading-7 text-[var(--shield-text-dim)] sm:text-base">AbroadShield connects the decisions, documents, deadlines and actions that normally live across dozens of tabs. The agent keeps the context and moves the work forward.</p></Reveal>
-        <Reveal delay={0.1} className="mt-10"><div className="grid gap-4 md:grid-cols-3"><StepCard num="01" icon={Plug} title="Connect" detail="Bring in the services you already use. Your information becomes one working context." /><StepCard num="02" icon={Bot} title="Orchestrate" detail="The agent turns your goals into a sequence of research, preparation, decisions and actions." /><StepCard num="03" icon={CheckCircle2} title="Approve" detail="The agent prepares the action. You decide what actually leaves your account." /></div></Reveal>
+        <Reveal className="max-w-2xl">
+          <Eyebrow>How AbroadShield works</Eyebrow>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--shield-text)] sm:text-5xl">One system from planning to progress.</h2>
+          <p className="mt-4 text-sm leading-7 text-[var(--shield-text-dim)] sm:text-base">Your profile, country context, requirements, documents, deadlines and actions stay connected. You do not rebuild the same context every time you need help.</p>
+        </Reveal>
+        <Reveal delay={0.1} className="mt-10">
+          <div className="grid gap-3 md:grid-cols-3">
+            <StepCard num="01" icon={Plug} title="Set the context" detail="Tell AbroadShield where you are going, what you are studying, and the constraints that matter." />
+            <StepCard num="02" icon={Bot} title="Agent coordinates" detail="The agent turns the goal into research, checks, preparation and actions through one task pipeline." />
+            <StepCard num="03" icon={CheckCircle2} title="You stay in control" detail="Important external actions require your approval, and outcomes return to the same journey record." />
+          </div>
+        </Reveal>
       </div>
     </section>
 
-    <section className="relative w-full py-24 sm:py-32"><div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.74_0.17_162/0.3)] to-transparent" /><div className="mx-auto max-w-7xl px-5 sm:px-8"><div className="grid items-center gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-20"><Reveal><div className="relative overflow-hidden rounded-[2rem] border border-[var(--shield-border)] bg-[oklch(0.13_0.018_165/0.65)] p-5 sm:p-7"><div className="flex items-center justify-between border-b border-[var(--shield-border)] pb-4"><div><div className="text-[10px] uppercase tracking-[0.18em] text-[var(--shield-text-faint)]">Agent orchestration</div><div className="mt-1 text-sm font-semibold">Today&apos;s execution plan</div></div><span className="rounded-full border border-[oklch(0.74_0.17_162/0.3)] px-2.5 py-1 text-[9px] text-[oklch(0.85_0.19_158)]">3 actions ready</span></div><div className="space-y-3 py-5"><ExecutionRow n="01" title="Check visa requirements" meta="Country rules · completed" done /><ExecutionRow n="02" title="Review document gaps" meta="13 documents · 2 need attention" /><ExecutionRow n="03" title="Prepare application email" meta="Draft ready · awaiting approval" /></div><div className="rounded-xl border border-[oklch(0.74_0.17_162/0.18)] bg-[oklch(0.74_0.17_162/0.05)] p-3 text-[11px] leading-5 text-[var(--shield-text-dim)]">The agent keeps the dependency chain intact: research → decision → preparation → approval → action.</div></div></Reveal><Reveal delay={0.12}><Eyebrow><Zap className="h-3.5 w-3.5" />What orchestration means</Eyebrow><h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--shield-text)] sm:text-4xl">The agent doesn&apos;t just answer.<br /><span className="as-text-gradient">It coordinates.</span></h2><p className="mt-4 text-sm leading-7 text-[var(--shield-text-dim)] sm:text-base">A request becomes a controlled workflow. AbroadShield remembers what has already happened, understands what depends on what, and surfaces the next useful action instead of making you start over.</p><div className="mt-7 grid gap-3 sm:grid-cols-2">{[{icon:BrainCircuit,text:"Persistent memory across the journey"},{icon:CalendarClock,text:"Deadlines become executable plans"},{icon:FileCheck2,text:"Documents linked to requirements"},{icon:Shield,text:"Human approval before external action"}].map(({icon:Icon,text}) => <div key={text} className="flex items-center gap-3 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.16_0.02_165/0.4)] px-3.5 py-3"><Icon className="h-4 w-4 text-[oklch(0.85_0.19_158)]" /><span className="text-sm text-[var(--shield-text)]">{text}</span></div>)}</div><button onClick={() => onNavigate?.("agent")} className="group mt-8 inline-flex items-center gap-2 rounded-full bg-[oklch(0.98_0.005_160)] px-5 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)]">See the agent <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" /></button></Reveal></div></div></section>
+    <section id="journey" className="relative w-full py-20 sm:py-28">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.74_0.17_162/0.28)] to-transparent" />
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <Reveal className="max-w-2xl">
+          <Eyebrow>Your journey</Eyebrow>
+          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--shield-text)] sm:text-4xl">Four phases. One continuous record.</h2>
+          <p className="mt-4 text-sm leading-7 text-[var(--shield-text-dim)] sm:text-base">The phase changes. The context does not. Select the phase that matters now and the same agent works against that part of the journey.</p>
+        </Reveal>
+        <Reveal delay={0.1} className="mt-8">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {PHASES.map(({ n, title, icon: Icon, detail }) => (
+              <motion.button key={n} type="button" onClick={() => onNavigate?.("journey")} whileHover={{ y: -3 }} className="rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.15_0.02_165/0.38)] p-5 text-left transition hover:border-[oklch(0.74_0.17_162/0.35)]">
+                <div className="flex items-center justify-between"><span className="text-[10px] font-semibold tracking-[0.18em] text-[var(--shield-text-faint)]">{n}</span><Icon className="h-4 w-4 text-[oklch(0.85_0.19_158)]" /></div>
+                <h3 className="mt-7 text-lg font-semibold">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-[var(--shield-text-dim)]">{detail}</p>
+              </motion.button>
+            ))}
+          </div>
+        </Reveal>
+      </div>
+    </section>
 
-    <section className="relative w-full py-24 sm:py-32"><div className="mx-auto max-w-7xl px-5 sm:px-8"><Reveal><Eyebrow>One journey. Four phases.</Eyebrow><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[{n:"01",title:"Decide",icon:Globe2,detail:"Country, course, route and strategy."},{n:"02",title:"Prepare",icon:FileCheck2,detail:"Documents, applications and deadlines."},{n:"03",title:"Move",icon:CalendarClock,detail:"Travel, arrival and immediate setup."},{n:"04",title:"Build",icon:Briefcase,detail:"Jobs, network and life after arrival."}].map(({n,title,icon:Icon,detail}) => <div key={n} className="rounded-2xl border border-[var(--shield-border)] p-5"><div className="flex items-center justify-between"><span className="text-[10px] font-semibold tracking-[0.18em] text-[var(--shield-text-faint)]">{n}</span><Icon className="h-4 w-4 text-[oklch(0.85_0.19_158)]" /></div><h3 className="mt-7 text-lg font-semibold">{title}</h3><p className="mt-2 text-sm leading-6 text-[var(--shield-text-dim)]">{detail}</p></div>)}</div></Reveal></div></section>
-
-    <section className="relative w-full py-20"><div className="mx-auto max-w-7xl px-5 sm:px-8"><Reveal><div className="rounded-[2rem] border border-[var(--shield-border)] bg-[oklch(0.15_0.02_165/0.55)] p-7 sm:p-10"><div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center"><div><Eyebrow>Designed for control</Eyebrow><h2 className="mt-3 max-w-3xl text-2xl font-semibold tracking-tight sm:text-4xl">Automation without handing over the steering wheel.</h2><p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--shield-text-dim)]">AbroadShield can prepare, research, draft and coordinate. External actions remain explicit decisions—not silent background activity.</p></div><button onClick={() => onNavigate?.("pricing")} className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--shield-border)] px-5 py-3 text-sm font-semibold hover:bg-white/5">Explore plans <ArrowRight className="h-3.5 w-3.5" /></button></div></div></Reveal></div></section>
+    <section className="relative w-full py-20">
+      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        <Reveal>
+          <div className="rounded-[2rem] border border-[var(--shield-border)] bg-[oklch(0.15_0.02_165/0.55)] p-7 sm:p-10">
+            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <Eyebrow><Shield className="h-3.5 w-3.5" />Control by design</Eyebrow>
+                <h2 className="mt-3 max-w-3xl text-2xl font-semibold tracking-tight sm:text-4xl">Automation without surrendering control.</h2>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--shield-text-dim)]">Research, preparation and coordination can continue. Sending or submitting something outside the workspace remains an explicit user decision.</p>
+              </div>
+              <button onClick={() => onNavigate?.("agent")} className="inline-flex items-center justify-center gap-2 rounded-full bg-[oklch(0.98_0.005_160)] px-5 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)]">Meet the agent <ArrowRight className="h-3.5 w-3.5" /></button>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
   </>;
 }
 
 function Eyebrow({ children }: { children: React.ReactNode }) { return <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[oklch(0.85_0.19_158)]">{children}</div>; }
-function ExecutionRow({ n, title, meta, done }: { n: string; title: string; meta: string; done?: boolean }) { return <div className="flex items-center gap-3 rounded-xl border border-[var(--shield-border)] p-3"><span className="text-[10px] font-semibold text-[var(--shield-text-faint)]">{n}</span><div className="min-w-0 flex-1"><div className="text-xs font-semibold">{title}</div><div className="mt-0.5 text-[10px] text-[var(--shield-text-faint)]">{meta}</div></div><span className={`h-2 w-2 rounded-full ${done ? "bg-[oklch(0.74_0.17_162)]" : "border border-[oklch(0.8_0.15_80)]"}`} /></div>; }
 function StepCard({ num, icon: Icon, title, detail }: { num: string; icon: typeof Plug; title: string; detail: string }) { return <div className="rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.15_0.02_165/0.42)] p-6"><div className="flex items-center justify-between"><span className="text-[10px] font-semibold tracking-[0.18em] text-[var(--shield-text-faint)]">{num}</span><Icon className="h-5 w-5 text-[oklch(0.85_0.19_158)]" /></div><h3 className="mt-10 text-lg font-semibold">{title}</h3><p className="mt-2 text-sm leading-6 text-[var(--shield-text-dim)]">{detail}</p></div>; }
