@@ -10,13 +10,11 @@ import Hero3D from "@/components/abroadshield/Hero3D";
 import ViewHero from "@/components/abroadshield/ViewHero";
 import HomeShowcase from "@/components/abroadshield/HomeShowcase";
 import JourneyExplorer from "@/components/abroadshield/JourneyExplorer";
-import AgentActivityPanel from "@/components/abroadshield/AgentActivityPanel";
 import DeadlineTimeline from "@/components/abroadshield/DeadlineTimeline";
 import MemoryVault from "@/components/abroadshield/MemoryVault";
 import CountryRules from "@/components/abroadshield/CountryRules";
 import Pillars from "@/components/abroadshield/Pillars";
 import AgentChat from "@/components/abroadshield/AgentChat";
-import ApprovalsHistory from "@/components/abroadshield/ApprovalsHistory";
 import NetworkingJobs from "@/components/abroadshield/NetworkingJobs";
 import Connectors from "@/components/abroadshield/Connectors";
 import PricingTiers from "@/components/abroadshield/PricingTiers";
@@ -50,9 +48,9 @@ export default function Home() {
   const isWorkspace = status === "authenticated" && WORKSPACE_VIEWS.includes(activeView as WorkspaceView);
   const content = <AnimatePresence mode="wait"><motion.div key={activeView} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
     {activeView === "home" && <><Hero3D onNavigate={navigateTo} /><HomeShowcase onNavigate={navigateTo} /></>}
-    {activeView === "dashboard" && (session ? <><DashboardView onNavigate={navigateTo} /><StageRequirements /><StageWorkspace onNavigate={navigateTo} /></> : <div className="flex min-h-[80vh] flex-col items-center justify-center px-6 text-center"><div className="mb-6 text-4xl">🛡️</div><h2 className="text-2xl font-semibold">Sign in to access your workspace</h2><p className="mt-3 max-w-sm text-sm text-[var(--shield-text-dim)]">Your agent, journey, documents and tasks are private to your account.</p><button onClick={() => setShowAuthForDashboard(true)} className="mt-6 rounded-full bg-[oklch(0.98_0.005_160)] px-6 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)]">Sign in / Create account</button></div>)}
-    {activeView === "journey" && <><ViewHero viewId="journey" /><StageRequirements /><StageWorkspace onNavigate={navigateTo} /><JourneyExplorer /><DeadlineTimeline /><MemoryVault /></>}
-    {activeView === "agent" && <><ViewHero viewId="agent" /><AgentActivityPanel /><AgentChat /><ApprovalsHistory /></>}
+    {activeView === "dashboard" && (session ? <DashboardView onNavigate={navigateTo} /> : <div className="flex min-h-[80vh] flex-col items-center justify-center px-6 text-center"><div className="mb-6 text-4xl">🛡️</div><h2 className="text-2xl font-semibold">Sign in to access your workspace</h2><p className="mt-3 max-w-sm text-sm text-[var(--shield-text-dim)]">Your agent, journey, documents and tasks are private to your account.</p><button onClick={() => setShowAuthForDashboard(true)} className="mt-6 rounded-full bg-[oklch(0.98_0.005_160)] px-6 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)]">Sign in / Create account</button></div>)}
+    {activeView === "journey" && <><StageRequirements /><StageWorkspace onNavigate={navigateTo} /><JourneyExplorer /><DeadlineTimeline /><MemoryVault /></>}
+    {activeView === "agent" && <AgentChat />}
     {activeView === "countries" && <><ViewHero viewId="countries" /><CountryRules /></>}
     {activeView === "network" && <><ViewHero viewId="network" /><NetworkingJobs /></>}
     {activeView === "connectors" && <><ViewHero viewId="connectors" /><Connectors /></>}
