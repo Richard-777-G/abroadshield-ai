@@ -8,9 +8,9 @@ type LiveToolResult = {
   message?: string;
 };
 
-const BRAVE_ENDPOINT = "https://api.search.brave.com/res/v1/web/search";
+const TAVILY_ENDPOINT = "https://api.tavily.com/search";
 
-/** Execute current-data capabilities through the configured Brave Search API. */
+/** Execute current-data capabilities through the configured Tavily Search API. */
 export async function executeLiveTool(
   capability: AgentCapability,
   query: string,
@@ -20,7 +20,7 @@ export async function executeLiveTool(
     return { capability, status: "failed", query, sources: [], message: "A search query is required." };
   }
 
-  const apiKey = process.env.BRAVE_SEARCH_API_KEY?.trim();
+  const apiKey = process.env.TAVILY_API_KEY?.trim();
   if (!apiKey) {
     return {
       capability,
@@ -31,19 +31,11 @@ export async function executeLiveTool(
     };
   }
 
-  const url = new URL(BRAVE_ENDPOINT);
-  url.searchParams.set("q", normalizedQuery);
-  url.searchParams.set("count", "10");
-  url.searchParams.set("search_lang", "en");
-  url.searchParams.set("safesearch", "moderate");
-
   try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        "X-Subscription-Token": apiKey,
-      },
+    const response = await fetch(TAVILY_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ api_key: apiKey, query: normalizedQuery, search_depth: "basic", max_results: 10, include_answer: false, include_raw_content: false }),
       cache: "no-store",
       signal: AbortSignal.timeout(10_000),
     });
@@ -52,15 +44,15 @@ export async function executeLiveTool(
     }
 
     const payload = (await response.json()) as {
-      web?: { results?: Array<{ title?: string; url?: string; description?: string }> };
+      results?: Array<{ title?: string; url?: string; content?: string }>;
     };
-    const sources = (payload.web?.results ?? [])
+    const sources = (payload.results ?? [])
       .filter((item) => typeof item.title === "string" && typeof item.url === "string")
       .map((item) => ({
         title: item.title!,
         url: item.url!,
         source: new URL(item.url!).hostname,
-        snippet: item.description,
+        snippet: item.content,
       }));
 
     return {
