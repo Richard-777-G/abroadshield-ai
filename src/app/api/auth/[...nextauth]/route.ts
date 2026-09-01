@@ -8,6 +8,7 @@ const GOOGLE_SCOPE = [
   "email",
   "profile",
   "https://www.googleapis.com/auth/gmail.compose",
+  "https://www.googleapis.com/auth/gmail.send",
 ].join(" ");
 
 const handler = NextAuth({
@@ -73,7 +74,11 @@ const handler = NextAuth({
         (session.user as { id?: string }).id = token.sub;
       }
       (session as typeof session & { gmailConnected?: boolean }).gmailConnected =
-        Boolean(token.googleAccessToken && token.googleScope?.includes("gmail.compose"));
+        Boolean(
+          token.googleAccessToken &&
+            token.googleScope?.includes("gmail.compose") &&
+            token.googleScope?.includes("gmail.send")
+        );
       return session;
     },
   },
