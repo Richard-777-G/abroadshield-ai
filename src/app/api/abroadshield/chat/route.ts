@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import ZAI from "z-ai-web-dev-sdk";
 import { db } from "@/lib/db";
 import { buildAgentContext, type AgentProfile } from "@/lib/abroadshield/task-context";
+import { detectCapability } from "@/lib/abroadshield/capability-router";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,11 +32,36 @@ async function resolveUser() {
 
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error("AGENT_TIMEOUT")), ms);
-  });
+  const timeout = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error("AGENT_TIMEOUT")), ms); });
   try { return await Promise.race([promise, timeout]); }
   finally { if (timer) clearTimeout(timer); }
+}
+
+function summarizeTask(capability: string, result: unknown): string {
+  const label = capability.replaceAll("_", " ");
+  if (!result || typeof result !== "object") return `I completed the ${label} task and recorded the result in your journey.`;
+  const data = result as Record<string, unknown>;
+  const lines: string[] = [];
+  if (typeof data.summary === "string") lines.push(data.summary);
+  if (typeof data.status === "string") lines.push(`Status: ${data.status}`);
+  if (Array.isArray(data.issues)) {
+    const issues = data.issues.filter((x): x is string => typeof x === "string");
+    if (issues.length) lines.push(`Issues: ${issues.join("; ")}`);
+  }
+  if (typeof data.nextAction === "string") lines.push(`Next: ${data.nextAction}`);
+  return lines.join("\n") || `I completed the ${label} task and recorded the result in your journey.`;
+}
+
+async function executeTask(req: NextRequest, capability: string, message: string, phase: string) {
+  const response = await fetch(new URL("/api/abroadshield/tasks", req.url), {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: req.headers.get("cookie") ?? "" },
+    body: JSON.stringify({ taskType: capability, context: message, phase }),
+    cache: "no-store",
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.ok) throw new Error(payload.error || "Task execution failed.");
+  return payload;
 }
 
 export async function POST(req: NextRequest) {
@@ -48,39 +74,41 @@ export async function POST(req: NextRequest) {
     if (!userMessage.trim()) return NextResponse.json({ ok: false, error: "Message is required." }, { status: 400 });
 
     const journey = await db.journeyProfile.findUnique({ where: { userId: resolved.user.id } });
+    const phase = journey?.currentPhase || "pre-departure";
+    const capability = detectCapability(userMessage);
+
+    if (capability) {
+      const taskPayload = await executeTask(req, capability, userMessage, phase);
+      const reply = summarizeTask(capability, taskPayload.result);
+      await db.agentMessage.createMany({ data: [
+        { userId: resolved.user.id, role: "user", content: userMessage, phase },
+        { userId: resolved.user.id, role: "assistant", content: reply, phase },
+      ] });
+      return NextResponse.json({ ok: true, reply, phase, capability, taskId: taskPayload.taskId, result: taskPayload.result, executed: true });
+    }
+
     const [recentEvents, recentTasks] = await Promise.all([
       db.journeyEvent.findMany({ where: { userId: resolved.user.id }, orderBy: { createdAt: "desc" }, take: 8 }),
       db.journeyTask.findMany({ where: { userId: resolved.user.id }, orderBy: { updatedAt: "desc" }, take: 8 }),
     ]);
     const profile: AgentProfile = {
-      name: journey?.userId ? resolved.user.name ?? resolved.session?.user?.name ?? undefined : resolved.session?.user?.name ?? undefined,
-      email: resolved.user.email,
-      origin: journey?.origin,
-      destination: journey?.destination,
-      course: journey?.course,
-      university: journey?.university,
-      intake: journey?.intake,
-      currentPhase: journey?.currentPhase,
-      documentsTotal: journey?.documentsTotal,
-      documentsVerified: journey?.documentsVerified,
-      visaAppointment: journey?.visaAppointment ?? undefined,
-      funding: journey?.funding ?? undefined,
-      homeLanguage: journey?.homeLanguage ?? undefined,
+      name: resolved.user.name ?? resolved.session?.user?.name ?? undefined, email: resolved.user.email,
+      origin: journey?.origin, destination: journey?.destination, course: journey?.course, university: journey?.university,
+      intake: journey?.intake, currentPhase: journey?.currentPhase, documentsTotal: journey?.documentsTotal,
+      documentsVerified: journey?.documentsVerified, visaAppointment: journey?.visaAppointment ?? undefined,
+      funding: journey?.funding ?? undefined, homeLanguage: journey?.homeLanguage ?? undefined,
     };
     const memory = `\nPERSISTENT JOURNEY:\n${buildAgentContext(profile)}\nRECENT EVENTS:\n${recentEvents.map((e) => `- [${e.phase}] ${e.type}: ${e.title}${e.detail ? ` — ${e.detail}` : ""}`).join("\n") || "none yet"}\nRECENT TASKS:\n${recentTasks.map((t) => `- [${t.phase}] ${t.status}: ${t.title}`).join("\n") || "none yet"}`;
     const history = messages.slice(-6).map((m) => ({ role: m.role, content: String(m.content).slice(0, 4000) }));
     const zai = await withTimeout(ZAI.create(), 8_000);
-    const completion = await withTimeout(
-      zai.chat.completions.create({ messages: [{ role: "assistant", content: SYSTEM_RULES + memory }, ...history, { role: "user", content: userMessage }], thinking: { type: "disabled" } }),
-      CHAT_TIMEOUT_MS,
-    );
+    const completion = await withTimeout(zai.chat.completions.create({ messages: [{ role: "assistant", content: SYSTEM_RULES + memory }, ...history, { role: "user", content: userMessage }], thinking: { type: "disabled" } }), CHAT_TIMEOUT_MS);
     const reply = completion.choices[0]?.message?.content?.trim() ?? "";
     if (!reply) return NextResponse.json({ ok: false, error: "The agent returned an empty result." }, { status: 502 });
-    await db.agentMessage.createMany({ data: [{ userId: resolved.user.id, role: "user", content: userMessage, phase: journey?.currentPhase || "pre-departure" }, { userId: resolved.user.id, role: "assistant", content: reply, phase: journey?.currentPhase || "pre-departure" }] });
-    return NextResponse.json({ ok: true, reply, phase: journey?.currentPhase || "pre-departure" });
+    await db.agentMessage.createMany({ data: [{ userId: resolved.user.id, role: "user", content: userMessage, phase }, { userId: resolved.user.id, role: "assistant", content: reply, phase }] });
+    return NextResponse.json({ ok: true, reply, phase, executed: false });
   } catch (error) {
     console.error("[abroadshield/chat] error", error);
     if (error instanceof Error && error.message === "AGENT_TIMEOUT") return NextResponse.json({ ok: false, error: "The agent took too long to respond. Please retry." }, { status: 504 });
-    return NextResponse.json({ ok: false, error: "The agent hit an error. Please try again." }, { status: 500 });
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "The agent hit an error. Please try again." }, { status: 500 });
   }
 }
