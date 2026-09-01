@@ -28,21 +28,32 @@ function encodeMessage({ to, subject, body }: Omit<GmailRequest, "action">) {
     .replace(/=+$/, "");
 }
 
+function hasGmailSendScope(scope?: string) {
+  return Boolean(scope?.split(" ").includes("https://www.googleapis.com/auth/gmail.send"));
+}
+
+export async function GET(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+  const connected = Boolean(token?.googleAccessToken && hasGmailSendScope(token.googleScope));
+
+  return NextResponse.json({
+    ok: true,
+    connected,
+    email: connected ? token?.email ?? null : null,
+  });
+}
+
 export async function POST(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
-  if (!token?.googleAccessToken || token.googleProvider !== undefined) {
-    // The access token is only issued by the Google provider. Keep this guard
-    // deliberately strict: credentials login must never masquerade as Gmail.
-    if (!token?.googleAccessToken) {
-      return NextResponse.json(
-        { ok: false, error: "Gmail is not connected. Sign in with Google and grant Gmail access first." },
-        { status: 401 }
-      );
-    }
+  if (!token?.googleAccessToken) {
+    return NextResponse.json(
+      { ok: false, error: "Gmail is not connected. Sign in with Google and grant Gmail access first." },
+      { status: 401 }
+    );
   }
 
-  if (!token.googleScope?.includes("gmail.send")) {
+  if (!hasGmailSendScope(token.googleScope)) {
     return NextResponse.json(
       { ok: false, error: "Gmail send permission is missing. Reconnect Google to grant Gmail access." },
       { status: 403 }
@@ -66,7 +77,13 @@ export async function POST(req: NextRequest) {
           Authorization: `Bearer ${token.googleAccessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ raw: encodeMessage(payload as Omit<GmailRequest, "action">) }),
+        body: JSON.stringify({
+          raw: encodeMessage({
+            to: payload.to,
+            subject: payload.subject,
+            body: payload.body,
+          }),
+        }),
       }
     );
 
@@ -74,7 +91,13 @@ export async function POST(req: NextRequest) {
     if (!response.ok) {
       console.error("[gmail] send failed", response.status, data);
       return NextResponse.json(
-        { ok: false, error: "Google rejected the Gmail request. Reconnect Google if the permission has changed." },
+        {
+          ok: false,
+          error:
+            response.status === 401
+              ? "Google rejected the access token. Please sign in with Google again."
+              : "Google rejected the Gmail request. Check the granted Gmail permission.",
+        },
         { status: response.status }
       );
     }
