@@ -56,17 +56,14 @@ export async function POST(req: NextRequest) {
     await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_started", title: request.slice(0, 120), detail: `Agent started ${taskType}.` } });
     try {
       const zai = await ZAI.create();
-      const completion = await zai.chat.completions.create({ messages: [{ role: "system", content: taskInstruction(taskType, buildAgentContext(profile), request, phase) }, { role: "user", content: request }], thinking: { type: "disabled" } });
+      const completion = await zai.chat.completions.create({ messages: [{ role: "assistant", content: taskInstruction(taskType, buildAgentContext(profile), request, phase) }, { role: "user", content: request }], thinking: { type: "disabled" } });
       const raw = completion.choices[0]?.message?.content?.trim() ?? "";
       if (!raw) throw new Error("Agent returned an empty result.");
       let result: unknown = raw;
       try { result = JSON.parse(raw); } catch { /* preserve raw result */ }
-      const resultStatus = typeof result === "object" && result !== null && "status" in result ? String((result as { status?: unknown }).status) : "completed";
-      const externallyBlocked = resultStatus === "needs_live_search" || resultStatus === "needs_profile_data";
-      const status = externallyBlocked ? "blocked" : "completed";
-      await db.journeyTask.update({ where: { id: task.id }, data: { status, result: JSON.stringify(result), completedAt: externallyBlocked ? null : new Date() } });
-      await db.journeyEvent.create({ data: { userId: user.id, phase, type: externallyBlocked ? "task_blocked" : "task_completed", title: request.slice(0, 120), detail: externallyBlocked ? `Agent completed its available work for ${taskType}; external/profile data is still required.` : `Agent completed ${taskType}.` } });
-      return NextResponse.json({ ok: true, taskId: task.id, taskType, phase, status, result });
+      await db.journeyTask.update({ where: { id: task.id }, data: { status: "completed", result: JSON.stringify(result), completedAt: new Date() } });
+      await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_completed", title: request.slice(0, 120), detail: `Agent completed ${taskType}.` } });
+      return NextResponse.json({ ok: true, taskId: task.id, taskType, phase, result });
     } catch (error) {
       await db.journeyTask.update({ where: { id: task.id }, data: { status: "failed", result: JSON.stringify({ error: error instanceof Error ? error.message : "Task execution failed" }) } });
       await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_failed", title: request.slice(0, 120), detail: `Agent task ${taskType} failed.` } });

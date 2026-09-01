@@ -17,7 +17,7 @@ const VIEW_HEROES: Record<ViewId, ViewHeroConfig> = {
     title: "One relationship carrying",
     highlight: "the same memory",
     subtitle:
-      "from planning and departure through arrival, study, work, and the transition into a career. What the student builds in one phase remains useful in the next.",
+      "through every leg. The trust built during a stressful visa week is still there — compounding, not resetting — when the same student sits down for a job interview two years later.",
     image: "/sections/hero-journey.png",
   },
   agent: {
@@ -25,39 +25,39 @@ const VIEW_HEROES: Record<ViewId, ViewHeroConfig> = {
     title: "Ask it to",
     highlight: "do the work.",
     subtitle:
-      "This isn't a scripted demo. The agent carries the student's journey in memory and responds with real drafts, real checks, and real shortlists — ready for review and approval.",
+      "This isn't a scripted demo. The agent carries Aarav's full journey in memory and responds with real drafts, real checks, and real shortlists — ready for your approval.",
     image: "/sections/hero-agent.png",
   },
   countries: {
-    eyebrow: "Country-specific rules",
+    eyebrow: "Country-specific rules baked in",
     title: "It already knows",
     highlight: "the rules.",
     subtitle:
-      "Visa requirements, official guidance, work restrictions, and post-study pathways are organized around the destination — so advice stays grounded in the student's actual route.",
+      "Official embassy links, visa checklists, work-hour caps, and post-study windows for 10 destinations. Pick a country to see what the agent has memorized.",
     image: "/sections/hero-countries.png",
   },
   network: {
     eyebrow: "Networking & Job Hub",
     title: "The agent doesn't just advise.",
-    highlight: "It helps you act.",
+    highlight: "It applies.",
     subtitle:
-      "Track networking, surface relevant opportunities, and prioritize roles around the student's profile, visa runway, and sponsorship requirements — with the student in control.",
+      "An always-on networking tracker plus a live job board filtered by your visa runway and sponsorship eligibility. Click any row to see what the agent is doing.",
     image: "/sections/hero-network.png",
   },
   connectors: {
     eyebrow: "Connectors & Integrations",
-    title: "It works across",
-    highlight: "the platforms you use.",
+    title: "It operates every platform",
+    highlight: "you need.",
     subtitle:
-      "Connect the tools that matter. The agent can search, shortlist, prepare, and coordinate work across connected platforms — with approval at the points that matter.",
+      "Connect the tools you already use. The agent searches, shortlists, drafts, and applies across 16 real platforms — with your approval at every step.",
     image: "/sections/hero-connectors.png",
   },
   pricing: {
-    eyebrow: "Direct-to-student",
-    title: "Start with the guidance you need.",
-    highlight: "Pay when the work expands.",
+    eyebrow: "Direct-to-student, from day one",
+    title: "Free for the students who need it most.",
+    highlight: "Paid when the agent does the work.",
     subtitle:
-      "The model is built around students rather than agencies: useful guidance and planning first, with deeper agentic work available when it creates enough value to justify the upgrade.",
+      "Consultant/agency licensing was rejected twice. The model is direct-to-student — free tier for the checklist + nudges, agentic actions gated behind a paid tier.",
     image: "/sections/hero-pricing.png",
   },
 };
@@ -68,26 +68,28 @@ export default function ViewHero({ viewId }: { viewId: ViewId }) {
   return (
     <section className="relative w-full overflow-hidden bg-transparent pt-20 sm:pt-24">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
+        {/* image banner — full width, no text overlap */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.985 }}
+          initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="relative h-[160px] overflow-hidden rounded-2xl border border-[oklch(0.6_0.04_165/0.2)] bg-[oklch(0.18_0.02_165/0.5)] sm:h-[200px]"
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="relative h-[160px] overflow-hidden rounded-2xl border border-[oklch(0.6_0.04_165/0.2)] sm:h-[200px]"
         >
           <img
             src={config.image}
-            alt=""
+            alt={config.title}
             className="h-full w-full object-cover opacity-40"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.14_0.018_165/0.92)] via-[oklch(0.14_0.018_165/0.2)] to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[oklch(0.14_0.018_165/0.9)] to-transparent" />
         </motion.div>
 
+        {/* heading text — BELOW the image, no overlap */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.12 }}
-          className="mt-7 max-w-3xl"
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="mt-6 max-w-2xl"
         >
           <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[oklch(0.85_0.19_158)]">
             <span className="h-px w-8 bg-[oklch(0.74_0.17_162/0.5)]" />
@@ -97,7 +99,7 @@ export default function ViewHero({ viewId }: { viewId: ViewId }) {
             {config.title}{" "}
             <span className="as-text-gradient">{config.highlight}</span>
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--shield-text-dim)] sm:text-base">
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-[var(--shield-text-dim)] sm:text-base">
             {config.subtitle}
           </p>
         </motion.div>
