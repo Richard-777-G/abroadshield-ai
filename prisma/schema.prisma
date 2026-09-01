@@ -11,15 +11,32 @@ datasource db {
 }
 
 model User {
-  id        String          @id @default(cuid())
-  email     String          @unique
+  id        String             @id @default(cuid())
+  email     String             @unique
   name      String?
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
   journey   JourneyProfile?
   events    JourneyEvent[]
   tasks     JourneyTask[]
   messages  AgentMessage[]
+  connections GoogleConnection[]
+}
+
+model GoogleConnection {
+  id           String   @id @default(cuid())
+  userId       String
+  provider     String   @default("google")
+  email        String?
+  accessToken  String?
+  refreshToken String?
+  scope        String?
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, provider])
+  @@index([userId, provider])
 }
 
 model Post {
