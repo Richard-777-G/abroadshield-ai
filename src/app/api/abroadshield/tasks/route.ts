@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { buildAgentContext, type AgentProfile } from "@/lib/abroadshield/task-context";
 import { normalizePhase } from "@/lib/abroadshield/journey";
 import { executeLiveTool } from "@/lib/abroadshield/live-tool-adapter";
+import { getStagePolicy, buildStageSystemDirective, isCapabilityAllowedInStage } from "@/lib/abroadshield/stage-orchestrator";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,7 +16,8 @@ type TaskRequest = { taskType?: string; context?: string; phase?: string };
 const LIVE_TASKS = new Set<TaskType>(["job_search", "housing_search", "visa_check"]);
 
 function taskInstruction(taskType: TaskType, profileContext: string, request: string, phase: string) {
-  const common = `You are an execution agent inside AbroadShield AI.\nCURRENT STAGE: ${phase}\nAUTHENTICATED STUDENT PROFILE:\n${profileContext}\n\nRules:\n- Work only with facts supplied by the profile or task request.\n- Never claim an external action happened unless this request actually performs it.\n- Never fabricate live URLs, employers, deadlines, prices, legal requirements, listings, or verification results.\n- If live external data or a connector is required but unavailable, say so explicitly.\n- Return valid JSON only.`;
+  const policy = getStagePolicy(normalizePhase(phase));
+  const common = `You are an execution agent inside AbroadShield AI.\n${buildStageSystemDirective(policy.phase)}\nAUTHENTICATED STUDENT PROFILE:\n${profileContext}\n\nRules:\n- Work only with facts supplied by the profile, verified live sources, or task request.\n- Never claim an external action happened unless this request actually performs it.\n- Never fabricate live URLs, employers, deadlines, prices, legal requirements, listings, or verification results.\n- If live external data or a connector is required but unavailable, say so explicitly.\n- Return valid JSON only.`;
   const instructions: Record<TaskType, string> = {
     document_check: `${common}\nPerform an informational document pre-check, not legal certification. Return {"status":"verified|issue|missing|needs_review","summary":string,"issues":string[],"agentActions":string[],"priority":"critical|high|medium|low","verificationNote":string}.`,
     draft_email: `${common}\nDraft a professional email. Return {"subject":string,"to":"recipient/role","body":string,"notes":string,"requiresApproval":true}. Do not send it.`,
@@ -47,6 +49,10 @@ export async function POST(req: NextRequest) {
     if (!taskType || !TASKS.includes(taskType)) return NextResponse.json({ ok: false, error: `Unknown task type. Valid types: ${TASKS.join(", ")}` }, { status: 400 });
     const journey = await db.journeyProfile.findUnique({ where: { userId: user.id } });
     const phase = normalizePhase(body.phase || journey?.currentPhase);
+    if (!isCapabilityAllowedInStage(phase, taskType)) {
+      const policy = getStagePolicy(phase);
+      return NextResponse.json({ ok: false, error: `${taskType.replaceAll("_", " ")} is not part of the ${policy.title} workflow.`, phase, stage: policy.title, allowedCapabilities: policy.capabilities }, { status: 409 });
+    }
     const profile: AgentProfile = {
       name: user.name ?? undefined, email: user.email, origin: journey?.origin, destination: journey?.destination,
       course: journey?.course, university: journey?.university, intake: journey?.intake, currentPhase: phase,
