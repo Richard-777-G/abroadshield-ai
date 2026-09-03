@@ -1,12 +1,12 @@
 // AbroadShield persistent journey data model
-// SQLite for the current deployment; keep domain entities provider-neutral.
+// PostgreSQL for production persistence; keep domain entities provider-neutral.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -79,7 +79,7 @@ model JourneyEvent {
   detail    String?
   metadata  String?
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId, createdAt])
   @@index([userId, phase])
 }
@@ -109,6 +109,6 @@ model AgentMessage {
   content   String
   phase     String
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId, createdAt])
 }
