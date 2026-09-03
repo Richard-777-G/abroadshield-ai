@@ -12,12 +12,12 @@ export const dynamic = "force-dynamic";
 
 const TASKS = ["document_check", "draft_email", "job_search", "tailor_cv", "deadline_scan", "housing_search", "visa_check"] as const;
 type TaskType = (typeof TASKS)[number];
-type TaskRequest = { taskType?: string; context?: string; phase?: string };
+type TaskRequest = { taskType?: string; context?: string; phase?: string; mode?: "execute" | "plan" };
 const LIVE_TASKS = new Set<TaskType>(["job_search", "housing_search", "visa_check"]);
 
-function taskInstruction(taskType: TaskType, profileContext: string, request: string, phase: string) {
+function taskInstruction(taskType: TaskType, profileContext: string, request: string, phase: string, mode: "execute" | "plan") {
   const policy = getStagePolicy(normalizePhase(phase));
-  const common = `You are an execution agent inside AbroadShield AI.\n${buildStageSystemDirective(policy.phase)}\nAUTHENTICATED STUDENT PROFILE:\n${profileContext}\n\nRules:\n- Work only with facts supplied by the profile, verified live sources, or task request.\n- Never claim an external action happened unless this request actually performs it.\n- Never fabricate live URLs, employers, deadlines, prices, legal requirements, listings, or verification results.\n- If live external data or a connector is required but unavailable, say so explicitly.\n- Return valid JSON only.`;
+  const common = `You are an execution agent inside AbroadShield AI.\n${buildStageSystemDirective(policy.phase)}\nMODE: ${mode === "plan" ? "FUTURE-STAGE PLANNING" : "CURRENT-STAGE EXECUTION"}\nAUTHENTICATED STUDENT PROFILE:\n${profileContext}\n\nRules:\n- Work only with facts supplied by the profile, verified live sources, or task request.\n- Never claim an external action happened unless this request actually performs it.\n- Never fabricate live URLs, employers, deadlines, prices, legal requirements, listings, or verification results.\n- If live external data or a connector is required but unavailable, say so explicitly.\n- In planning mode, explain what should be prepared and what must wait until that stage; do not imply the student has reached it.\n- Return valid JSON only.`;
   const instructions: Record<TaskType, string> = {
     document_check: `${common}\nPerform an informational document pre-check, not legal certification. Return {"status":"verified|issue|missing|needs_review","summary":string,"issues":string[],"agentActions":string[],"priority":"critical|high|medium|low","verificationNote":string}.`,
     draft_email: `${common}\nDraft a professional email. Return {"subject":string,"to":"recipient/role","body":string,"notes":string,"requiresApproval":true}. Do not send it.`,
@@ -48,20 +48,23 @@ export async function POST(req: NextRequest) {
     const taskType = body.taskType as TaskType | undefined;
     if (!taskType || !TASKS.includes(taskType)) return NextResponse.json({ ok: false, error: `Unknown task type. Valid types: ${TASKS.join(", ")}` }, { status: 400 });
     const journey = await db.journeyProfile.findUnique({ where: { userId: user.id } });
-    const phase = normalizePhase(body.phase || journey?.currentPhase);
-    if (!isCapabilityAllowedInStage(phase, taskType)) {
+    const currentPhase = normalizePhase(journey?.currentPhase);
+    const phase = normalizePhase(body.phase || currentPhase);
+    const mode = body.mode || "execute";
+    const planningAnotherStage = mode === "plan" && phase !== currentPhase;
+    if (!isCapabilityAllowedInStage(phase, taskType) && !planningAnotherStage) {
       const policy = getStagePolicy(phase);
       return NextResponse.json({ ok: false, error: `${taskType.replaceAll("_", " ")} is not part of the ${policy.title} workflow.`, phase, stage: policy.title, allowedCapabilities: policy.capabilities }, { status: 409 });
     }
     const profile: AgentProfile = {
       name: user.name ?? undefined, email: user.email, origin: journey?.origin, destination: journey?.destination,
-      course: journey?.course, university: journey?.university, intake: journey?.intake, currentPhase: phase,
+      course: journey?.course, university: journey?.university, intake: journey?.intake, currentPhase: currentPhase,
       documentsTotal: journey?.documentsTotal, documentsVerified: journey?.documentsVerified,
       visaAppointment: journey?.visaAppointment ?? undefined, funding: journey?.funding ?? undefined, homeLanguage: journey?.homeLanguage ?? undefined,
     };
-    const request = body.context?.trim() || `Execute ${taskType} for this student.`;
-    const task = await db.journeyTask.create({ data: { userId: user.id, phase, type: taskType, title: request.slice(0, 120), status: "running" } });
-    await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_started", title: request.slice(0, 120), detail: `Agent started ${taskType}.` } });
+    const request = body.context?.trim() || `${mode === "plan" ? "Plan" : "Execute"} ${taskType} for this student.`;
+    const task = await db.journeyTask.create({ data: { userId: user.id, phase, type: taskType, title: (planningAnotherStage ? "[Planned] " : "") + request.slice(0, 120), status: "running" } });
+    await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_started", title: request.slice(0, 120), detail: `Agent started ${mode} ${taskType}.` } });
 
     try {
       if (LIVE_TASKS.has(taskType)) {
@@ -70,30 +73,30 @@ export async function POST(req: NextRequest) {
           const result = { status: "needs_live_search", query: live.query, sources: live.sources, nextAction: live.message };
           await db.journeyTask.update({ where: { id: task.id }, data: { status: "completed", result: JSON.stringify(result), completedAt: new Date() } });
           await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_completed", title: request.slice(0, 120), detail: `Live ${taskType} unavailable: ${live.message ?? "not configured"}` } });
-          return NextResponse.json({ ok: true, taskId: task.id, taskType, phase, result });
+          return NextResponse.json({ ok: true, taskId: task.id, taskType, phase, mode, planningAnotherStage, result });
         }
 
         const liveContext = JSON.stringify({ query: live.query, sources: live.sources });
         const zai = await ZAI.create();
-        const completion = await zai.chat.completions.create({ messages: [{ role: "assistant", content: taskInstruction(taskType, buildAgentContext(profile), request, phase) }, { role: "user", content: liveContext }], thinking: { type: "disabled" } });
+        const completion = await zai.chat.completions.create({ messages: [{ role: "assistant", content: taskInstruction(taskType, buildAgentContext(profile), request, phase, mode) }, { role: "user", content: liveContext }], thinking: { type: "disabled" } });
         const raw = completion.choices[0]?.message?.content?.trim() ?? "";
         if (!raw) throw new Error("Agent returned an empty result.");
         let result: unknown = raw;
         try { result = JSON.parse(raw); } catch { result = { status: "shortlist", query: live.query, sources: live.sources, summary: raw }; }
         await db.journeyTask.update({ where: { id: task.id }, data: { status: "completed", result: JSON.stringify(result), completedAt: new Date() } });
-        await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_completed", title: request.slice(0, 120), detail: `Agent completed live ${taskType}.` } });
-        return NextResponse.json({ ok: true, taskId: task.id, taskType, phase, result, live: true });
+        await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_completed", title: request.slice(0, 120), detail: `Agent completed live ${mode} ${taskType}.` } });
+        return NextResponse.json({ ok: true, taskId: task.id, taskType, phase, mode, planningAnotherStage, result, live: true });
       }
 
       const zai = await ZAI.create();
-      const completion = await zai.chat.completions.create({ messages: [{ role: "assistant", content: taskInstruction(taskType, buildAgentContext(profile), request, phase) }, { role: "user", content: request }], thinking: { type: "disabled" } });
+      const completion = await zai.chat.completions.create({ messages: [{ role: "assistant", content: taskInstruction(taskType, buildAgentContext(profile), request, phase, mode) }, { role: "user", content: request }], thinking: { type: "disabled" } });
       const raw = completion.choices[0]?.message?.content?.trim() ?? "";
       if (!raw) throw new Error("Agent returned an empty result.");
       let result: unknown = raw;
       try { result = JSON.parse(raw); } catch { /* preserve raw result */ }
       await db.journeyTask.update({ where: { id: task.id }, data: { status: "completed", result: JSON.stringify(result), completedAt: new Date() } });
-      await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_completed", title: request.slice(0, 120), detail: `Agent completed ${taskType}.` } });
-      return NextResponse.json({ ok: true, taskId: task.id, taskType, phase, result });
+      await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_completed", title: request.slice(0, 120), detail: `Agent completed ${mode} ${taskType}.` } });
+      return NextResponse.json({ ok: true, taskId: task.id, taskType, phase, mode, planningAnotherStage, result });
     } catch (error) {
       await db.journeyTask.update({ where: { id: task.id }, data: { status: "failed", result: JSON.stringify({ error: error instanceof Error ? error.message : "Task execution failed" }) } });
       await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_failed", title: request.slice(0, 120), detail: `Agent task ${taskType} failed.` } });
