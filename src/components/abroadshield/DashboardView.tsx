@@ -68,18 +68,40 @@ export default function DashboardView({ onNavigate }: { onNavigate: (view: strin
           <button onClick={() => onNavigate("agent")} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[oklch(0.74_0.17_162)] px-4 py-2.5 text-xs font-semibold text-[oklch(0.12_0.016_165)]"><Bot className="h-4 w-4" />Open agent</button>
         </div>
 
-        {nextAction && <div className="mt-6 rounded-xl border border-[oklch(0.74_0.17_162/0.28)] bg-[oklch(0.74_0.17_162/0.045)] p-4"><div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--shield-text-faint)]">Next action</div><div className="mt-1 text-sm font-semibold">{nextAction.title}</div>{nextAction.reason && <div className="mt-1 text-xs leading-5 text-[var(--shield-text-dim)]">{nextAction.reason}</div>}</div>}
+        {nextAction ? (
+          <div className="mt-6 rounded-xl border border-[oklch(0.74_0.17_162/0.28)] bg-[oklch(0.74_0.17_162/0.045)] p-4">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--shield-text-faint)]">Next action</div>
+            <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-sm font-semibold">{nextAction.title}</div>
+                {nextAction.reason && <div className="mt-1 max-w-2xl text-xs leading-5 text-[var(--shield-text-dim)]">{nextAction.reason}</div>}
+              </div>
+              {nextAction.type && nextAction.type in ACTION_META ? (
+                <button type="button" disabled={!!working} onClick={() => void run(nextAction.type as keyof typeof ACTION_META)} className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[oklch(0.74_0.17_162)] px-4 py-2.5 text-xs font-semibold text-[oklch(0.12_0.016_165)]">
+                  {working === nextAction.type ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRight className="h-3.5 w-3.5" />}
+                  Take action
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-6 rounded-xl border border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-4 text-xs text-[var(--shield-text-dim)]">No active action yet. Review your Journey to establish the next step.</div>
+        )}
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {actions.map((type) => {
-            const meta = ACTION_META[type];
-            const Icon = meta.icon;
-            return <button key={type} disabled={!!working} onClick={() => void run(type)} className="rounded-xl border border-[var(--shield-border)] bg-[oklch(0.14_0.018_165)] p-4 text-left transition hover:border-[oklch(0.74_0.17_162/0.45)] disabled:opacity-60">
-              <div className="flex items-center justify-between"><Icon className="h-4 w-4 text-[oklch(0.74_0.17_162)]" />{working === type ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRight className="h-3.5 w-3.5 text-[var(--shield-text-faint)]" />}</div>
-              <div className="mt-3 text-sm font-semibold">{meta.label}</div>
-              <div className="mt-1 text-[10px] text-[var(--shield-text-faint)]">Available in {policy.title}</div>
-            </button>;
-          })}
+        <div className="mt-6 rounded-xl border border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--shield-text-faint)]">Current-stage capabilities</div>
+              <div className="mt-1 text-xs text-[var(--shield-text-dim)]">{policy.title} capabilities available to the agent.</div>
+            </div>
+            <button type="button" onClick={() => onNavigate("journey")} className="text-[10px] font-semibold text-[oklch(0.74_0.17_162)]">Open Journey <ArrowRight className="ml-1 inline h-3 w-3" /></button>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {actions.map((type) => {
+              const meta = ACTION_META[type];
+              return <button key={type} type="button" disabled={!!working} onClick={() => void run(type)} className="rounded-full border border-[var(--shield-border)] px-3 py-1.5 text-[10px] text-[var(--shield-text-dim)] hover:border-[oklch(0.74_0.17_162/0.35)] disabled:opacity-60">{meta.label}</button>;
+            })}
+          </div>
         </div>
 
         <div className="mt-6 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.14_0.018_165)] p-4">
