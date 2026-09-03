@@ -25,10 +25,14 @@ export default function DashboardView({ onNavigate }: { onNavigate: (view: strin
   const [working, setWorking] = useState<string | null>(null);
   const [result, setResult] = useState<{ label: string; text: string } | null>(null);
   const [requirements, setRequirements] = useState<{ title: string; status: string; priority: string }[]>([]);
+  const [nextAction, setNextAction] = useState<{ title: string; reason?: string; type?: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/abroadshield/requirements", { cache: "no-store" })
       .then(async (r) => { const d = await r.json(); if (d.ok) setRequirements(d.snapshot.requirements.slice(0, 4)); })
+      .catch(() => {});
+    fetch("/api/abroadshield/next-action", { cache: "no-store" })
+      .then(async (r) => { const d = await r.json(); if (d.ok) setNextAction(d.next || null); })
       .catch(() => {});
   }, [profile.destination, phase]);
 
@@ -63,6 +67,8 @@ export default function DashboardView({ onNavigate }: { onNavigate: (view: strin
           </div>
           <button onClick={() => onNavigate("agent")} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[oklch(0.74_0.17_162)] px-4 py-2.5 text-xs font-semibold text-[oklch(0.12_0.016_165)]"><Bot className="h-4 w-4" />Open agent</button>
         </div>
+
+        {nextAction && <div className="mt-6 rounded-xl border border-[oklch(0.74_0.17_162/0.28)] bg-[oklch(0.74_0.17_162/0.045)] p-4"><div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--shield-text-faint)]">Next action</div><div className="mt-1 text-sm font-semibold">{nextAction.title}</div>{nextAction.reason && <div className="mt-1 text-xs leading-5 text-[var(--shield-text-dim)]">{nextAction.reason}</div>}</div>}
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {actions.map((type) => {
