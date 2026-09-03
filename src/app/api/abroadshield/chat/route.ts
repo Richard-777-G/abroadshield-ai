@@ -4,6 +4,8 @@ import ZAI from "z-ai-web-dev-sdk";
 import { db } from "@/lib/db";
 import { buildAgentContext, type AgentProfile } from "@/lib/abroadshield/task-context";
 import { detectCapability } from "@/lib/abroadshield/capability-router";
+import { buildStageSystemDirective, getStagePolicy, isCapabilityAllowedInStage } from "@/lib/abroadshield/stage-orchestrator";
+import { normalizePhase } from "@/lib/abroadshield/journey";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,9 +14,9 @@ const CHAT_TIMEOUT_MS = 25_000;
 type ChatMessage = { role: "user" | "assistant"; content: string };
 
 const SYSTEM_RULES = `You are AbroadShield AI, an agentic study-abroad execution assistant.
-You work across four phases: Pre-Departure, Arrival, Studying & Part-Time, and Job Success.
-Use the student's persistent journey record as the source of truth. The selected/current phase matters, but the agent remembers the whole journey.
-Act instead of merely advising when a real tool or artifact is available. Never claim an external action happened unless the application actually executed it. Never fabricate live jobs, listings, deadlines, URLs, legal requirements, or connector state. If live data or a connector is unavailable, say so clearly and give the next executable step.
+You operate as a stage-specialized system, not a generic assistant. The active journey stage determines the current mission, priorities and allowed execution capabilities.
+Use the student's persistent journey record as the source of truth. The agent remembers the whole journey, but it must prioritize the active stage.
+Act instead of merely advising when a permitted real tool or artifact is available. Never claim an external action happened unless the application actually executed it. Never fabricate live jobs, listings, deadlines, URLs, legal requirements, or connector state. If live data or a connector is unavailable, say so clearly and give the next executable step.
 For emails and outbound communications, draft first and require explicit approval before sending. For visa/legal matters, distinguish general guidance from official advice and point to the relevant official authority.
 Keep responses concise, practical and professional.
 `;
@@ -74,8 +76,18 @@ export async function POST(req: NextRequest) {
     if (!userMessage.trim()) return NextResponse.json({ ok: false, error: "Message is required." }, { status: 400 });
 
     const journey = await db.journeyProfile.findUnique({ where: { userId: resolved.user.id } });
-    const phase = journey?.currentPhase || "pre-departure";
+    const phase = normalizePhase(journey?.currentPhase);
+    const policy = getStagePolicy(phase);
     const capability = detectCapability(userMessage);
+
+    if (capability && !isCapabilityAllowedInStage(phase, capability)) {
+      const reply = `That request belongs to a different journey stage. You are currently in ${policy.title}. I can work on ${policy.capabilities.map((item) => item.replaceAll("_", " ")).join(", ")}. If you need to move stages, change the active stage in your journey first.`;
+      await db.agentMessage.createMany({ data: [
+        { userId: resolved.user.id, role: "user", content: userMessage, phase },
+        { userId: resolved.user.id, role: "assistant", content: reply, phase },
+      ] });
+      return NextResponse.json({ ok: true, reply, phase, capability, executed: false, stageBlocked: true });
+    }
 
     if (capability) {
       const taskPayload = await executeTask(req, capability, userMessage, phase);
@@ -98,7 +110,7 @@ export async function POST(req: NextRequest) {
       documentsVerified: journey?.documentsVerified, visaAppointment: journey?.visaAppointment ?? undefined,
       funding: journey?.funding ?? undefined, homeLanguage: journey?.homeLanguage ?? undefined,
     };
-    const memory = `\nPERSISTENT JOURNEY:\n${buildAgentContext(profile)}\nRECENT EVENTS:\n${recentEvents.map((e) => `- [${e.phase}] ${e.type}: ${e.title}${e.detail ? ` — ${e.detail}` : ""}`).join("\n") || "none yet"}\nRECENT TASKS:\n${recentTasks.map((t) => `- [${t.phase}] ${t.status}: ${t.title}`).join("\n") || "none yet"}`;
+    const memory = `\nPERSISTENT JOURNEY:\n${buildAgentContext(profile)}\nACTIVE STAGE POLICY:\n${buildStageSystemDirective(phase)}\nRECENT EVENTS:\n${recentEvents.map((e) => `- [${e.phase}] ${e.type}: ${e.title}${e.detail ? ` — ${e.detail}` : ""}`).join("\n") || "none yet"}\nRECENT TASKS:\n${recentTasks.map((t) => `- [${t.phase}] ${t.status}: ${t.title}`).join("\n") || "none yet"}`;
     const history = messages.slice(-6).map((m) => ({ role: m.role, content: String(m.content).slice(0, 4000) }));
     const zai = await withTimeout(ZAI.create(), 8_000);
     const completion = await withTimeout(zai.chat.completions.create({ messages: [{ role: "assistant", content: SYSTEM_RULES + memory }, ...history, { role: "user", content: userMessage }], thinking: { type: "disabled" } }), CHAT_TIMEOUT_MS);
