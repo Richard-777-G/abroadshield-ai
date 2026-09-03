@@ -49,6 +49,11 @@ export default function DashboardView({ onNavigate }: { onNavigate: (view: strin
       });
       const d = await r.json();
       setResult({ label: action.label, text: d.ok ? (typeof d.result === "string" ? d.result : JSON.stringify(d.result, null, 2)) : (d.error || "Task failed") });
+      if (d.ok) {
+        const nextResponse = await fetch("/api/abroadshield/next-action", { cache: "no-store" });
+        const nextData = await nextResponse.json();
+        if (nextData.ok) setNextAction(nextData.next || null);
+      }
     } catch {
       setResult({ label: ACTION_META[type].label, text: "Could not reach the task service. Try again." });
     } finally { setWorking(null); }
