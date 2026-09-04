@@ -16,9 +16,13 @@ export interface ApprovalEntry {
   phase: string;
 }
 
+type NewApprovalEntry = Omit<ApprovalEntry, "id" | "time" | "recipient"> & {
+  recipient?: string;
+};
+
 interface ApprovalsState {
   entries: ApprovalEntry[];
-  addEntry: (entry: Omit<ApprovalEntry, "id" | "time">) => void;
+  addEntry: (entry: NewApprovalEntry) => void;
   clear: () => void;
 }
 
@@ -118,6 +122,7 @@ export const useApprovalsStore = create<ApprovalsState>((set) => ({
       entries: [
         {
           ...entry,
+          recipient: entry.recipient?.trim() || "Not specified",
           id: `live-${Date.now()}`,
           time: "just now",
         },
