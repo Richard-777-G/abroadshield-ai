@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { db } from "@/lib/db";
 import { createDraft, listRecentMessages, sendMessage } from "@/lib/abroadshield/google-gmail";
+import { normalizePhase } from "@/lib/abroadshield/journey";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,7 +42,8 @@ export async function POST(req: NextRequest) {
     if (action !== "send") return NextResponse.json({ ok: false, error: "Supported actions: draft, send." }, { status: 400 });
     if (body?.approved !== true) return NextResponse.json({ ok: false, error: "Sending email requires explicit approval." }, { status: 400 });
     const result = await sendMessage(id, to, subject, text);
-    await db.journeyEvent.create({ data: { userId: id, phase: "current", type: "connector_action", title: "Gmail message sent", detail: `Approved Gmail message sent to ${to}.`, metadata: JSON.stringify({ provider: "google", action: "send", messageId: result.id }) } });
+    const journey = await db.journeyProfile.findUnique({ where: { userId: id }, select: { currentPhase: true } });
+    await db.journeyEvent.create({ data: { userId: id, phase: normalizePhase(journey?.currentPhase), type: "connector_action", title: "Gmail message sent", detail: `Approved Gmail message sent to ${to}.`, metadata: JSON.stringify({ provider: "google", action: "send", messageId: result.id }) } });
     return NextResponse.json({ ok: true, action, result });
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Gmail operation failed." }, { status: 502 });
