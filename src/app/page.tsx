@@ -36,13 +36,22 @@ const WORKSPACE_VIEWS: WorkspaceView[] = ["dashboard", "agent", "journey", "conn
 
 export default function Home() {
   const { data: session, status } = useSession();
-  const { profile, hydrateFromServer } = useProfileStore();
+  const { profile, hydrateFromServer, resetProfile } = useProfileStore();
   const [activeRoute, setActiveRoute] = useState<Route>("home");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("signup");
 
-  useEffect(() => { if (status === "authenticated") void hydrateFromServer(); }, [status, hydrateFromServer]);
+  useEffect(() => {
+    if (status === "authenticated") void hydrateFromServer();
+    if (status === "unauthenticated") {
+      resetProfile();
+      setShowOnboarding(false);
+      setShowAuth(false);
+      setActiveRoute("home");
+      if (window.location.hash) window.history.replaceState(null, "", "/");
+    }
+  }, [status, hydrateFromServer, resetProfile]);
 
   const requestAuth = useCallback((mode: AuthMode = "signup") => {
     setAuthMode(mode);
@@ -54,7 +63,7 @@ export default function Home() {
     const valid = PUBLIC_VIEWS.some(v => v.id === route) || WORKSPACE_VIEWS.includes(route as WorkspaceView);
     if (!valid) return;
     if ((route === "agent" || WORKSPACE_VIEWS.includes(route as WorkspaceView)) && status !== "authenticated") {
-      requestAuth("login");
+      if (status === "unauthenticated") requestAuth("login");
       return;
     }
     setActiveRoute(route);
