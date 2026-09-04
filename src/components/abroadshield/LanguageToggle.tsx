@@ -13,7 +13,6 @@ export default function LanguageToggle({ locale, onChange }: Props) {
   const [open, setOpen] = useState(false);
   const current = LOCALES.find((l) => l.id === locale) ?? LOCALES[0];
 
-  // close on outside click / escape
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
@@ -32,21 +31,26 @@ export default function LanguageToggle({ locale, onChange }: Props) {
   return (
     <div className="relative" data-lang-toggle>
       <button
+        type="button"
         onClick={() => setOpen((o) => !o)}
         className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.08)] px-3 py-1.5 text-xs font-medium text-[oklch(0.85_0.19_158)] backdrop-blur transition hover:border-[oklch(0.74_0.17_162/0.6)] hover:bg-[oklch(0.74_0.17_162/0.15)]"
-        aria-label="Change language"
+        aria-label={`Change language. Current language: ${current.nativeLabel}`}
         aria-expanded={open}
+        aria-haspopup="listbox"
       >
-        <Globe className="h-3.5 w-3.5" />
+        <Globe className="h-3.5 w-3.5" aria-hidden="true" />
         <span className="hidden sm:inline">{current.nativeLabel}</span>
         <span className="sm:hidden">{current.flag}</span>
-        <ChevronDown className={`h-3 w-3 transition ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`h-3 w-3 transition ${open ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-[var(--shield-border)] as-glass-strong p-1 shadow-2xl">
+        <div className="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-2xl border border-[var(--shield-border)] as-glass-strong p-1 shadow-2xl" role="listbox" aria-label="Available languages">
           {LOCALES.map((l) => (
             <button
+              type="button"
+              role="option"
+              aria-selected={l.id === locale}
               key={l.id}
               onClick={() => {
                 onChange(l.id);
@@ -59,10 +63,10 @@ export default function LanguageToggle({ locale, onChange }: Props) {
               }`}
             >
               <span className="flex items-center gap-2">
-                <span className="text-base">{l.flag}</span>
+                <span className="text-base" aria-hidden="true">{l.flag}</span>
                 <span className="font-medium">{l.nativeLabel}</span>
               </span>
-              {l.id === locale && <Check className="h-3.5 w-3.5" />}
+              {l.id === locale && <Check className="h-3.5 w-3.5" aria-hidden="true" />}
             </button>
           ))}
           <div className="mt-1 border-t border-[var(--shield-border)] px-3 py-1.5 text-[10px] text-[var(--shield-text-dim)]">
