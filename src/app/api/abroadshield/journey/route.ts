@@ -6,7 +6,7 @@ import { normalizePhase } from "@/lib/abroadshield/journey";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const profileFields = ["origin", "destination", "course", "university", "intake", "currentPhase", "readiness", "onboarded", "documentsTotal", "documentsVerified", "visaAppointment", "funding", "homeLanguage"] as const;
+const profileFields = ["origin", "destination", "course", "university", "preferredUniversities", "careerGoal", "intake", "currentPhase", "readiness", "onboarded", "documentsTotal", "documentsVerified", "visaAppointment", "funding", "homeLanguage"] as const;
 type ProfileInput = Partial<Record<(typeof profileFields)[number], string | number | boolean | null>>;
 
 function sanitize(input: ProfileInput) {
@@ -22,9 +22,7 @@ async function resolveUser() {
   const sessionUserId = (session?.user as { id?: string } | undefined)?.id;
   const email = session?.user?.email;
   if (!sessionUserId && !email) return null;
-  if (sessionUserId) {
-    return db.user.upsert({ where: { id: sessionUserId }, update: { name: session?.user?.name ?? undefined, email: email ?? undefined }, create: { id: sessionUserId, email: email || `${sessionUserId}@local.invalid`, name: session?.user?.name ?? undefined } });
-  }
+  if (sessionUserId) return db.user.upsert({ where: { id: sessionUserId }, update: { name: session?.user?.name ?? undefined, email: email ?? undefined }, create: { id: sessionUserId, email: email || `${sessionUserId}@local.invalid`, name: session?.user?.name ?? undefined } });
   return db.user.upsert({ where: { email: email! }, update: { name: session?.user?.name ?? undefined }, create: { email: email!, name: session?.user?.name ?? undefined } });
 }
 
