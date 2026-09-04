@@ -23,6 +23,13 @@ export type TaskExecutionResult = {
   live: boolean;
 };
 
+export class TaskExecutionError extends Error {
+  constructor(message: string, public readonly status: 400 | 409) {
+    super(message);
+    this.name = "TaskExecutionError";
+  }
+}
+
 function isCapability(value: string): value is AgentCapability {
   return AGENT_CAPABILITIES.includes(value as AgentCapability);
 }
@@ -55,7 +62,7 @@ async function markTaskFailed(taskId: string, userId: string, phase: string, tit
 }
 
 export async function executeAgentTask(userId: string, profile: AgentProfile, input: TaskExecutionRequest): Promise<TaskExecutionResult> {
-  if (!isCapability(input.taskType)) throw new Error("Unknown task type.");
+  if (!isCapability(input.taskType)) throw new TaskExecutionError("Unknown task type.", 400);
 
   const taskType = input.taskType;
   const currentPhase = normalizePhase(profile.currentPhase);
@@ -65,7 +72,7 @@ export async function executeAgentTask(userId: string, profile: AgentProfile, in
 
   if (!isCapabilityAllowedInStage(phase, taskType) && !planningAnotherStage) {
     const policy = getStagePolicy(phase);
-    throw new Error(`${taskType.replaceAll("_", " ")} is not part of the ${policy.title} workflow.`);
+    throw new TaskExecutionError(`${taskType.replaceAll("_", " ")} is not part of the ${policy.title} workflow.`, 409);
   }
 
   const request = input.context?.trim() || `${mode === "plan" ? "Plan" : "Execute"} ${taskType} for this student.`;
@@ -122,5 +129,6 @@ export async function executeAgentTask(userId: string, profile: AgentProfile, in
 
 export function taskErrorResponseMessage(error: unknown): { message: string; status: number } {
   if (error instanceof AIRuntimeError) return { message: error.message, status: error.status };
+  if (error instanceof TaskExecutionError) return { message: error.message, status: error.status };
   return { message: error instanceof Error ? error.message : "Task execution failed.", status: 500 };
 }
