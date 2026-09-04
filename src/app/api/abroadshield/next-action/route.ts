@@ -25,6 +25,11 @@ export async function GET() {
       where: { userId: user.id, phase, status: { in: ["queued", "running"] } },
       orderBy: [{ priority: "asc" }, { dueAt: "asc" }, { createdAt: "asc" }], take: 10,
     });
+    const blocked = await db.journeyTask.findMany({
+      where: { userId: user.id, phase, status: "blocked" },
+      orderBy: { createdAt: "desc" }, take: 10,
+      select: { id: true, type: true, title: true, status: true, priority: true, dueAt: true, result: true, createdAt: true },
+    });
     const completed = await db.journeyTask.count({ where: { userId: user.id, phase, status: "completed" } });
     const recentCompleted = await db.journeyTask.findMany({
       where: { userId: user.id, phase, status: "completed" },
@@ -32,13 +37,16 @@ export async function GET() {
       select: { title: true, type: true, completedAt: true },
     });
     const next = active[0] ?? null;
+    const blockedTypes = new Set(blocked.map((task) => task.type));
+    const fallbackCapability = policy.capabilities.find((capability) => !blockedTypes.has(capability)) ?? policy.capabilities[0];
     const readiness = profile?.documentsTotal ? Math.round((profile.documentsVerified / Math.max(profile.documentsTotal, 1)) * 100) : profile?.readiness ?? 0;
-    const fallback = !next ? { type: policy.capabilities[0], title: phase === "pre-departure" ? "Review your next pre-departure action" : `Review your next ${policy.title.toLowerCase()} action`, reason: policy.objective, capability: policy.capabilities[0] } : null;
+    const fallback = !next ? { type: fallbackCapability, title: phase === "pre-departure" ? "Review your next pre-departure action" : `Review your next ${policy.title.toLowerCase()} action`, reason: policy.objective, capability: fallbackCapability } : null;
 
     return NextResponse.json({
       ok: true, phase, stage: policy.title, readiness,
       next: next ? { id: next.id, type: next.type, title: next.title, status: next.status, priority: next.priority, dueAt: next.dueAt, result: next.result } : fallback,
-      activeCount: active.length, completedCount: completed,
+      activeCount: active.length, blockedCount: blocked.length, completedCount: completed,
+      blocked: blocked.map((task) => ({ id: task.id, type: task.type, title: task.title, status: task.status, priority: task.priority, dueAt: task.dueAt, result: task.result, createdAt: task.createdAt })),
       recentCompleted: recentCompleted.map((task) => ({ title: task.title, type: task.type, completedAt: task.completedAt })),
       allowedCapabilities: policy.capabilities,
     });
