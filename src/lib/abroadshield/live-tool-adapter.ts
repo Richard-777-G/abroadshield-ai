@@ -12,9 +12,16 @@ type LiveToolResult = {
 const TAVILY_ENDPOINT = "https://api.tavily.com/search";
 const LIVE_SEARCH_TIMEOUT_MS = 12_000;
 
-function normalizeSources(items: Array<{ title?: unknown; name?: unknown; url?: unknown; source?: unknown; host_name?: unknown; snippet?: unknown; content?: unknown }> | undefined) {
+type NormalizedSource = {
+  title: string;
+  url: string;
+  source: string;
+  snippet: string | undefined;
+};
+
+function normalizeSources(items: Array<{ title?: unknown; name?: unknown; url?: unknown; source?: unknown; host_name?: unknown; snippet?: unknown; content?: unknown }> | undefined): NormalizedSource[] {
   return (items ?? [])
-    .map((item) => {
+    .map((item): NormalizedSource | null => {
       const title = typeof item.title === "string" ? item.title : typeof item.name === "string" ? item.name : "";
       const url = typeof item.url === "string" ? item.url : "";
       if (!title || !url) return null;
@@ -25,7 +32,7 @@ function normalizeSources(items: Array<{ title?: unknown; name?: unknown; url?: 
       const snippet = typeof item.snippet === "string" ? item.snippet : typeof item.content === "string" ? item.content : undefined;
       return { title, url, source, snippet };
     })
-    .filter((item): item is { title: string; url: string; source: string; snippet?: string } => Boolean(item));
+    .filter((item): item is NormalizedSource => item !== null);
 }
 
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
