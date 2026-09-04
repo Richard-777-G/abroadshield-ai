@@ -1,8 +1,9 @@
 "use client";
 
 import { create } from "zustand";
+import type { PhaseId } from "@/lib/abroadshield/phase";
 
-export type PhaseId = "pre-departure" | "arrival" | "studying" | "job-success";
+export type { PhaseId } from "@/lib/abroadshield/phase";
 export interface StudentProfile {
   name: string; email: string; origin: string; destination: string; course: string; university: string; intake: string;
   currentPhase: PhaseId; readiness: number; onboarded: boolean; documentsTotal: number; documentsVerified: number;
