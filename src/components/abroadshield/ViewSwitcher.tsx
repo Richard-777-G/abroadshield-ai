@@ -2,7 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { ViewId } from "./ViewSwitcher";
+
+export type ViewId =
+  | "journey"
+  | "agent"
+  | "countries"
+  | "network"
+  | "connectors"
+  | "pricing";
 
 interface Props {
   views: { id: ViewId; label: string; component: React.ReactNode }[];
