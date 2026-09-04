@@ -87,19 +87,21 @@ export async function executeAgentTask(userId: string, profile: AgentProfile, in
     if (taskType === "job_search" || taskType === "housing_search" || taskType === "visa_check") {
       const liveResult = await executeLiveTool(taskType, request);
       if (liveResult.status !== "ready") {
-        result = { status: "needs_live_search", query: liveResult.query, sources: liveResult.sources, nextAction: liveResult.message };
-      } else {
-        live = true;
-        const raw = await generateText({
-          messages: [
-            { role: "system", content: buildInstruction(taskType, buildAgentContext(profile), request, phase, mode) },
-            { role: "user", content: JSON.stringify({ query: liveResult.query, sources: liveResult.sources }) },
-          ],
-          timeoutMs: 25_000,
-          jsonMode: true,
-        });
-        result = JSON.parse(raw);
+        result = { status: "blocked", query: liveResult.query, sources: liveResult.sources, nextAction: liveResult.message };
+        await db.journeyTask.update({ where: { id: task.id }, data: { status: "blocked", result: JSON.stringify(result) } });
+        await db.journeyEvent.create({ data: { userId, phase, type: "task_blocked", title: request.slice(0, 120), detail: `Agent task ${taskType} is blocked because live data is unavailable.` } });
+        return { taskId: task.id, taskType, phase, mode, planningAnotherStage, result, live };
       }
+      live = true;
+      const raw = await generateText({
+        messages: [
+          { role: "system", content: buildInstruction(taskType, buildAgentContext(profile), request, phase, mode) },
+          { role: "user", content: JSON.stringify({ query: liveResult.query, sources: liveResult.sources }) },
+        ],
+        timeoutMs: 25_000,
+        jsonMode: true,
+      });
+      result = JSON.parse(raw);
     } else {
       const raw = await generateText({
         messages: [
