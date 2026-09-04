@@ -51,6 +51,66 @@ function buildInstruction(taskType: AgentCapability, profileContext: string, req
   return `${instructions[taskType]}\n\nTASK REQUEST: ${request}`;
 }
 
+function buildDeterministicPlan(taskType: AgentCapability, profile: AgentProfile, phase: string, request: string) {
+  const destination = profile.destination || "your destination country";
+  const course = profile.course || "your programme";
+  const common = [
+    `Target stage: ${getStagePolicy(normalizePhase(phase)).title}`,
+    `Destination: ${destination}`,
+    `Programme: ${course}`,
+    "No external action was taken.",
+    "No live data was used in planning mode.",
+  ];
+
+  const plans: Record<AgentCapability, { summary: string; nextSteps: string[]; prerequisites: string[] }> = {
+    document_check: {
+      summary: "Prepare a structured document inventory and identify missing or unverified items before execution.",
+      nextSteps: ["List required documents from official destination-specific requirements.", "Mark each document as missing, ready, or needing review.", "Attach or connect the evidence needed for any item that needs verification."],
+      prerequisites: ["Official requirement source", "Document inventory", "Copies or scans of relevant documents"],
+    },
+    draft_email: {
+      summary: "Prepare the facts, recipient, purpose, and desired outcome for a reviewable draft. Sending remains approval-gated.",
+      nextSteps: ["Confirm the recipient or institution.", "Collect the relevant dates, reference numbers, and facts.", "Prepare the draft for review before any outbound communication."],
+      prerequisites: ["Recipient", "Purpose of message", "Verified facts to include"],
+    },
+    job_search: {
+      summary: "Prepare a compliant job-search brief for the selected stage. Live vacancies will be fetched only during execution.",
+      nextSteps: ["Define target role families and locations.", "Define sponsorship and work-authorization constraints.", "Prepare the CV/profile facts used for matching.", "Run the live search when this stage is ready for execution."],
+      prerequisites: ["Target roles", "Target geography", "Work-authorization constraints"],
+    },
+    tailor_cv: {
+      summary: "Prepare the source CV facts and target role before generating tailored content.",
+      nextSteps: ["Select the target role.", "Identify verified experience and skills relevant to that role.", "Generate tailored bullets only from those supplied facts."],
+      prerequisites: ["Current CV facts", "Target role description", "Verified achievements"],
+    },
+    deadline_scan: {
+      summary: "Prepare a deadline inventory; exact dates must come from supplied or verified sources.",
+      nextSteps: ["Collect application, visa, travel, accommodation, and enrolment dates.", "Record the source for each date.", "Run the deadline scan after source data is available."],
+      prerequisites: ["Known dates", "Source for each date", "Relevant destination/stage"],
+    },
+    housing_search: {
+      summary: "Prepare housing criteria and constraints. Live listings will be fetched only during execution.",
+      nextSteps: ["Define area or acceptable commute.", "Set budget and required amenities.", "Define move-in date and eligibility constraints.", "Run the live search when execution is appropriate."],
+      prerequisites: ["Search area", "Budget", "Move-in timing", "Housing constraints"],
+    },
+    visa_check: {
+      summary: "Prepare the visa question and the official-source checklist. Current guidance will be fetched only during execution.",
+      nextSteps: ["State the exact visa or immigration question.", "Identify the destination and current stage.", "Use official government/consular sources when executing the check.", "Separate official guidance from legal advice."],
+      prerequisites: ["Exact question", "Destination", "Current stage"],
+    },
+  };
+
+  return {
+    status: "plan_ready",
+    capability: taskType,
+    request,
+    summary: plans[taskType].summary,
+    context: common,
+    nextSteps: plans[taskType].nextSteps,
+    prerequisites: plans[taskType].prerequisites,
+  };
+}
+
 async function markTaskFailed(taskId: string, userId: string, phase: string, title: string, taskType: AgentCapability, error: unknown) {
   await db.journeyTask.update({
     where: { id: taskId },
@@ -81,6 +141,18 @@ export async function executeAgentTask(userId: string, profile: AgentProfile, in
   await db.journeyEvent.create({ data: { userId, phase, type: "task_started", title: request.slice(0, 120), detail: `Agent started ${mode} ${taskType}.` } });
 
   try {
+    if (mode === "plan") {
+      const result = buildDeterministicPlan(taskType, profile, phase, request);
+      await db.journeyTask.update({
+        where: { id: task.id },
+        data: { status: "completed", result: JSON.stringify(result), completedAt: new Date() },
+      });
+      await db.journeyEvent.create({
+        data: { userId, phase, type: "task_completed", title: request.slice(0, 120), detail: `Agent completed deterministic planning for ${taskType}.` },
+      });
+      return { taskId: task.id, taskType, phase, mode, planningAnotherStage, result, live: false };
+    }
+
     let result: unknown;
     let live = false;
 
