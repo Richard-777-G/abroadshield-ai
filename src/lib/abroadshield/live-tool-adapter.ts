@@ -10,6 +10,7 @@ type LiveToolResult = {
 };
 
 const TAVILY_ENDPOINT = "https://api.tavily.com/search";
+const LIVE_SEARCH_TIMEOUT_MS = 12_000;
 
 function normalizeSources(items: Array<{ title?: unknown; name?: unknown; url?: unknown; source?: unknown; host_name?: unknown; snippet?: unknown; content?: unknown }> | undefined) {
   return (items ?? [])
@@ -27,10 +28,17 @@ function normalizeSources(items: Array<{ title?: unknown; name?: unknown; url?: 
     .filter((item): item is { title: string; url: string; source: string; snippet?: string } => Boolean(item));
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error("LIVE_SEARCH_TIMEOUT")), ms); });
+  try { return await Promise.race([promise, timeout]); }
+  finally { if (timer) clearTimeout(timer); }
+}
+
 async function searchWithZai(normalizedQuery: string, capability: AgentCapability): Promise<LiveToolResult> {
   try {
-    const zai = await ZAI.create();
-    const raw = await zai.functions.invoke("web_search", { query: normalizedQuery, num: 10, recency_days: 30 });
+    const zai = await withTimeout(ZAI.create(), LIVE_SEARCH_TIMEOUT_MS);
+    const raw = await withTimeout(zai.functions.invoke("web_search", { query: normalizedQuery, num: 10, recency_days: 30 }), LIVE_SEARCH_TIMEOUT_MS);
     const payload = raw as unknown;
     const items = Array.isArray(payload)
       ? payload
@@ -70,7 +78,7 @@ export async function executeLiveTool(
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify({ api_key: apiKey, query: normalizedQuery, search_depth: "basic", max_results: 10, include_answer: false, include_raw_content: false }),
       cache: "no-store",
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(LIVE_SEARCH_TIMEOUT_MS),
     });
     if (response.ok) {
       const payload = (await response.json()) as { results?: Array<{ title?: string; url?: string; content?: string }> };
