@@ -9,6 +9,8 @@ export type AICompletionOptions = {
   jsonMode?: boolean;
 };
 
+type AIProvider = "openrouter" | "gateway";
+
 export class AIRuntimeError extends Error {
   code: "AI_NOT_CONFIGURED" | "AI_REQUEST_FAILED" | "AI_INVALID_RESPONSE";
   status: number;
@@ -26,36 +28,102 @@ export class AIRuntimeError extends Error {
 }
 
 const DEFAULT_GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions";
-const DEFAULT_MODEL = "openai/gpt-5.5-fast";
+const DEFAULT_GATEWAY_MODEL = "openai/gpt-5.5-fast";
+const DEFAULT_OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const DEFAULT_OPENROUTER_MODEL = "openrouter/free";
 const DEFAULT_TIMEOUT_MS = 25_000;
 
-function getRuntimeConfig() {
-  const apiKey = process.env.AI_GATEWAY_API_KEY?.trim();
-  if (!apiKey) {
-    throw new AIRuntimeError(
-      "AI_NOT_CONFIGURED",
-      "AI Gateway is not configured. Set AI_GATEWAY_API_KEY in the server environment.",
-      503,
-    );
+function getRuntimeConfig(): {
+  provider: AIProvider;
+  apiKey: string;
+  endpoint: string;
+  model: string;
+} {
+  const requestedProvider = process.env.ABROADSHIELD_AI_PROVIDER?.trim().toLowerCase();
+  const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
+  const gatewayKey = process.env.AI_GATEWAY_API_KEY?.trim();
+
+  if (requestedProvider === "openrouter") {
+    if (!openRouterKey) {
+      throw new AIRuntimeError(
+        "AI_NOT_CONFIGURED",
+        "OpenRouter is selected but OPENROUTER_API_KEY is not configured.",
+        503,
+      );
+    }
+    return {
+      provider: "openrouter",
+      apiKey: openRouterKey,
+      endpoint: process.env.OPENROUTER_BASE_URL?.trim() || DEFAULT_OPENROUTER_URL,
+      model: process.env.ABROADSHIELD_AI_MODEL?.trim() || DEFAULT_OPENROUTER_MODEL,
+    };
   }
 
+  if (requestedProvider === "gateway") {
+    if (!gatewayKey) {
+      throw new AIRuntimeError(
+        "AI_NOT_CONFIGURED",
+        "AI Gateway is selected but AI_GATEWAY_API_KEY is not configured.",
+        503,
+      );
+    }
+    return {
+      provider: "gateway",
+      apiKey: gatewayKey,
+      endpoint: process.env.AI_GATEWAY_BASE_URL?.trim() || DEFAULT_GATEWAY_URL,
+      model: process.env.ABROADSHIELD_AI_MODEL?.trim() || DEFAULT_GATEWAY_MODEL,
+    };
+  }
+
+  if (openRouterKey) {
+    return {
+      provider: "openrouter",
+      apiKey: openRouterKey,
+      endpoint: process.env.OPENROUTER_BASE_URL?.trim() || DEFAULT_OPENROUTER_URL,
+      model: process.env.ABROADSHIELD_AI_MODEL?.trim() || DEFAULT_OPENROUTER_MODEL,
+    };
+  }
+
+  if (gatewayKey) {
+    return {
+      provider: "gateway",
+      apiKey: gatewayKey,
+      endpoint: process.env.AI_GATEWAY_BASE_URL?.trim() || DEFAULT_GATEWAY_URL,
+      model: process.env.ABROADSHIELD_AI_MODEL?.trim() || DEFAULT_GATEWAY_MODEL,
+    };
+  }
+
+  throw new AIRuntimeError(
+    "AI_NOT_CONFIGURED",
+    "No AI provider is configured. Set OPENROUTER_API_KEY for the free OpenRouter runtime or AI_GATEWAY_API_KEY for Vercel AI Gateway.",
+    503,
+  );
+}
+
+function providerHeaders(provider: AIProvider, apiKey: string): HeadersInit {
   return {
-    apiKey,
-    endpoint: process.env.AI_GATEWAY_BASE_URL?.trim() || DEFAULT_GATEWAY_URL,
-    model: process.env.ABROADSHIELD_AI_MODEL?.trim() || DEFAULT_MODEL,
+    Authorization: `Bearer ${apiKey}`,
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    ...(provider === "openrouter"
+      ? {
+          "HTTP-Referer": "https://abroadshield-ai.vercel.app",
+          "X-OpenRouter-Title": "AbroadShield AI",
+        }
+      : {}),
   };
 }
 
-export async function generateText({ messages, timeoutMs = DEFAULT_TIMEOUT_MS, jsonMode = false }: AICompletionOptions): Promise<string> {
+export async function generateText({
+  messages,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  jsonMode = false,
+}: AICompletionOptions): Promise<string> {
   const config = getRuntimeConfig();
 
   const response = await fetch(config.endpoint, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${config.apiKey}`,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
+    headers: providerHeaders(config.provider, config.apiKey),
     body: JSON.stringify({
       model: config.model,
       messages,
@@ -76,7 +144,12 @@ export async function generateText({ messages, timeoutMs = DEFAULT_TIMEOUT_MS, j
 
   if (!response.ok) {
     const providerMessage = payload?.error?.message;
-    console.error("[abroadshield/ai-runtime] provider request failed", response.status, providerMessage || "unknown error");
+    console.error(
+      "[abroadshield/ai-runtime] provider request failed",
+      config.provider,
+      response.status,
+      providerMessage || "unknown error",
+    );
     throw new AIRuntimeError(
       "AI_REQUEST_FAILED",
       providerMessage || "The AI service returned an error.",
