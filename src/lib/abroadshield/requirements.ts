@@ -30,8 +30,8 @@ type Profile = {
   documentsTotal?: number;
   documentsVerified?: number;
   readiness?: number;
-  visaAppointment?: string;
-  funding?: string;
+  visaAppointment?: string | null;
+  funding?: string | null;
 };
 
 const PHASE_IDS: readonly PhaseId[] = ["pre-departure", "arrival", "studying", "job-success"];
