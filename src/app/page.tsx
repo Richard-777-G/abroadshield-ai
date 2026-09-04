@@ -11,7 +11,7 @@ import HomeShowcase from "@/components/abroadshield/HomeShowcase";
 import AuthModal from "@/components/abroadshield/AuthModal";
 import AppShell, { type WorkspaceView } from "@/components/abroadshield/AppShell";
 import JourneyWorkspace from "@/components/abroadshield/JourneyWorkspace";
-import { useProfileStore } from "@/components/abroadshield/profileStore";
+import { useProfileStore, type StudentProfile } from "@/components/abroadshield/profileStore";
 
 const PublicJourney = dynamic(() => import("@/components/abroadshield/PublicJourney"));
 const CountryRules = dynamic(() => import("@/components/abroadshield/CountryRules"));
@@ -103,7 +103,7 @@ export default function Home() {
   </div>;
 }
 
-function contentFor(activeRoute: Route, status: string, session: ReturnType<typeof useSession>["data"], profile: ReturnType<typeof useProfileStore>["profile"], navigateTo: (view: string) => void, requestAuth: (mode?: AuthMode) => void) {
+function contentFor(activeRoute: Route, status: string, session: ReturnType<typeof useSession>["data"], profile: StudentProfile, navigateTo: (view: string) => void, requestAuth: (mode?: AuthMode) => void) {
   return <AnimatePresence mode="wait"><motion.div key={activeRoute} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
     {activeRoute === "home" && <><Hero3D onNavigate={navigateTo} /><HomeShowcase onNavigate={navigateTo} /></>}
     {activeRoute === "journey" && (session ? <JourneyWorkspace onNavigate={navigateTo} /> : <PublicJourney onNavigate={navigateTo} />)}
