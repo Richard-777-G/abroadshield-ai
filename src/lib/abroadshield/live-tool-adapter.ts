@@ -1,4 +1,3 @@
-import ZAI from "z-ai-web-dev-sdk";
 import type { AgentCapability } from "./tool-registry";
 
 type LiveToolResult = {
@@ -35,49 +34,15 @@ function normalizeSources(items: Array<{ title?: unknown; name?: unknown; url?: 
     .filter((item): item is NormalizedSource => item !== null);
 }
 
-async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error("LIVE_SEARCH_TIMEOUT")), ms); });
-  try { return await Promise.race([promise, timeout]); }
-  finally { if (timer) clearTimeout(timer); }
-}
-
-async function searchWithZai(normalizedQuery: string, capability: AgentCapability): Promise<LiveToolResult> {
-  try {
-    const zai = await withTimeout(ZAI.create(), LIVE_SEARCH_TIMEOUT_MS);
-    const raw = await withTimeout(zai.functions.invoke("web_search", { query: normalizedQuery, num: 10, recency_days: 30 }), LIVE_SEARCH_TIMEOUT_MS);
-    const payload = raw as unknown;
-    const items = Array.isArray(payload)
-      ? payload
-      : payload && typeof payload === "object" && Array.isArray((payload as { data?: unknown }).data)
-        ? (payload as { data: unknown[] }).data
-        : [];
-    const sources = normalizeSources(items as Array<Record<string, unknown>>);
-    return {
-      capability,
-      status: "ready",
-      query: normalizedQuery,
-      sources,
-      message: sources.length ? `Found ${sources.length} current web results.` : "The live search returned no results.",
-    };
-  } catch (error) {
-    console.error("[abroadshield/live-search/zai] error", error);
-    return { capability, status: "failed", query: normalizedQuery, sources: [], message: "Live search could not be completed. Please retry." };
-  }
-}
-
-/** Execute current-data capabilities through Tavily when configured, with the built-in ZAI web search as fallback. */
-export async function executeLiveTool(
-  capability: AgentCapability,
-  query: string,
-): Promise<LiveToolResult> {
+/** Execute live-data capabilities through the explicitly configured search provider. */
+export async function executeLiveTool(capability: AgentCapability, query: string): Promise<LiveToolResult> {
   const normalizedQuery = query.trim().slice(0, 400);
-  if (!normalizedQuery) {
-    return { capability, status: "failed", query, sources: [], message: "A search query is required." };
-  }
+  if (!normalizedQuery) return { capability, status: "failed", query, sources: [], message: "A search query is required." };
 
   const apiKey = process.env.TAVILY_API_KEY?.trim();
-  if (!apiKey) return searchWithZai(normalizedQuery, capability);
+  if (!apiKey) {
+    return { capability, status: "unconfigured", query: normalizedQuery, sources: [], message: "Live search is not configured. Add TAVILY_API_KEY to enable current web data." };
+  }
 
   try {
     const response = await fetch(TAVILY_ENDPOINT, {
@@ -87,22 +52,15 @@ export async function executeLiveTool(
       cache: "no-store",
       signal: AbortSignal.timeout(LIVE_SEARCH_TIMEOUT_MS),
     });
-    if (response.ok) {
-      const payload = (await response.json()) as { results?: Array<{ title?: string; url?: string; content?: string }> };
-      const sources = normalizeSources(payload.results as Array<Record<string, unknown>> | undefined);
-      return {
-        capability,
-        status: "ready",
-        query: normalizedQuery,
-        sources,
-        message: sources.length ? `Found ${sources.length} current web results.` : "The live search returned no results.",
-      };
+    if (!response.ok) {
+      console.warn(`[abroadshield/live-search] provider returned HTTP ${response.status}`);
+      return { capability, status: "failed", query: normalizedQuery, sources: [], message: "Live search is temporarily unavailable. Please retry." };
     }
-
-    console.warn(`[abroadshield/live-search] Tavily returned HTTP ${response.status}; falling back to ZAI web search.`);
-    return searchWithZai(normalizedQuery, capability);
+    const payload = (await response.json()) as { results?: Array<{ title?: string; url?: string; content?: string }> };
+    const sources = normalizeSources(payload.results as Array<Record<string, unknown>> | undefined);
+    return { capability, status: "ready", query: normalizedQuery, sources, message: sources.length ? `Found ${sources.length} current web results.` : "The live search returned no results." };
   } catch (error) {
-    console.error("[abroadshield/live-search/tavily] error", error);
-    return searchWithZai(normalizedQuery, capability);
+    console.error("[abroadshield/live-search] provider error", error);
+    return { capability, status: "failed", query: normalizedQuery, sources: [], message: "Live search could not be completed. Please retry." };
   }
 }
