@@ -1,148 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { getServerSession } from "next-auth";
+import { db } from "@/lib/db";
+import { sendMessage } from "@/lib/abroadshield/google-gmail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type GmailRequest = {
-  action: "send";
-  to: string;
-  subject: string;
-  body: string;
-};
-
-type GoogleToken = {
-  googleAccessToken?: string;
-  googleRefreshToken?: string;
-  googleScope?: string;
-  googleAccessTokenExpires?: number;
-};
-
-function hasGmailSendScope(scope?: string) {
-  return Boolean(scope?.split(" ").includes("https://www.googleapis.com/auth/gmail.send"));
+async function resolveUserId() {
+  const session = await getServerSession();
+  const id = (session?.user as { id?: string } | undefined)?.id;
+  const email = session?.user?.email;
+  if (id) return id;
+  if (!email) return null;
+  const user = await db.user.findUnique({ where: { email: email.toLowerCase() } });
+  return user?.id ?? null;
 }
 
-async function getUsableGoogleAccessToken(req: NextRequest) {
-  const token = (await getToken({ req, secret: process.env.NEXTAUTH_SECRET })) as (GoogleToken & { email?: string }) | null;
-  if (!token?.googleAccessToken) return { token, accessToken: null };
-
-  const expiresAt = token.googleAccessTokenExpires ?? 0;
-  const stillValid = !expiresAt || Date.now() < expiresAt - 60_000;
-  if (stillValid || !token.googleRefreshToken) {
-    return { token, accessToken: token.googleAccessToken };
+export async function GET() {
+  try {
+    const userId = await resolveUserId();
+    if (!userId) return NextResponse.json({ ok: true, connected: false, email: null });
+    const connection = await db.googleConnection.findUnique({ where: { userId_provider: { userId, provider: "google" } }, select: { email: true, accessToken: true, scope: true } });
+    const scopes = connection?.scope?.split(/\s+/) ?? [];
+    const connected = Boolean(connection?.accessToken && scopes.includes("https://www.googleapis.com/auth/gmail.send"));
+    return NextResponse.json({ ok: true, connected, email: connected ? connection?.email ?? null : null });
+  } catch (error) {
+    console.error("[gmail integration status]", error);
+    return NextResponse.json({ ok: false, error: "Could not determine Gmail connection status." }, { status: 500 });
   }
-
-  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
-    return { token, accessToken: token.googleAccessToken };
-  }
-
-  const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: process.env.GOOGLE_CLIENT_ID,
-      client_secret: process.env.GOOGLE_CLIENT_SECRET,
-      refresh_token: token.googleRefreshToken,
-      grant_type: "refresh_token",
-    }),
-  });
-
-  if (!refreshResponse.ok) {
-    return { token, accessToken: null };
-  }
-
-  const refreshed = (await refreshResponse.json()) as {
-    access_token?: string;
-    expires_in?: number;
-  };
-
-  if (!refreshed.access_token) return { token, accessToken: null };
-
-  // NextAuth JWT callbacks are responsible for persisting refreshed tokens.
-  // This request uses the fresh token immediately; the next session callback
-  // can persist it when the session is re-issued.
-  return { token, accessToken: refreshed.access_token };
-}
-
-export async function GET(req: NextRequest) {
-  const { token, accessToken } = await getUsableGoogleAccessToken(req);
-  const connected = Boolean(accessToken && hasGmailSendScope(token?.googleScope));
-
-  return NextResponse.json({
-    ok: true,
-    connected,
-    email: connected ? token?.email ?? null : null,
-  });
 }
 
 export async function POST(req: NextRequest) {
-  const { token, accessToken } = await getUsableGoogleAccessToken(req);
-
-  if (!token || !accessToken) {
-    return NextResponse.json(
-      { ok: false, error: "Gmail is not connected. Sign in with Google and grant Gmail access first." },
-      { status: 401 }
-    );
-  }
-
-  if (!hasGmailSendScope(token.googleScope)) {
-    return NextResponse.json(
-      { ok: false, error: "Gmail send permission is missing. Reconnect Google and grant Gmail access." },
-      { status: 403 }
-    );
-  }
-
   try {
-    const payload = (await req.json()) as Partial<GmailRequest>;
-    if (payload.action !== "send" || !payload.to || !payload.subject || !payload.body) {
-      return NextResponse.json(
-        { ok: false, error: "Send requires action, to, subject and body." },
-        { status: 400 }
-      );
+    const userId = await resolveUserId();
+    if (!userId) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
+    const body = (await req.json().catch(() => ({}))) as { action?: unknown; to?: unknown; subject?: unknown; body?: unknown };
+    if (body.action !== "send" || typeof body.to !== "string" || typeof body.subject !== "string" || typeof body.body !== "string" || !body.to.trim() || !body.subject.trim() || !body.body.trim()) {
+      return NextResponse.json({ ok: false, error: "Send requires action, to, subject and body." }, { status: 400 });
     }
-
-    const message = [
-      `To: ${payload.to}`,
-      `Subject: ${payload.subject}`,
-      "Content-Type: text/plain; charset=UTF-8",
-      "MIME-Version: 1.0",
-      "",
-      payload.body,
-    ].join("\r\n");
-
-    const raw = Buffer.from(message)
-      .toString("base64")
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
-
-    const response = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ raw }),
-    });
-
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      console.error("[gmail] send failed", response.status, data);
-      return NextResponse.json(
-        {
-          ok: false,
-          error:
-            response.status === 401
-              ? "Google rejected the access token. Please sign in with Google again."
-              : "Google rejected the Gmail request. Check the granted Gmail permission.",
-        },
-        { status: response.status }
-      );
-    }
-
-    return NextResponse.json({ ok: true, messageId: data.id ?? null });
+    const result = await sendMessage(userId, body.to.trim(), body.subject.trim(), body.body);
+    return NextResponse.json({ ok: true, messageId: result.id });
   } catch (error) {
-    console.error("[gmail] unexpected error", error);
-    return NextResponse.json({ ok: false, error: "Gmail action failed." }, { status: 500 });
+    console.error("[gmail integration send]", error);
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Gmail action failed." }, { status: 502 });
   }
 }
