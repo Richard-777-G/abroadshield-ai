@@ -26,7 +26,7 @@ export interface RequirementSnapshot {
 
 type Profile = {
   destination?: string;
-  currentPhase?: PhaseId;
+  currentPhase?: string;
   documentsTotal?: number;
   documentsVerified?: number;
   readiness?: number;
@@ -34,11 +34,17 @@ type Profile = {
   funding?: string;
 };
 
+const PHASE_IDS: readonly PhaseId[] = ["pre-departure", "arrival", "studying", "job-success"];
+
+function normalizePhase(value?: string): PhaseId {
+  return PHASE_IDS.includes(value as PhaseId) ? (value as PhaseId) : "pre-departure";
+}
+
 const sourceFor = (country: CountryRule, index: number) => country.embassyLinks[index] ?? country.embassyLinks[0];
 
 export function buildRequirementSnapshot(profile: Profile = {}): RequirementSnapshot {
   const country = COUNTRIES.find((item) => item.country === profile.destination) ?? null;
-  const phase = profile.currentPhase ?? "pre-departure";
+  const phase = normalizePhase(profile.currentPhase);
   const totalDocuments = Math.max(0, profile.documentsTotal ?? 0);
   const verifiedDocuments = Math.min(totalDocuments, Math.max(0, profile.documentsVerified ?? 0));
   const readiness = Math.max(0, Math.min(100, profile.readiness ?? (totalDocuments ? Math.round((verifiedDocuments / totalDocuments) * 100) : 0)));
