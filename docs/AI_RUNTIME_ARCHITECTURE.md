@@ -12,6 +12,8 @@ The runtime boundary is responsible for:
 - normalized provider errors;
 - optional JSON response mode.
 
+For production, `AI_GATEWAY_API_KEY` must be configured in the Vercel Production environment before AI-backed routes can execute. Missing configuration must surface as an explicit service-unavailable condition.
+
 The application therefore depends on an internal AI contract, not on a provider-specific SDK.
 
 ## Execution pipeline
@@ -23,7 +25,7 @@ The application therefore depends on an internal AI contract, not on a provider-
 5. Task route creates a persisted `JourneyTask` and `task_started` event.
 6. Live capabilities obtain current data through the explicitly configured live-search adapter.
 7. The centralized AI runtime interprets profile data, task context and verified tool output.
-8. The executor persists the result and emits `task_completed` or `task_failed`.
+8. The executor persists the result and emits `task_completed`, `task_blocked` or `task_failed`.
 9. Chat records the conversational result in `AgentMessage`.
 10. Journey/Dashboard surfaces read persisted state rather than maintaining a second task source of truth.
 
