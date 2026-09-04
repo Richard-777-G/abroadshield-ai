@@ -37,7 +37,7 @@ function isValidRoute(value: string): value is Route {
 
 export default function Home() {
   const { data: session, status } = useSession();
-  const { profile, hydrateFromServer, resetProfile } = useProfileStore();
+  const { profile, hydrated, hydrateFromServer, resetProfile } = useProfileStore();
   const [activeRoute, setActiveRoute] = useState<Route>("home");
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
@@ -94,7 +94,17 @@ export default function Home() {
   }, [navigateTo]);
 
   const isWorkspace = status === "authenticated" && WORKSPACE_VIEWS.includes(activeRoute as WorkspaceView);
-  const content = <AnimatePresence mode="wait"><motion.div key={activeRoute} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
+  const workspaceContent = hydrated ? contentFor(activeRoute, status, session, profile, navigateTo, requestAuth) : <FeatureLoading label="Preparing your private workspace…" />;
+
+  return <div className="relative flex min-h-screen flex-col bg-transparent">
+    <AnimatePresence>{showOnboarding && <OnboardingWizard onComplete={() => { setShowOnboarding(false); navigateTo("dashboard"); }} />}</AnimatePresence>
+    {isWorkspace ? <AppShell activeView={activeRoute as WorkspaceView} onNavigate={navigateTo as (v: WorkspaceView) => void}>{workspaceContent}</AppShell> : <><SiteHeader activeView={activeRoute} onViewChange={navigateTo} views={PUBLIC_VIEWS} onTryAgent={() => { if (status !== "authenticated") { requestAuth("login"); return; } if (profile.onboarded) navigateTo("agent"); else setShowOnboarding(true); }} onAuthRequest={requestAuth} /><main className="flex-1">{contentFor(activeRoute, status, session, profile, navigateTo, requestAuth)}</main><SiteFooter /></>}
+    <AuthModal open={showAuth} onClose={() => setShowAuth(false)} mode={authMode} />
+  </div>;
+}
+
+function contentFor(activeRoute: Route, status: string, session: ReturnType<typeof useSession>["data"], profile: ReturnType<typeof useProfileStore>["profile"], navigateTo: (view: string) => void, requestAuth: (mode?: AuthMode) => void) {
+  return <AnimatePresence mode="wait"><motion.div key={activeRoute} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
     {activeRoute === "home" && <><Hero3D onNavigate={navigateTo} /><HomeShowcase onNavigate={navigateTo} /></>}
     {activeRoute === "journey" && (session ? <JourneyWorkspace onNavigate={navigateTo} /> : <PublicJourney onNavigate={navigateTo} />)}
     {activeRoute === "agent" && status === "authenticated" && <AgentChat />}
@@ -104,12 +114,7 @@ export default function Home() {
     {activeRoute === "network" && status === "authenticated" && <NetworkingJobs />}
     {activeRoute === "connectors" && status === "authenticated" && <Connectors />}
   </motion.div></AnimatePresence>;
-
-  return <div className="relative flex min-h-screen flex-col bg-transparent">
-    <AnimatePresence>{showOnboarding && <OnboardingWizard onComplete={() => { setShowOnboarding(false); navigateTo("dashboard"); }} />}</AnimatePresence>
-    {isWorkspace ? <AppShell activeView={activeRoute as WorkspaceView} onNavigate={navigateTo as (v: WorkspaceView) => void}>{content}</AppShell> : <><SiteHeader activeView={activeRoute} onViewChange={navigateTo} views={PUBLIC_VIEWS} onTryAgent={() => { if (status !== "authenticated") { requestAuth("login"); return; } if (profile.onboarded) navigateTo("agent"); else setShowOnboarding(true); }} onAuthRequest={requestAuth} /><main className="flex-1">{content}</main><SiteFooter /></>}
-    <AuthModal open={showAuth} onClose={() => setShowAuth(false)} mode={authMode} />
-  </div>;
 }
+
 function FeatureLoading({ label }: { label: string }) { return <div className="flex min-h-[50vh] items-center justify-center px-6 text-sm text-[var(--shield-text-dim)]">{label}</div>; }
 function SignInPanel({ onSignIn }: { onSignIn: () => void }) { return <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center"><div className="mb-6 text-4xl">🛡️</div><h2 className="text-2xl font-semibold">Sign in to access your workspace</h2><p className="mt-3 max-w-sm text-sm text-[var(--shield-text-dim)]">Your agent, journey, documents and tasks are private to your account.</p><button type="button" onClick={onSignIn} className="mt-6 rounded-full bg-[oklch(0.98_0.005_160)] px-6 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)]">Sign in / Create account</button></div>; }
