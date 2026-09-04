@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import ZAI from "z-ai-web-dev-sdk";
 import { db } from "@/lib/db";
 import { buildAgentContext, type AgentProfile } from "@/lib/abroadshield/task-context";
-import { STAGE_POLICIES, normalizePhase } from "@/lib/abroadshield/stage-orchestrator";
+import { normalizePhase } from "@/lib/abroadshield/journey";
+import { STAGE_POLICIES } from "@/lib/abroadshield/stage-orchestrator";
 
 export async function GET() {
   return NextResponse.json({ ok: true });
