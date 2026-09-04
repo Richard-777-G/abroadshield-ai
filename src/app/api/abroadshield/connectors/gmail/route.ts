@@ -13,7 +13,7 @@ async function userId() {
   const email = session?.user?.email;
   if (id) return id;
   if (!email) return null;
-  const user = await db.user.findUnique({ where: { email } });
+  const user = await db.user.findUnique({ where: { email: email.toLowerCase() } });
   return user?.id ?? null;
 }
 
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     if (body?.approved !== true) return NextResponse.json({ ok: false, error: "Sending email requires explicit approval." }, { status: 400 });
     const result = await sendMessage(id, to, subject, text);
     const journey = await db.journeyProfile.findUnique({ where: { userId: id }, select: { currentPhase: true } });
-    await db.journeyEvent.create({ data: { userId: id, phase: normalizePhase(journey?.currentPhase), type: "connector_action", title: "Gmail message sent", detail: `Approved Gmail message sent to ${to}.`, metadata: JSON.stringify({ provider: "google", action: "send", messageId: result.id }) } });
+    await db.journeyEvent.create({ data: { userId: id, phase: normalizePhase(journey?.currentPhase), type: "connector_action", title: "Gmail message sent", detail: "Approved Gmail message was sent.", metadata: JSON.stringify({ provider: "google", action: "send", messageId: result.id }) } });
     return NextResponse.json({ ok: true, action, result });
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Gmail operation failed." }, { status: 502 });
