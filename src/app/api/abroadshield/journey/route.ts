@@ -30,9 +30,11 @@ export async function GET() {
   try {
     const user = await resolveUser();
     if (!user) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
-    const profile = await db.journeyProfile.findUnique({ where: { userId: user.id } });
-    const events = await db.journeyEvent.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 50 });
-    const tasks = await db.journeyTask.findMany({ where: { userId: user.id }, orderBy: [{ status: "asc" }, { dueAt: "asc" }], take: 100 });
+    const [profile, events, tasks] = await Promise.all([
+      db.journeyProfile.findUnique({ where: { userId: user.id } }),
+      db.journeyEvent.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 50 }),
+      db.journeyTask.findMany({ where: { userId: user.id }, orderBy: [{ status: "asc" }, { dueAt: "asc" }], take: 100 }),
+    ]);
     return NextResponse.json({ ok: true, profile, events, tasks });
   } catch (error) {
     console.error("[abroadshield/journey GET]", error);
@@ -48,7 +50,7 @@ export async function PUT(req: NextRequest) {
     const previous = await db.journeyProfile.findUnique({ where: { userId: user.id } });
     const profile = await db.journeyProfile.upsert({ where: { userId: user.id }, update: input, create: { userId: user.id, ...input } });
     const phaseChanged = previous && previous.currentPhase !== profile.currentPhase;
-    await db.journeyEvent.create({ data: { userId: user.id, phase: profile.currentPhase, type: phaseChanged ? "phase_changed" : "profile_updated", title: phaseChanged ? `Moved to ${profile.currentPhase}` : "Journey profile updated", detail: "Journey state saved to the persistent record." } });
+    await db.journeyEvent.create({ data: { userId: user.id, phase: profile.currentPhase, type: phaseChanged ? "phase_changed" : "profile_updated", title: phaseChanged ? `Moved to ${profile.currentPhase}` : "Journey profile updated", detail: "Journey strategy saved to the persistent record." } });
     return NextResponse.json({ ok: true, profile });
   } catch (error) {
     console.error("[abroadshield/journey PUT]", error);
