@@ -31,6 +31,10 @@ const PUBLIC_VIEWS: { id: PublicView; label: string }[] = [
 ];
 const WORKSPACE_VIEWS: WorkspaceView[] = ["dashboard", "agent", "journey", "connectors", "network"];
 
+function isValidRoute(value: string): value is Route {
+  return PUBLIC_VIEWS.some((v) => v.id === value) || WORKSPACE_VIEWS.includes(value as WorkspaceView);
+}
+
 export default function Home() {
   const { data: session, status } = useSession();
   const { profile, hydrateFromServer, resetProfile } = useProfileStore();
@@ -53,26 +57,35 @@ export default function Home() {
   const requestAuth = useCallback((mode: AuthMode = "signup") => { setAuthMode(mode); setShowAuth(true); }, []);
   const navigateTo = useCallback((id: string) => {
     const route = id as Route;
-    const valid = PUBLIC_VIEWS.some(v => v.id === route) || WORKSPACE_VIEWS.includes(route as WorkspaceView);
-    if (!valid) return;
+    if (!isValidRoute(route)) return;
     if ((route === "agent" || WORKSPACE_VIEWS.includes(route as WorkspaceView)) && status !== "authenticated") {
       if (status === "unauthenticated") requestAuth("login"); return;
     }
-    setActiveRoute(route); window.history.replaceState(null, "", route === "home" ? "/" : `#${route}`); window.scrollTo({ top: 0, behavior: "auto" });
-  }, [requestAuth, status]);
+    if (route === activeRoute) return;
+    setActiveRoute(route);
+    const nextUrl = route === "home" ? "/" : `#${route}`;
+    window.history.pushState(null, "", nextUrl);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [requestAuth, status, activeRoute]);
 
   useEffect(() => {
-    const fromHash = () => {
+    const syncFromLocation = () => {
       const hash = window.location.hash.slice(1) as Route;
-      const valid = PUBLIC_VIEWS.some(v => v.id === hash) || WORKSPACE_VIEWS.includes(hash as WorkspaceView);
-      if (!valid) return;
-      if ((hash === "agent" || WORKSPACE_VIEWS.includes(hash as WorkspaceView)) && status !== "authenticated") {
+      const route = hash || "home";
+      if (!isValidRoute(route)) return;
+      if ((route === "agent" || WORKSPACE_VIEWS.includes(route as WorkspaceView)) && status !== "authenticated") {
         if (status === "unauthenticated") { requestAuth("login"); window.history.replaceState(null, "", "/"); }
         return;
       }
-      setActiveRoute(hash);
+      setActiveRoute((current) => current === route ? current : route);
     };
-    fromHash(); window.addEventListener("hashchange", fromHash); return () => window.removeEventListener("hashchange", fromHash);
+    syncFromLocation();
+    window.addEventListener("hashchange", syncFromLocation);
+    window.addEventListener("popstate", syncFromLocation);
+    return () => {
+      window.removeEventListener("hashchange", syncFromLocation);
+      window.removeEventListener("popstate", syncFromLocation);
+    };
   }, [requestAuth, status]);
 
   useEffect(() => {
