@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import ZAI from "z-ai-web-dev-sdk";
 import { db } from "@/lib/db";
+import { generateText, AIRuntimeError } from "@/lib/abroadshield/ai-runtime";
 import { buildAgentContext, type AgentProfile } from "@/lib/abroadshield/task-context";
 import { normalizePhase } from "@/lib/abroadshield/journey";
 import { STAGE_POLICIES } from "@/lib/abroadshield/stage-orchestrator";
@@ -28,19 +28,10 @@ async function generateIntelligence() {
   ]);
 
   const profile: AgentProfile = {
-    name: user.name ?? undefined,
-    email: user.email,
-    origin: journey?.origin,
-    destination: journey?.destination,
-    course: journey?.course,
-    university: journey?.university,
-    intake: journey?.intake,
-    currentPhase,
-    documentsTotal: journey?.documentsTotal,
-    documentsVerified: journey?.documentsVerified,
-    visaAppointment: journey?.visaAppointment ?? undefined,
-    funding: journey?.funding ?? undefined,
-    homeLanguage: journey?.homeLanguage ?? undefined,
+    name: user.name ?? undefined, email: user.email, origin: journey?.origin, destination: journey?.destination,
+    course: journey?.course, university: journey?.university, intake: journey?.intake, currentPhase,
+    documentsTotal: journey?.documentsTotal, documentsVerified: journey?.documentsVerified,
+    visaAppointment: journey?.visaAppointment ?? undefined, funding: journey?.funding ?? undefined, homeLanguage: journey?.homeLanguage ?? undefined,
   };
 
   const prompt = [
@@ -52,48 +43,39 @@ async function generateIntelligence() {
     "Also provide studentSummary, careerDirection, biggestUnknowns, next90Days.",
     "Use persisted events and tasks to avoid recommending work already completed unless it needs follow-up.",
     "Return valid JSON only.",
-    "PROFILE:",
-    buildAgentContext(profile),
-    "PERSISTED RECENT EVENTS:",
-    recentEvents.map((e) => `- [${e.phase}] ${e.type}: ${e.title}${e.detail ? ` — ${e.detail}` : ""}`).join("\n") || "none yet",
-    "PERSISTED RECENT TASKS:",
-    recentTasks.map((t) => `- [${t.phase}] ${t.status}: ${t.title}${t.completedAt ? ` — completed ${t.completedAt.toISOString()}` : ""}`).join("\n") || "none yet",
-    "CANONICAL STAGE POLICIES:",
-    JSON.stringify(STAGE_POLICIES),
+    "PROFILE:", buildAgentContext(profile),
+    "PERSISTED RECENT EVENTS:", recentEvents.map((e) => `- [${e.phase}] ${e.type}: ${e.title}${e.detail ? ` — ${e.detail}` : ""}`).join("\n") || "none yet",
+    "PERSISTED RECENT TASKS:", recentTasks.map((t) => `- [${t.phase}] ${t.status}: ${t.title}${t.completedAt ? ` — completed ${t.completedAt.toISOString()}` : ""}`).join("\n") || "none yet",
+    "CANONICAL STAGE POLICIES:", JSON.stringify(STAGE_POLICIES),
   ].join("\n\n");
 
-  const zai = await ZAI.create();
-  const completion = await zai.chat.completions.create({
-    messages: [{ role: "assistant", content: prompt }],
-    thinking: { type: "disabled" },
+  const raw = await generateText({
+    messages: [{ role: "system", content: prompt }],
+    timeoutMs: 25_000,
+    jsonMode: true,
   });
-  const raw = completion.choices[0]?.message?.content?.trim() ?? "";
-  if (!raw) throw new Error("Journey intelligence returned an empty response.");
 
   let intelligence: unknown;
-  try {
-    intelligence = JSON.parse(raw);
-  } catch {
-    return NextResponse.json({ ok: false, error: "Journey intelligence returned invalid JSON." }, { status: 502 });
-  }
+  try { intelligence = JSON.parse(raw); }
+  catch { return NextResponse.json({ ok: false, error: "Journey intelligence returned invalid JSON." }, { status: 502 }); }
 
   return NextResponse.json({ ok: true, currentPhase, generatedAt: new Date().toISOString(), intelligence });
 }
 
 export async function GET() {
-  try {
-    return await generateIntelligence();
-  } catch (error) {
+  try { return await generateIntelligence(); }
+  catch (error) {
     console.error("[abroadshield/journey-intelligence GET]", error);
+    if (error instanceof AIRuntimeError) return NextResponse.json({ ok: false, error: error.message }, { status: error.status });
     return NextResponse.json({ ok: false, error: "Unable to generate journey intelligence." }, { status: 500 });
   }
 }
 
 export async function POST() {
-  try {
-    return await generateIntelligence();
-  } catch (error) {
+  try { return await generateIntelligence(); }
+  catch (error) {
     console.error("[abroadshield/journey-intelligence POST]", error);
+    if (error instanceof AIRuntimeError) return NextResponse.json({ ok: false, error: error.message }, { status: error.status });
     return NextResponse.json({ ok: false, error: "Unable to generate journey intelligence." }, { status: 500 });
   }
 }
