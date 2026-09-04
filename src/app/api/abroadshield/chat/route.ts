@@ -6,6 +6,8 @@ import { buildAgentContext, type AgentProfile } from "@/lib/abroadshield/task-co
 import { detectCapability } from "@/lib/abroadshield/capability-router";
 import { buildStageSystemDirective, buildWholeJourneyDirective, getStagePolicy, isCapabilityAllowedInStage, isExplorationRequest } from "@/lib/abroadshield/stage-orchestrator";
 import { normalizePhase } from "@/lib/abroadshield/journey";
+import { executeAgentTask } from "@/lib/abroadshield/task-executor";
+import type { AgentCapability } from "@/lib/abroadshield/tool-registry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,7 +60,7 @@ export async function POST(req: NextRequest) {
     const journey = await db.journeyProfile.findUnique({ where: { userId: resolved.user.id } });
     const phase = normalizePhase(journey?.currentPhase);
     const policy = getStagePolicy(phase);
-    const capability = detectCapability(userMessage);
+    const capability = detectCapability(userMessage) as AgentCapability | null;
     const exploring = isExplorationRequest(userMessage);
 
     if (capability && !isCapabilityAllowedInStage(phase, capability) && !exploring) {
@@ -71,20 +73,28 @@ export async function POST(req: NextRequest) {
     }
 
     if (capability && !exploring && isCapabilityAllowedInStage(phase, capability)) {
-      const taskResponse = await fetch(new URL("/api/abroadshield/tasks", req.url), {
-        method: "POST",
-        headers: { "content-type": "application/json", cookie: req.headers.get("cookie") ?? "" },
-        body: JSON.stringify({ taskType: capability, context: userMessage, phase }),
-        cache: "no-store",
-      });
-      const taskPayload = await taskResponse.json().catch(() => ({}));
-      if (!taskResponse.ok || !taskPayload.ok) throw new Error(taskPayload.error || "Task execution failed.");
-      const reply = summarizeTask(capability, taskPayload.result);
+      const profile: AgentProfile = {
+        name: resolved.user.name ?? resolved.session?.user?.name ?? undefined,
+        email: resolved.user.email,
+        origin: journey?.origin,
+        destination: journey?.destination,
+        course: journey?.course,
+        university: journey?.university,
+        intake: journey?.intake,
+        currentPhase: phase,
+        documentsTotal: journey?.documentsTotal,
+        documentsVerified: journey?.documentsVerified,
+        visaAppointment: journey?.visaAppointment ?? undefined,
+        funding: journey?.funding ?? undefined,
+        homeLanguage: journey?.homeLanguage ?? undefined,
+      };
+      const taskResult = await executeAgentTask(resolved.user.id, profile, { taskType: capability, context: userMessage, phase, mode: "execute" });
+      const reply = summarizeTask(capability, taskResult.result);
       await db.agentMessage.createMany({ data: [
         { userId: resolved.user.id, role: "user", content: userMessage, phase },
         { userId: resolved.user.id, role: "assistant", content: reply, phase },
       ] });
-      return NextResponse.json({ ok: true, reply, phase, capability, taskId: taskPayload.taskId, result: taskPayload.result, executed: true });
+      return NextResponse.json({ ok: true, reply, phase, capability, taskId: taskResult.taskId, result: taskResult.result, executed: true });
     }
 
     const [recentEvents, recentTasks] = await Promise.all([
