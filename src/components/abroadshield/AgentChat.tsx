@@ -55,8 +55,14 @@ export default function AgentChat() {
     if (!trimmed || sending) return;
     const userMsg: Message = { id: `u-${Date.now()}`, role: "user", content: trimmed };
     const pendingMsg: Message = { id: `a-${Date.now()}`, role: "assistant", content: "", pending: true };
-    const history = messages.map((m) => ({ role: m.role, content: m.content }));
-    setMessages((m) => [...m, userMsg, pendingMsg]); setInput(""); setSending(true);
+    const conversation = messages[0]?.id === "welcome" ? messages.slice(1) : messages;
+    const history = conversation.map((m) => ({ role: m.role, content: m.content }));
+    setMessages((m) => {
+      const base = m[0]?.id === "welcome" ? m.slice(1) : m;
+      return [...base, userMsg, pendingMsg];
+    });
+    setInput("");
+    setSending(true);
     try {
       const res = await fetch("/api/abroadshield/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: trimmed, messages: history }) });
       const data = await res.json().catch(() => null);
@@ -64,7 +70,10 @@ export default function AgentChat() {
       setMessages((m) => m.map((msg) => msg.id === pendingMsg.id ? { ...msg, content: reply, pending: false } : msg));
     } catch {
       setMessages((m) => m.map((msg) => msg.id === pendingMsg.id ? { ...msg, content: "Network error reaching the agent. Check your connection and retry.", pending: false } : msg));
-    } finally { setSending(false); inputRef.current?.focus(); }
+    } finally {
+      setSending(false);
+      inputRef.current?.focus();
+    }
   };
 
   const reset = () => { setMessages([buildWelcome(profile)]); setInput(""); };
