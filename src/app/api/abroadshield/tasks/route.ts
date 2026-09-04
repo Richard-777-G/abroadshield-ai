@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import ZAI from "z-ai-web-dev-sdk";
 import { db } from "@/lib/db";
+import { generateText, AIRuntimeError } from "@/lib/abroadshield/ai-runtime";
 import { buildAgentContext, type AgentProfile } from "@/lib/abroadshield/task-context";
 import { normalizePhase } from "@/lib/abroadshield/journey";
 import { executeLiveTool } from "@/lib/abroadshield/live-tool-adapter";
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
     const profile: AgentProfile = {
       name: user.name ?? undefined, email: user.email, origin: journey?.origin, destination: journey?.destination,
-      course: journey?.course, university: journey?.university, intake: journey?.intake, currentPhase: currentPhase,
+      course: journey?.course, university: journey?.university, intake: journey?.intake, currentPhase,
       documentsTotal: journey?.documentsTotal, documentsVerified: journey?.documentsVerified,
       visaAppointment: journey?.visaAppointment ?? undefined, funding: journey?.funding ?? undefined, homeLanguage: journey?.homeLanguage ?? undefined,
     };
@@ -67,36 +67,37 @@ export async function POST(req: NextRequest) {
     await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_started", title: request.slice(0, 120), detail: `Agent started ${mode} ${taskType}.` } });
 
     try {
+      let result: unknown;
+      let live = false;
       if (LIVE_TASKS.has(taskType)) {
-        const live = await executeLiveTool(taskType, request);
-        if (live.status !== "ready") {
-          const result = { status: "needs_live_search", query: live.query, sources: live.sources, nextAction: live.message };
-          await db.journeyTask.update({ where: { id: task.id }, data: { status: "completed", result: JSON.stringify(result), completedAt: new Date() } });
-          await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_completed", title: request.slice(0, 120), detail: `Live ${taskType} unavailable: ${live.message ?? "not configured"}` } });
-          return NextResponse.json({ ok: true, taskId: task.id, taskType, phase, mode, planningAnotherStage, result });
+        const liveResult = await executeLiveTool(taskType, request);
+        if (liveResult.status !== "ready") {
+          result = { status: "needs_live_search", query: liveResult.query, sources: liveResult.sources, nextAction: liveResult.message };
+        } else {
+          live = true;
+          result = JSON.parse(await generateText({
+            messages: [
+              { role: "system", content: taskInstruction(taskType, buildAgentContext(profile), request, phase, mode) },
+              { role: "user", content: JSON.stringify({ query: liveResult.query, sources: liveResult.sources }) },
+            ],
+            timeoutMs: 25_000,
+            jsonMode: true,
+          }));
         }
-
-        const liveContext = JSON.stringify({ query: live.query, sources: live.sources });
-        const zai = await ZAI.create();
-        const completion = await zai.chat.completions.create({ messages: [{ role: "assistant", content: taskInstruction(taskType, buildAgentContext(profile), request, phase, mode) }, { role: "user", content: liveContext }], thinking: { type: "disabled" } });
-        const raw = completion.choices[0]?.message?.content?.trim() ?? "";
-        if (!raw) throw new Error("Agent returned an empty result.");
-        let result: unknown = raw;
-        try { result = JSON.parse(raw); } catch { result = { status: "shortlist", query: live.query, sources: live.sources, summary: raw }; }
-        await db.journeyTask.update({ where: { id: task.id }, data: { status: "completed", result: JSON.stringify(result), completedAt: new Date() } });
-        await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_completed", title: request.slice(0, 120), detail: `Agent completed live ${mode} ${taskType}.` } });
-        return NextResponse.json({ ok: true, taskId: task.id, taskType, phase, mode, planningAnotherStage, result, live: true });
+      } else {
+        result = JSON.parse(await generateText({
+          messages: [
+            { role: "system", content: taskInstruction(taskType, buildAgentContext(profile), request, phase, mode) },
+            { role: "user", content: request },
+          ],
+          timeoutMs: 25_000,
+          jsonMode: true,
+        }));
       }
 
-      const zai = await ZAI.create();
-      const completion = await zai.chat.completions.create({ messages: [{ role: "assistant", content: taskInstruction(taskType, buildAgentContext(profile), request, phase, mode) }, { role: "user", content: request }], thinking: { type: "disabled" } });
-      const raw = completion.choices[0]?.message?.content?.trim() ?? "";
-      if (!raw) throw new Error("Agent returned an empty result.");
-      let result: unknown = raw;
-      try { result = JSON.parse(raw); } catch { /* preserve raw result */ }
       await db.journeyTask.update({ where: { id: task.id }, data: { status: "completed", result: JSON.stringify(result), completedAt: new Date() } });
       await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_completed", title: request.slice(0, 120), detail: `Agent completed ${mode} ${taskType}.` } });
-      return NextResponse.json({ ok: true, taskId: task.id, taskType, phase, mode, planningAnotherStage, result });
+      return NextResponse.json({ ok: true, taskId: task.id, taskType, phase, mode, planningAnotherStage, result, live });
     } catch (error) {
       await db.journeyTask.update({ where: { id: task.id }, data: { status: "failed", result: JSON.stringify({ error: error instanceof Error ? error.message : "Task execution failed" }) } });
       await db.journeyEvent.create({ data: { userId: user.id, phase, type: "task_failed", title: request.slice(0, 120), detail: `Agent task ${taskType} failed.` } });
@@ -104,6 +105,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     console.error("[abroadshield/tasks] error", error);
+    if (error instanceof AIRuntimeError) return NextResponse.json({ ok: false, error: error.message }, { status: error.status });
     return NextResponse.json({ ok: false, error: "Task execution failed." }, { status: 500 });
   }
 }
