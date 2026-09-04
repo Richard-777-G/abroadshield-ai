@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { executeAgentTask, taskErrorResponseMessage } from "@/lib/abroadshield/task-executor";
 import type { AgentProfile } from "@/lib/abroadshield/task-context";
 import { normalizePhase } from "@/lib/abroadshield/journey";
+import { detectCapability } from "@/lib/abroadshield/capability-router";
 import { getTool, type AgentCapability } from "@/lib/abroadshield/tool-registry";
 
 export const runtime = "nodejs";
@@ -44,12 +45,15 @@ export async function POST(req: NextRequest) {
       mode?: unknown;
     };
 
-    const taskType = typeof body.taskType === "string" ? body.taskType : "";
-    if (!isCapability(taskType)) {
-      return NextResponse.json({ ok: false, error: "Unknown task type." }, { status: 400 });
+    const message = typeof body.message === "string" ? body.message.trim() : "";
+    const context = typeof body.context === "string" ? body.context.trim() : "";
+    const requestedTaskType = typeof body.taskType === "string" ? body.taskType : "";
+    const taskType = isCapability(requestedTaskType) ? requestedTaskType : detectCapability(message || context);
+    if (!taskType) {
+      return NextResponse.json({ ok: false, error: "Could not determine the task type. Specify a supported capability or provide a more specific request." }, { status: 400 });
     }
 
-    const request = typeof body.context === "string" ? body.context.trim() : typeof body.message === "string" ? body.message.trim() : "";
+    const request = context || message;
     if (!request) return NextResponse.json({ ok: false, error: "Message or context is required." }, { status: 400 });
 
     const journey = await db.journeyProfile.findUnique({ where: { userId: user.id } });
