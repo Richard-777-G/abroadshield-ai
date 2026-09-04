@@ -5,16 +5,36 @@
 All model calls flow through `src/lib/abroadshield/ai-runtime.ts`. Application routes must not import an AI provider SDK directly.
 
 The runtime boundary is responsible for:
+- provider selection through `ABROADSHIELD_AI_PROVIDER`;
 - provider authentication through server-only environment variables;
 - model selection through `ABROADSHIELD_AI_MODEL`;
-- optional gateway endpoint override through `AI_GATEWAY_BASE_URL`;
+- provider endpoint overrides when required;
 - request timeout and transport failure handling;
 - normalized provider errors;
 - optional JSON response mode.
 
-For production, `AI_GATEWAY_API_KEY` must be configured in the Vercel Production environment before AI-backed routes can execute. Missing configuration must surface as an explicit service-unavailable condition.
+## Providers
 
-The application therefore depends on an internal AI contract, not on a provider-specific SDK.
+### Free-first development runtime
+
+Set `ABROADSHIELD_AI_PROVIDER=openrouter` and configure `OPENROUTER_API_KEY`. When no model is explicitly selected, the runtime uses `openrouter/free`, which routes to available free models subject to OpenRouter's free-tier limits and availability.
+
+This keeps development and early product testing independent of Vercel AI Gateway billing.
+
+### Vercel AI Gateway
+
+Set `ABROADSHIELD_AI_PROVIDER=gateway` and configure `AI_GATEWAY_API_KEY`. When no model is explicitly selected, the runtime uses `openai/gpt-5.5-fast` through the configured gateway endpoint.
+
+The application therefore depends on an internal AI contract, not on a provider-specific SDK or billing arrangement. Switching providers is configuration, not an application rewrite.
+
+## Provider selection precedence
+
+1. Explicit `ABROADSHIELD_AI_PROVIDER=openrouter` or `gateway` is authoritative.
+2. If no provider is explicitly selected, OpenRouter is preferred when `OPENROUTER_API_KEY` exists.
+3. If OpenRouter is unavailable and `AI_GATEWAY_API_KEY` exists, the runtime uses the gateway.
+4. If neither provider is configured, the runtime returns an explicit service-unavailable error.
+
+There is no silent request-level provider fallback after a provider has been selected. This prevents mixed-provider execution and makes failures observable.
 
 ## Execution pipeline
 
@@ -42,7 +62,7 @@ The application therefore depends on an internal AI contract, not on a provider-
 ## Safety rules
 
 - No provider SDK imports from product routes.
-- No hidden provider fallback.
+- No hidden provider fallback after an explicit provider selection.
 - No fabricated live data.
 - No external action is claimed without an executor result.
 - Outbound communications remain approval-gated.
