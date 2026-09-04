@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Bot, Briefcase, CalendarClock, CheckCircle2, FileText, Home, Plane, BookOpen, UserRound, ShieldCheck } from "lucide-react";
 import { PHASES } from "./data";
 import type { PhaseId } from "@/lib/abroadshield/phase";
@@ -37,8 +37,17 @@ export default function StageWorkspace({ onNavigate }: { onNavigate: (view: stri
   const { profile } = useProfileStore();
   const currentPhase: PhaseId = profile.currentPhase || "pre-departure";
   const [selectedPhase, setSelectedPhase] = useState<PhaseId>(currentPhase);
+  const [lastProfilePhase, setLastProfilePhase] = useState<PhaseId>(currentPhase);
   const [busy, setBusy] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentPhase === lastProfilePhase) return;
+    setSelectedPhase(currentPhase);
+    setLastProfilePhase(currentPhase);
+    setResult(null);
+  }, [currentPhase, lastProfilePhase]);
+
   const phase = PHASES.find((item) => item.id === selectedPhase) || PHASES[0];
   const currentIndex = PHASES.findIndex((item) => item.id === currentPhase);
   const selectedIndex = PHASES.findIndex((item) => item.id === selectedPhase);
