@@ -1,4 +1,4 @@
-import type { PhaseId } from "@/components/abroadshield/data";
+import type { PhaseId } from "./phase";
 import type { AgentCapability } from "./tool-registry";
 
 export type StagePolicy = {
