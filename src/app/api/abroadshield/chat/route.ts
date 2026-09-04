@@ -7,12 +7,14 @@ import { detectCapability } from "@/lib/abroadshield/capability-router";
 import { buildStageSystemDirective, buildWholeJourneyDirective, getStagePolicy, isCapabilityAllowedInStage, isExplorationRequest } from "@/lib/abroadshield/stage-orchestrator";
 import { normalizePhase } from "@/lib/abroadshield/journey";
 import { executeAgentTask } from "@/lib/abroadshield/task-executor";
+import { AGENT_CAPABILITIES, getTool } from "@/lib/abroadshield/tool-registry";
 import type { AgentCapability } from "@/lib/abroadshield/tool-registry";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
+type DeterministicKind = "greeting" | "capabilities" | "positioning" | "stage";
 
 const SYSTEM_RULES = `You are AbroadShield AI, an agentic study-abroad execution assistant.
 You operate as a stage-specialized system, not a generic assistant. The active journey stage determines the current mission, priorities and allowed execution capabilities.
@@ -48,6 +50,44 @@ function summarizeTask(capability: string, result: unknown): string {
   return lines.join("\n") || `I completed the ${label} task and recorded the result in your journey.`;
 }
 
+function isGreeting(message: string): boolean {
+  return /^(hi|hey|hello|hiya|good morning|good afternoon|good evening|yo)[.!\s]*$/i.test(message.trim());
+}
+function isCapabilityQuestion(message: string): boolean {
+  return /\b(what can you do|what do you do|what can i do|your capabilities|your tools|what tools|what tasks can|how can you help|what are your functions|available tasks)\b/i.test(message);
+}
+function isPositioningQuestion(message: string): boolean {
+  return /\b(why should i choose you|why choose you|why use you|better than claude|better than chatgpt|vs claude|vs chatgpt|compared with claude|compared with chatgpt|why you over|what makes you different)\b/i.test(message);
+}
+function buildGreeting(name: string | null | undefined, phase: ReturnType<typeof normalizePhase>, destination?: string | null): string {
+  const policy = getStagePolicy(phase);
+  const who = name ? ` ${name}` : "";
+  const place = destination ? ` for **${destination}**` : "";
+  return `Hi${who}. I’m ready to work with your journey context${place}.\n\n**Current stage:** ${policy.title}\n**Current mission:** ${policy.mission}\n\nGive me a concrete task, or ask what needs attention next.`;
+}
+function buildCapabilityReply(phase: ReturnType<typeof normalizePhase>): string {
+  const policy = getStagePolicy(phase);
+  const current = new Set(policy.capabilities);
+  const rows = AGENT_CAPABILITIES.map((capability) => {
+    const tool = getTool(capability)!;
+    const status = current.has(capability) ? "Available now" : "Available in the relevant stage";
+    const mode = tool.requiresLiveData ? "live data" : tool.requiresApproval ? "draft + approval" : "task execution";
+    return `| ${tool.label} | ${mode} | ${status} |`;
+  }).join("\n");
+  return `I’m not a replacement for a general-purpose model. AbroadShield is specialized around **your study-abroad journey** and the execution layer behind it.\n\n**What the agent can do**\n| Capability | Execution | Stage |\n| --- | --- | --- |\n${rows}\n\nYour active stage is **${policy.title}**. I prioritize the capabilities allowed there, while you can still plan for later stages without accidentally executing them.`;
+}
+function buildPositioningReply(phase: ReturnType<typeof normalizePhase>): string {
+  const policy = getStagePolicy(phase);
+  return `You should not choose AbroadShield because it claims to be a smarter base model than Claude or ChatGPT. That would be an unsupported claim.\n\nChoose it for a different layer of the problem: **an operational study-abroad workspace built around your journey**. It keeps a persistent journey profile, enforces stage-specific capabilities, separates planning from execution, routes live-data tasks through explicit tools, gates outbound communication behind approval, and records task/event state in the application.\n\nA general-purpose assistant may be better for broad reasoning, writing, coding, or open-ended research. AbroadShield’s advantage is the workflow around the student: **context → stage policy → task → evidence/tool result → recorded outcome → next action**.\n\nRight now your active stage is **${policy.title}**, so that orchestration is the layer I should use rather than pretending to compete on raw model intelligence.`;
+}
+async function persistDeterministic(userId: string, phase: ReturnType<typeof normalizePhase>, userMessage: string, reply: string, kind: DeterministicKind) {
+  await db.agentMessage.createMany({ data: [
+    { userId, role: "user", content: userMessage, phase },
+    { userId, role: "assistant", content: reply, phase },
+  ] });
+  return NextResponse.json({ ok: true, reply, phase, executed: false, deterministic: true, kind });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const resolved = await resolveUser();
@@ -56,37 +96,34 @@ export async function POST(req: NextRequest) {
     const messages: ChatMessage[] = Array.isArray(body.messages) ? body.messages : [];
     const userMessage = typeof body.message === "string" ? body.message : messages.find((m) => m.role === "user")?.content ?? "";
     if (!userMessage.trim()) return NextResponse.json({ ok: false, error: "Message is required." }, { status: 400 });
-
     const journey = await db.journeyProfile.findUnique({ where: { userId: resolved.user.id } });
     const phase = normalizePhase(journey?.currentPhase);
     const policy = getStagePolicy(phase);
     const capability = detectCapability(userMessage) as AgentCapability | null;
     const exploring = isExplorationRequest(userMessage);
 
-    if (capability && !isCapabilityAllowedInStage(phase, capability) && !exploring) {
-      const reply = `That action belongs to a different journey stage. You are currently in ${policy.title}. You can still explore that future stage with me; to execute an action, make the relevant stage active first.`;
-      await db.agentMessage.createMany({ data: [
-        { userId: resolved.user.id, role: "user", content: userMessage, phase },
-        { userId: resolved.user.id, role: "assistant", content: reply, phase },
-      ] });
-      return NextResponse.json({ ok: true, reply, phase, capability, executed: false, stageBlocked: true });
-    }
+    if (isGreeting(userMessage)) return persistDeterministic(resolved.user.id, phase, userMessage, buildGreeting(resolved.user.name ?? resolved.session?.user?.name, phase, journey?.destination), "greeting");
+    if (isCapabilityQuestion(userMessage)) return persistDeterministic(resolved.user.id, phase, userMessage, buildCapabilityReply(phase), "capabilities");
+    if (isPositioningQuestion(userMessage)) return persistDeterministic(resolved.user.id, phase, userMessage, buildPositioningReply(phase), "positioning");
 
+    if (capability && exploring) {
+      const tool = getTool(capability)!;
+      const status = isCapabilityAllowedInStage(phase, capability)
+        ? `That capability is available in **${policy.title}**.`
+        : `That capability is not enabled for **${policy.title}**, but you can plan for it without changing stages.`;
+      const reply = `${status}\n\n**${tool.label}** uses ${tool.requiresLiveData ? "verified live data" : tool.requiresApproval ? "a draft-and-approval workflow" : "the task engine"}. I will only execute it when the active stage and request allow execution.`;
+      return persistDeterministic(resolved.user.id, phase, userMessage, reply, "stage");
+    }
+    if (capability && !isCapabilityAllowedInStage(phase, capability) && !exploring) {
+      const reply = `That action belongs to a different journey stage. You are currently in **${policy.title}**. You can still explore or plan that future stage with me; to execute the action, make the relevant stage active first.`;
+      return persistDeterministic(resolved.user.id, phase, userMessage, reply, "stage");
+    }
     if (capability && !exploring && isCapabilityAllowedInStage(phase, capability)) {
       const profile: AgentProfile = {
-        name: resolved.user.name ?? resolved.session?.user?.name ?? undefined,
-        email: resolved.user.email,
-        origin: journey?.origin,
-        destination: journey?.destination,
-        course: journey?.course,
-        university: journey?.university,
-        intake: journey?.intake,
-        currentPhase: phase,
-        documentsTotal: journey?.documentsTotal,
-        documentsVerified: journey?.documentsVerified,
-        visaAppointment: journey?.visaAppointment ?? undefined,
-        funding: journey?.funding ?? undefined,
-        homeLanguage: journey?.homeLanguage ?? undefined,
+        name: resolved.user.name ?? resolved.session?.user?.name ?? undefined, email: resolved.user.email,
+        origin: journey?.origin, destination: journey?.destination, course: journey?.course, university: journey?.university,
+        intake: journey?.intake, currentPhase: phase, documentsTotal: journey?.documentsTotal, documentsVerified: journey?.documentsVerified,
+        visaAppointment: journey?.visaAppointment ?? undefined, funding: journey?.funding ?? undefined, homeLanguage: journey?.homeLanguage ?? undefined,
       };
       const taskResult = await executeAgentTask(resolved.user.id, profile, { taskType: capability, context: userMessage, phase, mode: "execute" });
       const reply = summarizeTask(capability, taskResult.result);
@@ -104,9 +141,8 @@ export async function POST(req: NextRequest) {
     const profile: AgentProfile = {
       name: resolved.user.name ?? resolved.session?.user?.name ?? undefined, email: resolved.user.email,
       origin: journey?.origin, destination: journey?.destination, course: journey?.course, university: journey?.university,
-      intake: journey?.intake, currentPhase: phase, documentsTotal: journey?.documentsTotal,
-      documentsVerified: journey?.documentsVerified, visaAppointment: journey?.visaAppointment ?? undefined,
-      funding: journey?.funding ?? undefined, homeLanguage: journey?.homeLanguage ?? undefined,
+      intake: journey?.intake, currentPhase: phase, documentsTotal: journey?.documentsTotal, documentsVerified: journey?.documentsVerified,
+      visaAppointment: journey?.visaAppointment ?? undefined, funding: journey?.funding ?? undefined, homeLanguage: journey?.homeLanguage ?? undefined,
     };
     const memory = `PERSISTENT JOURNEY:\n${buildAgentContext(profile)}\nACTIVE STAGE POLICY:\n${buildStageSystemDirective(phase)}\nWHOLE JOURNEY POLICY:\n${buildWholeJourneyDirective(phase)}\nRECENT EVENTS:\n${recentEvents.map((e) => `- [${e.phase}] ${e.type}: ${e.title}${e.detail ? ` — ${e.detail}` : ""}`).join("\n") || "none yet"}\nRECENT TASKS:\n${recentTasks.map((t) => `- [${t.phase}] ${t.status}: ${t.title}`).join("\n") || "none yet"}`;
     const history = messages.slice(-6).map((m) => ({ role: m.role, content: String(m.content).slice(0, 4000) }));
