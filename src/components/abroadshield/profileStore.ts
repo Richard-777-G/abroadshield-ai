@@ -26,14 +26,23 @@ export const useProfileStore = create<ProfileStore>((set) => {
     hydrateFromServer: async () => {
       try {
         const res = await fetch("/api/abroadshield/journey", { cache: "no-store" });
-        if (!res.ok) return;
+        if (!res.ok) {
+          set({ hydrated: true });
+          return;
+        }
         const data = await res.json();
-        if (!data?.profile) return;
+        if (!data?.profile) {
+          persistLocal(DEFAULT_PROFILE);
+          set({ profile: DEFAULT_PROFILE, hydrated: true });
+          return;
+        }
         const server = data.profile;
-        const profile: StudentProfile = { ...DEFAULT_PROFILE, ...server, email: server.email || initial.email };
+        const profile: StudentProfile = { ...DEFAULT_PROFILE, ...server };
         persistLocal(profile);
         set({ profile, hydrated: true });
-      } catch { set({ hydrated: true }); }
+      } catch {
+        set({ hydrated: true });
+      }
     },
     resetProfile: () => { if (typeof window !== "undefined") localStorage.removeItem("abroadshield-profile"); set({ profile: DEFAULT_PROFILE, hydrated: true }); },
   };
