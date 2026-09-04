@@ -11,6 +11,20 @@ export type AICompletionOptions = {
 
 type AIProvider = "openrouter" | "gateway";
 
+type ProviderPayload = {
+  choices?: Array<{
+    text?: unknown;
+    finish_reason?: unknown;
+    message?: {
+      content?: unknown;
+      refusal?: unknown;
+      reasoning?: unknown;
+      reasoning_content?: unknown;
+    };
+  }>;
+  error?: { message?: string; code?: unknown };
+};
+
 export class AIRuntimeError extends Error {
   code: "AI_NOT_CONFIGURED" | "AI_REQUEST_FAILED" | "AI_INVALID_RESPONSE";
   status: number;
@@ -114,6 +128,30 @@ function providerHeaders(provider: AIProvider, apiKey: string): HeadersInit {
   };
 }
 
+function extractText(payload: ProviderPayload): string {
+  const choice = payload.choices?.[0];
+  const content = choice?.message?.content;
+
+  if (typeof content === "string" && content.trim()) return content.trim();
+
+  if (Array.isArray(content)) {
+    const text = content
+      .map((part) => {
+        if (!part || typeof part !== "object") return "";
+        const value = part as Record<string, unknown>;
+        return typeof value.text === "string" ? value.text : "";
+      })
+      .filter(Boolean)
+      .join("\n")
+      .trim();
+    if (text) return text;
+  }
+
+  if (typeof choice?.text === "string" && choice.text.trim()) return choice.text.trim();
+
+  return "";
+}
+
 export async function generateText({
   messages,
   timeoutMs = DEFAULT_TIMEOUT_MS,
@@ -138,9 +176,7 @@ export async function generateText({
     throw new AIRuntimeError("AI_REQUEST_FAILED", "The AI service could not be reached.", 502);
   });
 
-  const payload = (await response.json().catch(() => null)) as
-    | { choices?: Array<{ message?: { content?: unknown } }>; error?: { message?: string } }
-    | null;
+  const payload = (await response.json().catch(() => null)) as ProviderPayload | null;
 
   if (!response.ok) {
     const providerMessage = payload?.error?.message;
@@ -157,10 +193,23 @@ export async function generateText({
     );
   }
 
-  const content = payload?.choices?.[0]?.message?.content;
-  if (typeof content !== "string" || !content.trim()) {
-    throw new AIRuntimeError("AI_INVALID_RESPONSE", "The AI service returned an empty response.", 502);
+  const content = extractText(payload || {});
+  if (!content) {
+    const choice = payload?.choices?.[0];
+    console.error(
+      "[abroadshield/ai-runtime] provider returned no text",
+      JSON.stringify({
+        provider: config.provider,
+        model: config.model,
+        choices: payload?.choices?.length || 0,
+        finishReason: choice?.finish_reason || null,
+        hasContent: choice?.message?.content != null,
+        hasRefusal: choice?.message?.refusal != null,
+        hasReasoning: choice?.message?.reasoning != null || choice?.message?.reasoning_content != null,
+      }),
+    );
+    throw new AIRuntimeError("AI_INVALID_RESPONSE", "The AI service returned no usable text.", 502);
   }
 
-  return content.trim();
+  return content;
 }
