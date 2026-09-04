@@ -1,6 +1,6 @@
-import type { PhaseId } from "@/components/abroadshield/data";
+import { VALID_PHASES, type PhaseId } from "./phase";
 
-export const VALID_PHASES: PhaseId[] = ["pre-departure", "arrival", "studying", "job-success"];
+export { VALID_PHASES, type PhaseId } from "./phase";
 
 export function normalizePhase(value?: string): PhaseId {
   return VALID_PHASES.includes(value as PhaseId) ? (value as PhaseId) : "pre-departure";
