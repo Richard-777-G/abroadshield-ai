@@ -5,6 +5,7 @@ import { normalizePhase } from "./journey";
 import { executeLiveTool } from "./live-tool-adapter";
 import { AGENT_CAPABILITIES, type AgentCapability } from "./tool-registry";
 import { buildStageSystemDirective, getStagePolicy, isCapabilityAllowedInStage } from "./stage-orchestrator";
+import { parseModelJson } from "./parse-json";
 
 export type TaskExecutionRequest = {
   taskType: string;
@@ -173,7 +174,7 @@ export async function executeAgentTask(userId: string, profile: AgentProfile, in
         timeoutMs: 25_000,
         jsonMode: true,
       });
-      result = JSON.parse(raw);
+      result = parseModelJson(raw);
     } else {
       const raw = await generateText({
         messages: [
@@ -183,7 +184,7 @@ export async function executeAgentTask(userId: string, profile: AgentProfile, in
         timeoutMs: 25_000,
         jsonMode: true,
       });
-      result = JSON.parse(raw);
+      result = parseModelJson(raw);
     }
 
     await db.journeyTask.update({
