@@ -13,7 +13,6 @@ import AppShell, { type WorkspaceView } from "@/components/abroadshield/AppShell
 import JourneyWorkspace from "@/components/abroadshield/JourneyWorkspace";
 import { useProfileStore, type StudentProfile } from "@/components/abroadshield/profileStore";
 
-const PublicJourney = dynamic(() => import("@/components/abroadshield/PublicJourney"));
 const PublicProduct = dynamic(() => import("@/components/abroadshield/PublicProduct"));
 const CountryRules = dynamic(() => import("@/components/abroadshield/CountryRules"));
 const AgentChat = dynamic(() => import("@/components/abroadshield/AgentChat"), { loading: () => <FeatureLoading label="Loading agent…" /> });
@@ -90,7 +89,7 @@ export default function Home() {
 function contentFor(activeRoute: Route, status: string, session: ReturnType<typeof useSession>["data"], profile: StudentProfile, navigateTo: (view: string) => void, requestAuth: (mode?: AuthMode) => void) {
   return <AnimatePresence mode="wait"><motion.div key={activeRoute} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
     {activeRoute === "home" && <><Hero3D onNavigate={navigateTo} /><HomeShowcase onNavigate={navigateTo} /></>}
-    {activeRoute === "journey" && (session ? <JourneyWorkspace onNavigate={navigateTo} /> : <PublicJourney onNavigate={navigateTo} />)}
+    {activeRoute === "journey" && (session ? <JourneyWorkspace onNavigate={navigateTo} /> : <PublicProduct onNavigate={navigateTo} />)}
     {activeRoute === "agent" && status === "authenticated" && <AgentChat />}
     {activeRoute === "countries" && <CountryRules />}
     {activeRoute === "pricing" && <><PricingTiers onStart={() => { if (status === "authenticated") navigateTo("agent"); else requestAuth("signup"); }} /><VisionCTA onNavigate={navigateTo} /></>}
