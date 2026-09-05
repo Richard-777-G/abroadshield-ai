@@ -44,27 +44,18 @@ export default function Home() {
   const [authMode, setAuthMode] = useState<AuthMode>("signup");
 
   useEffect(() => {
-    if (status === "authenticated") {
-      resetProfile();
-      void hydrateFromServer();
-    }
-    if (status === "unauthenticated") {
-      resetProfile(); setShowOnboarding(false); setShowAuth(false); setActiveRoute("home");
-      if (window.location.hash) window.history.replaceState(null, "", "/");
-    }
+    if (status === "authenticated") { resetProfile(); void hydrateFromServer(); }
+    if (status === "unauthenticated") { resetProfile(); setShowOnboarding(false); setShowAuth(false); setActiveRoute("home"); if (window.location.hash) window.history.replaceState(null, "", "/"); }
   }, [status, hydrateFromServer, resetProfile]);
 
   const requestAuth = useCallback((mode: AuthMode = "signup") => { setAuthMode(mode); setShowAuth(true); }, []);
   const navigateTo = useCallback((id: string) => {
     const route = id as Route;
     if (!isValidRoute(route)) return;
-    if ((route === "agent" || WORKSPACE_VIEWS.includes(route as WorkspaceView)) && status !== "authenticated") {
-      if (status === "unauthenticated") requestAuth("login"); return;
-    }
+    if ((route === "agent" || WORKSPACE_VIEWS.includes(route as WorkspaceView)) && status !== "authenticated") { if (status === "unauthenticated") requestAuth("login"); return; }
     if (route === activeRoute) return;
     setActiveRoute(route);
-    const nextUrl = route === "home" ? "/" : `#${route}`;
-    window.history.pushState(null, "", nextUrl);
+    window.history.pushState(null, "", route === "home" ? "/" : `#${route}`);
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [requestAuth, status, activeRoute]);
 
@@ -73,25 +64,14 @@ export default function Home() {
       const hash = window.location.hash.slice(1) as Route;
       const route = hash || "home";
       if (!isValidRoute(route)) return;
-      if ((route === "agent" || WORKSPACE_VIEWS.includes(route as WorkspaceView)) && status !== "authenticated") {
-        if (status === "unauthenticated") { requestAuth("login"); window.history.replaceState(null, "", "/"); }
-        return;
-      }
+      if ((route === "agent" || WORKSPACE_VIEWS.includes(route as WorkspaceView)) && status !== "authenticated") { if (status === "unauthenticated") { requestAuth("login"); window.history.replaceState(null, "", "/"); } return; }
       setActiveRoute((current) => current === route ? current : route);
     };
-    syncFromLocation();
-    window.addEventListener("hashchange", syncFromLocation);
-    window.addEventListener("popstate", syncFromLocation);
-    return () => {
-      window.removeEventListener("hashchange", syncFromLocation);
-      window.removeEventListener("popstate", syncFromLocation);
-    };
+    syncFromLocation(); window.addEventListener("hashchange", syncFromLocation); window.addEventListener("popstate", syncFromLocation);
+    return () => { window.removeEventListener("hashchange", syncFromLocation); window.removeEventListener("popstate", syncFromLocation); };
   }, [requestAuth, status]);
 
-  useEffect(() => {
-    const handler = (e: Event) => { const route = (e as CustomEvent<string>).detail; if (route) navigateTo(route); };
-    window.addEventListener("abroadshield:navigate", handler); return () => window.removeEventListener("abroadshield:navigate", handler);
-  }, [navigateTo]);
+  useEffect(() => { const handler = (e: Event) => { const route = (e as CustomEvent<string>).detail; if (route) navigateTo(route); }; window.addEventListener("abroadshield:navigate", handler); return () => window.removeEventListener("abroadshield:navigate", handler); }, [navigateTo]);
 
   const isWorkspace = status === "authenticated" && WORKSPACE_VIEWS.includes(activeRoute as WorkspaceView);
   const workspaceContent = hydrated ? contentFor(activeRoute, status, session, profile, navigateTo, requestAuth) : <FeatureLoading label="Preparing your private workspace…" />;
@@ -109,7 +89,7 @@ function contentFor(activeRoute: Route, status: string, session: ReturnType<type
     {activeRoute === "journey" && (session ? <JourneyWorkspace onNavigate={navigateTo} /> : <PublicJourney onNavigate={navigateTo} />)}
     {activeRoute === "agent" && status === "authenticated" && <AgentChat />}
     {activeRoute === "countries" && <CountryRules />}
-    {activeRoute === "pricing" && <><PricingTiers /><VisionCTA /></>}
+    {activeRoute === "pricing" && <><PricingTiers onStart={() => { if (status === "authenticated") navigateTo("agent"); else requestAuth("signup"); }} /><VisionCTA onNavigate={navigateTo} /></>}
     {activeRoute === "dashboard" && (status === "authenticated" ? <DashboardView onNavigate={navigateTo} /> : <SignInPanel onSignIn={() => requestAuth("login")} />)}
     {activeRoute === "network" && status === "authenticated" && <NetworkingJobs />}
     {activeRoute === "connectors" && status === "authenticated" && <Connectors />}
