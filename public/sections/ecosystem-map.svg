@@ -1,0 +1,60 @@
+<svg width="1200" height="680" viewBox="0 0 1200 680" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="e" x1="190" y1="100" x2="1005" y2="590" gradientUnits="userSpaceOnUse"><stop stop-color="#D7FF6C"/><stop offset=".5" stop-color="#49E5A2"/><stop offset="1" stop-color="#62D7FF"/></linearGradient>
+  <filter id="blur"><feGaussianBlur stdDeviation="30"/></filter>
+</defs>
+<rect width="1200" height="680" rx="36" fill="#0E1715"/>
+<circle cx="600" cy="340" r="220" stroke="#BFFFE3" stroke-opacity=".055"/><circle cx="600" cy="340" r="150" stroke="#BFFFE3" stroke-opacity=".07"/><circle cx="600" cy="340" r="82" fill="#49E5A2" fill-opacity=".08" filter="url(#blur)"/>
+<path d="M172 340H1028M600 92V588" stroke="#BFFFE3" stroke-opacity=".05"/>
+<g stroke="url(#e)" stroke-opacity=".36" stroke-dasharray="5 9">
+  <path d="M600 340L260 170"/><path d="M600 340L910 160"/><path d="M600 340L1010 370"/><path d="M600 340L864 553"/><path d="M600 340L332 555"/><path d="M600 340L190 383"/>
+</g>
+<g>
+  <circle cx="600" cy="340" r="62" fill="#101B18" stroke="url(#e)" stroke-width="2"/>
+  <circle cx="600" cy="340" r="38" fill="#173029" stroke="#D7FF6C" stroke-opacity=".18"/>
+  <path d="M584 342l10 10 23-28" stroke="#E9FFF5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="600" y="277" text-anchor="middle" fill="#F3FFF9" font-family="Inter,Arial" font-size="11" font-weight="700" letter-spacing="2">THE ECOSYSTEM</text>
+  <text x="600" y="423" text-anchor="middle" fill="#A8BBB5" font-family="Inter,Arial" font-size="12">AbroadShield as the journey layer</text>
+</g>
+
+<g>
+  <rect x="82" y="106" width="286" height="108" rx="20" fill="#17231F" stroke="#BFFFE3" stroke-opacity=".14"/>
+  <text x="110" y="139" fill="#9FE7C5" font-family="Inter,Arial" font-size="10" font-weight="700" letter-spacing="2">DISCOVER</text>
+  <text x="110" y="166" fill="#F3FFF9" font-family="Inter,Arial" font-size="15" font-weight="650">Universities · courses</text>
+  <text x="110" y="189" fill="#A8BBB5" font-family="Inter,Arial" font-size="11">Potential future data and search partners</text>
+</g>
+<g>
+  <rect x="832" y="104" width="286" height="108" rx="20" fill="#17231F" stroke="#BFFFE3" stroke-opacity=".14"/>
+  <text x="860" y="137" fill="#9FE7C5" font-family="Inter,Arial" font-size="10" font-weight="700" letter-spacing="2">PREPARE</text>
+  <text x="860" y="164" fill="#F3FFF9" font-family="Inter,Arial" font-size="15" font-weight="650">Email · calendar · documents</text>
+  <text x="860" y="187" fill="#A8BBB5" font-family="Inter,Arial" font-size="11">Approval-gated productivity connections</text>
+</g>
+<g>
+  <rect x="880" y="320" width="258" height="108" rx="20" fill="#17231F" stroke="#BFFFE3" stroke-opacity=".14"/>
+  <text x="908" y="353" fill="#9FE7C5" font-family="Inter,Arial" font-size="10" font-weight="700" letter-spacing="2">MOVE</text>
+  <text x="908" y="380" fill="#F3FFF9" font-family="Inter,Arial" font-size="15" font-weight="650">Housing · visa · services</text>
+  <text x="908" y="403" fill="#A8BBB5" font-family="Inter,Arial" font-size="11">Potential partner marketplace layer</text>
+</g>
+<g>
+  <rect x="800" y="490" width="318" height="108" rx="20" fill="#17231F" stroke="#BFFFE3" stroke-opacity=".14"/>
+  <text x="828" y="523" fill="#9FE7C5" font-family="Inter,Arial" font-size="10" font-weight="700" letter-spacing="2">LAND THE ROLE</text>
+  <text x="828" y="550" fill="#F3FFF9" font-family="Inter,Arial" font-size="15" font-weight="650">Jobs · networking · employers</text>
+  <text x="828" y="573" fill="#A8BBB5" font-family="Inter,Arial" font-size="11">Potential distribution and hiring partners</text>
+</g>
+<g>
+  <rect x="82" y="500" width="310" height="108" rx="20" fill="#17231F" stroke="#BFFFE3" stroke-opacity=".14"/>
+  <text x="110" y="533" fill="#9FE7C5" font-family="Inter,Arial" font-size="10" font-weight="700" letter-spacing="2">SERVE</text>
+  <text x="110" y="560" fill="#F3FFF9" font-family="Inter,Arial" font-size="15" font-weight="650">Universities · advisors · employers</text>
+  <text x="110" y="583" fill="#A8BBB5" font-family="Inter,Arial" font-size="11">Potential B2B and B2B2C distribution</text>
+</g>
+<g>
+  <rect x="42" y="312" width="270" height="108" rx="20" fill="#17231F" stroke="#BFFFE3" stroke-opacity=".14"/>
+  <text x="70" y="345" fill="#9FE7C5" font-family="Inter,Arial" font-size="10" font-weight="700" letter-spacing="2">MONETIZE</text>
+  <text x="70" y="372" fill="#F3FFF9" font-family="Inter,Arial" font-size="15" font-weight="650">Premium + partner revenue</text>
+  <text x="70" y="395" fill="#A8BBB5" font-family="Inter,Arial" font-size="11">Future model — not current traction</text>
+</g>
+
+<g fill="#D7FF6C" stroke="#0E1715" stroke-width="4">
+ <circle cx="260" cy="170" r="8"/><circle cx="910" cy="160" r="8"/><circle cx="1010" cy="370" r="8"/><circle cx="864" cy="553" r="8"/><circle cx="332" cy="555" r="8"/><circle cx="190" cy="383" r="8"/>
+</g>
+</svg>
