@@ -78,12 +78,16 @@ function extractText(payload: ProviderPayload): string {
   return "";
 }
 
-export async function generateText({ messages, timeoutMs = DEFAULT_TIMEOUT_MS, jsonMode = false }: AICompletionOptions): Promise<string> {
-  const config = getRuntimeConfig();
-  const response = await fetch(config.endpoint, {
+async function requestProvider(
+  endpoint: string,
+  headers: HeadersInit,
+  body: Record<string, unknown>,
+  timeoutMs: number,
+): Promise<{ response: Response; payload: ProviderPayload | null }> {
+  const response = await fetch(endpoint, {
     method: "POST",
-    headers: providerHeaders(config.provider, config.apiKey),
-    body: JSON.stringify({ model: config.model, messages, ...(jsonMode ? { response_format: { type: "json_object" } } : {}) }),
+    headers,
+    body: JSON.stringify(body),
     cache: "no-store",
     signal: AbortSignal.timeout(timeoutMs),
   }).catch((error) => {
@@ -91,16 +95,58 @@ export async function generateText({ messages, timeoutMs = DEFAULT_TIMEOUT_MS, j
     throw new AIRuntimeError("AI_REQUEST_FAILED", "The AI service could not be reached.", 502);
   });
   const payload = (await response.json().catch(() => null)) as ProviderPayload | null;
-  if (!response.ok) {
-    const providerMessage = payload?.error?.message;
-    console.error("[abroadshield/ai-runtime] provider request failed", config.provider, response.status, providerMessage || "unknown error");
-    throw new AIRuntimeError("AI_REQUEST_FAILED", providerMessage || "The AI service returned an error.", response.status >= 500 ? 502 : response.status);
+  return { response, payload };
+}
+
+export async function generateText({ messages, timeoutMs = DEFAULT_TIMEOUT_MS, jsonMode = false }: AICompletionOptions): Promise<string> {
+  const config = getRuntimeConfig();
+  const headers = providerHeaders(config.provider, config.apiKey);
+  const baseBody: Record<string, unknown> = { model: config.model, messages };
+  if (jsonMode) baseBody.response_format = { type: "json_object" };
+
+  const attempts: Record<string, unknown>[] = [baseBody];
+  if (config.provider === "openrouter" && jsonMode) {
+    attempts.push({ model: config.model, messages, temperature: 0 });
   }
-  const content = extractText(payload || {});
-  if (!content) {
+
+  let lastPayload: ProviderPayload | null = null;
+  let lastResponse: Response | null = null;
+
+  for (let attempt = 0; attempt < attempts.length; attempt += 1) {
+    const { response, payload } = await requestProvider(config.endpoint, headers, attempts[attempt], timeoutMs);
+    lastResponse = response;
+    lastPayload = payload;
+
+    if (!response.ok) {
+      const providerMessage = payload?.error?.message;
+      if (attempt + 1 < attempts.length && config.provider === "openrouter" && response.status === 400) continue;
+      console.error("[abroadshield/ai-runtime] provider request failed", config.provider, response.status, providerMessage || "unknown error");
+      throw new AIRuntimeError("AI_REQUEST_FAILED", providerMessage || "The AI service returned an error.", response.status >= 500 ? 502 : response.status);
+    }
+
+    const content = extractText(payload || {});
+    if (content) return content;
+
     const choice = payload?.choices?.[0];
-    console.error("[abroadshield/ai-runtime] provider returned no text", JSON.stringify({ provider: config.provider, model: config.model, choices: payload?.choices?.length || 0, finishReason: choice?.finish_reason || null, hasContent: choice?.message?.content != null, hasRefusal: choice?.message?.refusal != null, hasReasoning: choice?.message?.reasoning != null || choice?.message?.reasoning_content != null }));
-    throw new AIRuntimeError("AI_INVALID_RESPONSE", "The AI service returned no usable text.", 502);
+    console.warn("[abroadshield/ai-runtime] provider returned no usable text; retrying when supported", JSON.stringify({
+      provider: config.provider,
+      model: config.model,
+      attempt: attempt + 1,
+      choices: payload?.choices?.length || 0,
+      finishReason: choice?.finish_reason || null,
+      hasContent: choice?.message?.content != null,
+      hasRefusal: choice?.message?.refusal != null,
+      hasReasoning: choice?.message?.reasoning != null || choice?.message?.reasoning_content != null,
+    }));
   }
-  return content;
+
+  const choice = lastPayload?.choices?.[0];
+  console.error("[abroadshield/ai-runtime] provider exhausted response recovery", JSON.stringify({
+    provider: config.provider,
+    model: config.model,
+    status: lastResponse?.status || null,
+    choices: lastPayload?.choices?.length || 0,
+    finishReason: choice?.finish_reason || null,
+  }));
+  throw new AIRuntimeError("AI_INVALID_RESPONSE", "The AI service returned no usable text.", 502);
 }
