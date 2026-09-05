@@ -14,6 +14,7 @@ import JourneyWorkspace from "@/components/abroadshield/JourneyWorkspace";
 import { useProfileStore, type StudentProfile } from "@/components/abroadshield/profileStore";
 
 const PublicJourney = dynamic(() => import("@/components/abroadshield/PublicJourney"));
+const PublicProduct = dynamic(() => import("@/components/abroadshield/PublicProduct"));
 const CountryRules = dynamic(() => import("@/components/abroadshield/CountryRules"));
 const AgentChat = dynamic(() => import("@/components/abroadshield/AgentChat"), { loading: () => <FeatureLoading label="Loading agent…" /> });
 const NetworkingJobs = dynamic(() => import("@/components/abroadshield/NetworkingJobs"));
@@ -27,12 +28,15 @@ type PublicView = "home" | "journey" | "agent" | "countries" | "pricing";
 type Route = PublicView | WorkspaceView;
 type AuthMode = "login" | "signup";
 const PUBLIC_VIEWS: { id: PublicView; label: string }[] = [
-  { id: "home", label: "Home" }, { id: "journey", label: "Journey" }, { id: "agent", label: "Agent" }, { id: "countries", label: "Countries" }, { id: "pricing", label: "Pricing" },
+  { id: "home", label: "Home" },
+  { id: "journey", label: "How it works" },
+  { id: "countries", label: "Country intelligence" },
+  { id: "pricing", label: "Pricing" },
 ];
 const WORKSPACE_VIEWS: WorkspaceView[] = ["dashboard", "agent", "journey", "connectors", "network"];
 
 function isValidRoute(value: string): value is Route {
-  return PUBLIC_VIEWS.some((v) => v.id === value) || WORKSPACE_VIEWS.includes(value as WorkspaceView);
+  return PUBLIC_VIEWS.some((v) => v.id === value) || value === "agent" || WORKSPACE_VIEWS.includes(value as WorkspaceView);
 }
 
 export default function Home() {
