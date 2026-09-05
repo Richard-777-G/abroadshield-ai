@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { ArrowRight, Bot, Layers3, Network, Sparkles, Target } from "lucide-react";
 import Reveal from "./Reveal";
 import JourneyEngine3D from "./JourneyEngine3D";
@@ -28,14 +27,12 @@ export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: strin
           <h2 className="as-public-title mt-3 text-3xl sm:text-4xl">The problem is not a lack of information. It is a lack of continuity.</h2>
           <p className="as-public-copy mt-4 max-w-2xl">Students move between university portals, spreadsheets, consultants, email, visa checklists, job boards and networking tools. Each system sees one slice. AbroadShield is designed around the journey itself.</p>
         </Reveal>
-        <Reveal delay={.08} className="mt-7">
-          <div className="grid gap-3 lg:grid-cols-2">
-            {SIGNALS.map(([title, detail, n], i) => <motion.div key={title} initial={{ opacity: 0, y: 8 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * .05 }} className="as-public-card flex items-start gap-4 p-4">
-              <span className="font-mono text-[9px] text-[var(--shield-text-faint)]">{n}</span>
-              <div><div className="text-sm font-semibold">{title}</div><div className="mt-1 text-[11px] leading-5 text-[var(--shield-text-dim)]">{detail}</div></div>
-            </motion.div>)}
-          </div>
-        </Reveal>
+        <div className="mt-7 grid gap-3 lg:grid-cols-2">
+          {SIGNALS.map(([title, detail, n]) => <div key={title} className="as-public-card as-public-card--quiet flex items-start gap-4 p-4">
+            <span className="font-mono text-[9px] text-[var(--shield-text-faint)]">{n}</span>
+            <div><div className="text-sm font-semibold">{title}</div><div className="mt-1 text-[11px] leading-5 text-[var(--shield-text-dim)]">{detail}</div></div>
+          </div>)}
+        </div>
       </div>
     </section>
 
@@ -59,16 +56,14 @@ export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: strin
           <h2 className="as-public-title mt-3 text-3xl sm:text-4xl">Four phases. One evolving strategy.</h2>
           <p className="as-public-copy mt-3">The route stays visible while the current mission changes.</p>
         </Reveal>
-        <Reveal delay={.08} className="mt-7">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {PHASES.map(([n, title, detail], i) => <motion.button key={n} type="button" onClick={() => onNavigate?.("journey")} initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ delay: i * .05 }} whileHover={{ y: -2 }} className="as-public-card as-card-hover p-4 text-left">
-              <div className="text-[9px] font-semibold tracking-[.18em] text-[var(--shield-text-faint)]">{n}</div>
-              <h3 className="mt-4 text-sm font-semibold">{title}</h3>
-              <p className="mt-2 text-[11px] leading-5 text-[var(--shield-text-dim)]">{detail}</p>
-              <span className="mt-3 inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[.13em] text-[var(--shield-emerald-bright)]">See the route <ArrowRight className="h-3 w-3" /></span>
-            </motion.button>)}
-          </div>
-        </Reveal>
+        <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {PHASES.map(([n, title, detail]) => <button key={n} type="button" onClick={() => onNavigate?.("journey")} className="as-public-card as-public-card--quiet group p-4 text-left transition hover:-translate-y-0.5 hover:border-[var(--shield-border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--shield-emerald)]/50">
+            <div className="text-[9px] font-semibold tracking-[.18em] text-[var(--shield-text-faint)]">{n}</div>
+            <h3 className="mt-4 text-sm font-semibold">{title}</h3>
+            <p className="mt-2 text-[11px] leading-5 text-[var(--shield-text-dim)]">{detail}</p>
+            <span className="mt-3 inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[.13em] text-[var(--shield-emerald-bright)]">See the route <ArrowRight className="h-3 w-3" /></span>
+          </button>)}
+        </div>
       </div>
     </section>
 
