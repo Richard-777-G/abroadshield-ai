@@ -5,6 +5,7 @@ import { generateText, AIRuntimeError } from "@/lib/abroadshield/ai-runtime";
 import { buildAgentContext, type AgentProfile } from "@/lib/abroadshield/task-context";
 import { normalizePhase } from "@/lib/abroadshield/journey";
 import { STAGE_POLICIES } from "@/lib/abroadshield/stage-orchestrator";
+import { parseModelJson } from "@/lib/abroadshield/parse-json";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,8 +57,11 @@ async function generateIntelligence() {
   });
 
   let intelligence: unknown;
-  try { intelligence = JSON.parse(raw); }
-  catch { return NextResponse.json({ ok: false, error: "Journey intelligence returned invalid JSON." }, { status: 502 }); }
+  try {
+    intelligence = parseModelJson(raw);
+  } catch {
+    return NextResponse.json({ ok: false, error: "Journey intelligence returned invalid JSON." }, { status: 502 });
+  }
 
   return NextResponse.json({ ok: true, currentPhase, generatedAt: new Date().toISOString(), intelligence });
 }
