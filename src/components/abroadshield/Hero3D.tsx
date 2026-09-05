@@ -1,84 +1,91 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { ArrowRight, BrainCircuit, FileText, Globe2, Network, Sparkles, Target } from "lucide-react";
+import { useState, useRef } from "react";
+import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "framer-motion";
+import { ArrowRight, ArrowUpRight, BrainCircuit, BriefcaseBusiness, FileText, Globe2, Network, Sparkles, Target } from "lucide-react";
 import LanguageToggle from "./LanguageToggle";
 import { HERO_STRINGS, type LocaleId } from "./data";
 
-const DESTINATIONS = ["United Kingdom", "France", "Germany", "Netherlands", "Canada", "Australia", "Ireland", "United States"];
+const DESTINATIONS = ["UK", "France", "Germany", "Netherlands", "Canada", "Australia"];
+const FLOW = [
+  { label: "Understand", detail: "Profile + CV", icon: FileText },
+  { label: "Map", detail: "Country + study", icon: Globe2 },
+  { label: "Prioritize", detail: "Next best move", icon: BrainCircuit },
+  { label: "Build", detail: "Skills + role", icon: BriefcaseBusiness },
+];
 
 export default function Hero3D({ onNavigate }: { onNavigate?: (view: string) => void }) {
   const [locale, setLocale] = useState<LocaleId>("en");
   const t = HERO_STRINGS[locale];
+  const reducedMotion = useReducedMotion();
+  const reveal = { hidden: { opacity: 0, y: 24 }, show: (delay = 0) => ({ opacity: 1, y: 0, transition: { duration: reducedMotion ? 0 : .7, delay, ease: [0.22, 1, 0.36, 1] } }) };
 
   return (
-    <section id="top" className="relative min-h-[100svh] w-full overflow-hidden bg-transparent">
-      <motion.div aria-hidden className="pointer-events-none absolute right-[5%] top-[7%] h-[48vh] w-[48vh] rounded-full [background:radial-gradient(circle,oklch(0.74_0.17_162/0.24),transparent_68%)] blur-3xl" animate={{ opacity: [0.55, 0.85, 0.55], scale: [0.95, 1.06, 0.95] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }} />
-      <motion.div aria-hidden className="pointer-events-none absolute bottom-[2%] left-[8%] h-[34vh] w-[34vh] rounded-full [background:radial-gradient(circle,oklch(0.82_0.13_210/0.10),transparent_70%)] blur-3xl" animate={{ x: [0, 25, 0], y: [0, -12, 0] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }} />
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-[var(--shield-ink)] to-transparent" />
-      <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col px-6 sm:px-10">
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .7, delay: .1 }} className="mt-24 flex items-center justify-between sm:mt-28">
-          <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.2em] text-[oklch(0.78_0.08_165)]"><span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.74_0.17_162)]" />{t.eyebrow}</span>
+    <section id="top" className="relative isolate min-h-[92svh] overflow-hidden border-b border-[var(--shield-border)] bg-[radial-gradient(circle_at_76%_27%,oklch(0.28_0.05_162/.32),transparent_34%),radial-gradient(circle_at_18%_88%,oklch(0.30_0.055_135/.18),transparent_28%),var(--shield-ink)]">
+      <div aria-hidden className="pointer-events-none absolute inset-0 as-bg-grid opacity-80" />
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-[oklch(0.18_0.022_165/.62)] to-transparent" />
+      <motion.div aria-hidden className="pointer-events-none absolute -right-28 top-12 h-[34rem] w-[34rem] rounded-full bg-[oklch(0.74_0.17_162/.11)] blur-3xl" animate={reducedMotion ? undefined : { x: [0, 24, 0], y: [0, -14, 0], scale: [1, 1.05, 1] }} transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }} />
+      <motion.div aria-hidden className="pointer-events-none absolute left-[9%] top-[62%] h-56 w-56 rounded-full bg-[oklch(0.86_0.2_135/.07)] blur-3xl" animate={reducedMotion ? undefined : { x: [0, 18, 0], y: [0, -10, 0] }} transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }} />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-5 sm:px-8">
+        <motion.div initial="hidden" animate="show" custom={.05} variants={reveal} className="flex items-center justify-between pt-24 sm:pt-28">
+          <div className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[.24em] text-[oklch(0.82_0.11_165)]"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[oklch(0.85_0.19_158)]" />{t.eyebrow}</div>
           <LanguageToggle locale={locale} onChange={setLocale} />
         </motion.div>
-        <div className="mt-8 grid flex-1 items-center gap-12 pb-10 lg:grid-cols-[.92fr_1.08fr] lg:gap-14 lg:pb-14">
-          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .8, delay: .15 }}>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[oklch(0.74_0.17_162/0.24)] bg-[oklch(0.74_0.17_162/0.06)] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[.16em] text-[oklch(0.85_0.19_158)]"><Sparkles className="h-3 w-3" />Study abroad → career</div>
-            <h1 className="max-w-3xl text-balance text-[2.75rem] font-semibold leading-[.99] tracking-[-0.045em] text-[var(--shield-text)] sm:text-6xl lg:text-[4.45rem]">Your move abroad is a journey.<br /><span className="as-shimmer">Your AI should see the whole thing.</span></h1>
-            <p className="mt-6 max-w-xl text-[15px] leading-7 text-[oklch(0.76_0.015_220)] sm:text-[17px]">AbroadShield connects your study decision, country strategy, applications, preparation, networking and eventual full-time job into one evolving plan — instead of making you manage a dozen disconnected tools.</p>
-            <div className="mt-8 flex flex-wrap gap-3"><button type="button" onClick={() => onNavigate?.("journey")} className="inline-flex items-center gap-2 rounded-full bg-[oklch(0.98_0.005_160)] px-5 py-3 text-sm font-semibold text-[oklch(0.14_0.018_165)] transition hover:-translate-y-0.5 hover:bg-white"><BrainCircuit className="h-4 w-4" />See how the agent works<ArrowRight className="h-3.5 w-3.5" /></button><button type="button" onClick={() => onNavigate?.("journey")} className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.6_0.04_165/0.22)] px-5 py-3 text-sm font-semibold text-[oklch(0.88_0.005_180)] transition hover:-translate-y-0.5 hover:bg-[oklch(0.24_0.028_165/0.5)]"><Target className="h-4 w-4" />Explore the blueprint</button></div>
-            <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-[10px] uppercase tracking-[.14em] text-[oklch(0.55_0.015_165)]">{DESTINATIONS.slice(0, 4).map((item) => <span key={item}>{item}</span>)}<span>+ more destinations</span></div>
-          </motion.div>
-          <HeroProductVisual />
+
+        <div className="grid min-h-[calc(92svh-92px)] items-center gap-10 pb-10 pt-12 lg:grid-cols-[.88fr_1.12fr] lg:gap-14 lg:pt-4">
+          <div>
+            <motion.div initial="hidden" animate="show" custom={.13} variants={reveal} className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.74_0.17_162/.24)] bg-[oklch(0.74_0.17_162/.06)] px-3 py-1.5 text-[9px] font-bold uppercase tracking-[.16em] text-[oklch(0.88_0.2_158)]"><Sparkles className="h-3 w-3" />Study abroad × career OS</motion.div>
+            <motion.h1 initial="hidden" animate="show" custom={.2} variants={reveal} className="mt-5 max-w-2xl text-balance text-[clamp(3.1rem,7vw,5.7rem)] font-semibold leading-[.92] tracking-[-.06em] text-[var(--shield-text)]"><span className="block">From choosing</span><span className="block as-text-gradient">the move</span><span className="block">to landing the role.</span></motion.h1>
+            <motion.p initial="hidden" animate="show" custom={.31} variants={reveal} className="mt-6 max-w-xl text-[15px] leading-7 text-[var(--shield-text-dim)] sm:text-[17px]">AbroadShield keeps your profile, destination, documents and career goal in one evolving context—so the agent can decide what matters next, not just answer what you ask right now.</motion.p>
+            <motion.div initial="hidden" animate="show" custom={.41} variants={reveal} className="mt-8 flex flex-wrap gap-3"><button type="button" onClick={() => onNavigate?.("journey")} className="group inline-flex items-center gap-2 rounded-full bg-[var(--shield-text)] px-5 py-3 text-sm font-semibold text-[var(--shield-ink)] shadow-[0_14px_40px_oklch(0.74_0.17_162/.14)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_48px_oklch(0.74_0.17_162/.2)]"><BrainCircuit className="h-4 w-4" />See the agent in action<ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></button><button type="button" onClick={() => onNavigate?.("journey")} className="inline-flex items-center gap-2 rounded-full border border-[var(--shield-border-strong)] bg-[oklch(0.15_0.02_165/.45)] px-5 py-3 text-sm font-semibold text-[var(--shield-text)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-[oklch(0.2_0.025_165/.65)]">Explore the route<Target className="h-3.5 w-3.5" /></button></motion.div>
+            <motion.div initial="hidden" animate="show" custom={.5} variants={reveal} className="mt-8 flex flex-wrap gap-2">{DESTINATIONS.map((item) => <span key={item} className="rounded-full border border-[var(--shield-border)] bg-[oklch(0.1_0.013_165/.55)] px-3 py-1.5 text-[9px] font-semibold text-[var(--shield-text-faint)]">{item}</span>)}<span className="px-1 py-1.5 text-[9px] font-semibold text-[var(--shield-text-faint)]">+ more routes</span></motion.div>
+          </div>
+          <HeroProductVisual reducedMotion={!!reducedMotion} />
         </div>
       </div>
+      <div aria-hidden className="pointer-events-none absolute bottom-0 left-1/2 hidden -translate-x-1/2 text-[8px] font-semibold uppercase tracking-[.28em] text-[var(--shield-text-faint)] lg:block">scroll to see the journey</div>
     </section>
   );
 }
 
-function HeroProductVisual() {
+function HeroProductVisual({ reducedMotion }: { reducedMotion: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(0);
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const rotateX = useSpring(useTransform(my, [-0.5, 0.5], [4, -4]), { stiffness: 90, damping: 20 });
-  const rotateY = useSpring(useTransform(mx, [-0.5, 0.5], [-6, 6]), { stiffness: 90, damping: 20 });
-  const depth = useTransform(mx, [-0.5, 0.5], [-8, 8]);
+  const [active, setActive] = useState(2);
+  const px = useMotionValue(0); const py = useMotionValue(0);
+  const rotateX = useSpring(useTransform(py, [-.5, .5], [4, -4]), { stiffness: 100, damping: 20 });
+  const rotateY = useSpring(useTransform(px, [-.5, .5], [-6, 6]), { stiffness: 100, damping: 20 });
+  const shift = useTransform(px, [-.5, .5], [-10, 10]);
+  function handleMove(event: React.PointerEvent<HTMLDivElement>) { const rect = ref.current?.getBoundingClientRect(); if (!rect || reducedMotion) return; px.set((event.clientX - rect.left) / rect.width - .5); py.set((event.clientY - rect.top) / rect.height - .5); }
 
-  const nodes = [
-    { icon: FileText, title: "Profile + CV", text: "Understand the student", x: "left-[0%] top-[7%]", delay: 0 },
-    { icon: Globe2, title: "Destination strategy", text: "Country + study fit", x: "right-[0%] top-[17%]", delay: .12 },
-    { icon: BrainCircuit, title: "AI reasoning layer", text: "Prioritize what matters", x: "left-[1%] bottom-[20%]", delay: .24 },
-    { icon: Network, title: "Career network", text: "Skills + people + roles", x: "right-[1%] bottom-[7%]", delay: .36 },
-  ];
-
-  function move(event: React.PointerEvent<HTMLDivElement>) {
-    const rect = ref.current?.getBoundingClientRect();
-    if (!rect) return;
-    mx.set((event.clientX - rect.left) / rect.width - .5);
-    my.set((event.clientY - rect.top) / rect.height - .5);
-  }
-
-  return <motion.div ref={ref} onPointerMove={move} onPointerLeave={() => { mx.set(0); my.set(0); }} onPointerDown={() => setActive((value) => (value + 1) % 4)} style={{ perspective: 1200 }} initial={{ opacity: 0, scale: .96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: .9, delay: .25 }} className="relative mx-auto flex min-h-[440px] w-full max-w-[640px] items-center justify-center cursor-default select-none sm:min-h-[480px]">
-    <motion.div aria-hidden className="absolute inset-x-[8%] top-[6%] h-[84%] rounded-[36px] border border-[oklch(0.74_0.17_162/0.13)] bg-[oklch(0.12_0.016_165/0.58)] shadow-[0_40px_120px_oklch(0.05_0.02_165/0.55)] backdrop-blur-xl" style={{ x: depth }} />
-    <motion.div aria-hidden className="absolute inset-x-[12%] top-[12%] h-[72%] rounded-[30px] border border-[oklch(0.74_0.17_162/0.12)] bg-[linear-gradient(145deg,oklch(0.16_0.02_165/.88),oklch(0.10_0.013_165/.8))]" style={{ x: useTransform(mx, [-.5, .5], [-4, 4]) }} />
-
-    <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="relative z-10 h-[360px] w-[360px] sm:h-[390px] sm:w-[390px]">
-      <motion.div aria-hidden className="absolute inset-[15%] rounded-full border border-[oklch(0.74_0.17_162/0.25)]" animate={{ rotate: 360 }} transition={{ duration: 32, repeat: Infinity, ease: "linear" }} />
-      <motion.div aria-hidden className="absolute inset-[23%] rounded-full border border-dashed border-[oklch(0.74_0.17_162/0.15)]" animate={{ rotate: -360 }} transition={{ duration: 24, repeat: Infinity, ease: "linear" }} />
-      <motion.div aria-hidden className="absolute inset-[31%] rounded-full" animate={{ scale: [1, 1.045, 1], opacity: [.6, 1, .6] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }} style={{ background: "radial-gradient(circle at 35% 30%, oklch(0.86 0.2 158 / .95), oklch(0.74 0.17 162 / .52) 45%, transparent 74%)", boxShadow: "0 0 80px oklch(0.74 0.17 162 / .34)" }} />
-      <div className="absolute inset-0 flex items-center justify-center [transform-style:preserve-3d]">
-        <motion.div style={{ transform: "translateZ(46px)" }} className="relative w-[62%] rounded-[28px] border border-[oklch(0.98_0.005_160/.14)] bg-[oklch(0.07_0.011_165/.8)] p-5 shadow-[0_30px_100px_oklch(0.04_0.01_165/.7)] backdrop-blur-2xl">
-          <div className="flex items-center justify-between"><div className="text-[8px] font-bold uppercase tracking-[.2em] text-[var(--shield-text-faint)]">AbroadShield agent</div><span className="flex items-center gap-1 text-[8px] font-semibold text-[oklch(0.85_0.19_158)]"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[oklch(0.74_0.17_162)]"/>active</span></div>
-          <div className="mt-4 text-base font-semibold leading-tight">Building your path from study choice to full-time role.</div>
-          <div className="mt-4 space-y-2">{["Understand profile", "Map the journey", "Identify next leverage", "Prepare the next action"].map((item, index) => <motion.div key={item} onMouseEnter={() => setActive(index)} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0, scale: active === index ? 1.015 : 1 }} transition={{ delay: .65 + index * .12 }} className="flex items-center gap-2 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.14_0.018_165/.6)] px-3 py-2"><span className="flex h-5 w-5 items-center justify-center rounded-full bg-[oklch(0.74_0.17_162/.13)] text-[8px] font-bold text-[oklch(0.85_0.19_158)]">{String(index + 1).padStart(2, "0")}</span><span className="text-[9px] text-[var(--shield-text-dim)]">{item}</span></motion.div>)}</div>
+  return <motion.div ref={ref} onPointerMove={handleMove} onPointerLeave={() => { px.set(0); py.set(0); }} className="relative mx-auto h-[500px] w-full max-w-[660px] sm:h-[560px]" style={{ perspective: 1500 }} initial={{ opacity: 0, scale: .96, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : 1, delay: .18, ease: [0.22, 1, 0.36, 1] }}>
+    <motion.div aria-hidden className="absolute inset-[6%_7%_5%_8%] rounded-[38px] border border-[oklch(0.74_0.17_162/.15)] bg-[oklch(0.11_0.014_165/.48)] shadow-[0_40px_120px_oklch(0.04_0.01_165/.55)] backdrop-blur-2xl" style={{ x: shift }} />
+    <motion.div aria-hidden className="absolute inset-[11%_12%_10%_13%] rounded-[32px] border border-[oklch(0.74_0.17_162/.12)] bg-[linear-gradient(145deg,oklch(0.18_0.022_165/.88),oklch(0.09_0.012_165/.88))]" style={{ x: useTransform(px, [-.5, .5], [-5, 5]) }} />
+    <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="absolute inset-[10%] [transform-style:preserve-3d]">
+      <motion.div aria-hidden className="absolute inset-[4%_6%_6%_4%] rounded-[34px] border border-[oklch(0.86_0.2_135/.12)]" animate={reducedMotion ? undefined : { rotate: 360 }} transition={{ duration: 42, repeat: Infinity, ease: "linear" }} style={{ transform: "translateZ(-30px)" }} />
+      <motion.div aria-hidden className="absolute inset-[10%_12%_12%_10%] rounded-full border border-dashed border-[oklch(0.74_0.17_162/.12)]" animate={reducedMotion ? undefined : { rotate: -360 }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }} style={{ transform: "translateZ(-14px)" }} />
+      <div className="absolute inset-0 [transform-style:preserve-3d]">
+        <motion.div style={{ transform: "translateZ(62px)" }} className="absolute left-1/2 top-1/2 w-[min(64%,360px)] -translate-x-1/2 -translate-y-1/2 rounded-[28px] border border-[oklch(0.98_0.005_160/.14)] bg-[linear-gradient(160deg,oklch(0.10_0.013_165/.92),oklch(0.07_0.011_165/.94))] p-5 shadow-[0_30px_100px_oklch(0.03_0.008_165/.72)] backdrop-blur-2xl sm:p-6">
+          <div className="flex items-center justify-between"><div className="text-[8px] font-bold uppercase tracking-[.2em] text-[var(--shield-text-faint)]">Journey intelligence</div><span className="flex items-center gap-1.5 rounded-full border border-[oklch(0.74_0.17_162/.15)] bg-[oklch(0.74_0.17_162/.05)] px-2 py-1 text-[8px] font-semibold text-[oklch(0.84_0.18_158)]"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[oklch(0.85_0.19_158)]" />active</span></div>
+          <h3 className="mt-4 text-xl font-semibold leading-tight tracking-[-.025em] sm:text-2xl">Your next move is bigger than your next answer.</h3>
+          <p className="mt-2 text-[9px] leading-5 text-[var(--shield-text-faint)]">The agent reasons from the route you are on, the evidence you have, and the outcome you chose.</p>
+          <div className="mt-5 space-y-2">{FLOW.map(({ label, detail, icon: Icon }, index) => <motion.button type="button" key={label} onMouseEnter={() => setActive(index)} onFocus={() => setActive(index)} className={`w-full rounded-xl border p-2.5 text-left transition ${active === index ? "border-[oklch(0.74_0.17_162/.34)] bg-[oklch(0.74_0.17_162/.07)]" : "border-[var(--shield-border)] bg-[oklch(0.13_0.017_165/.56)]"}`} whileHover={{ x: 3 }}><div className="flex items-center gap-2.5"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[oklch(0.74_0.17_162/.18)] bg-[oklch(0.74_0.17_162/.05)]"><Icon className="h-3.5 w-3.5 text-[oklch(0.85_0.19_158)]" /></span><span className="min-w-0"><span className="block text-[9px] font-semibold text-[var(--shield-text)]">{label}</span><span className="block text-[8px] text-[var(--shield-text-faint)]">{detail}</span></span><ArrowUpRight className="ml-auto h-3 w-3 text-[var(--shield-text-faint)]" /></div></motion.button>)}</div>
+          <div className="mt-4 flex items-center justify-between border-t border-[var(--shield-border)] pt-3"><div className="flex items-center gap-1.5 text-[8px] font-semibold text-[var(--shield-text-faint)]"><Network className="h-3 w-3" />Decision context connected</div><span className="text-[8px] font-semibold text-[oklch(0.85_0.19_158)]">Student approval required</span></div>
         </motion.div>
+        <FloatingSignal className="left-[1%] top-[8%]" title="Profile" detail="CV · goals · constraints" icon={FileText} delay={.1} />
+        <FloatingSignal className="right-[0%] top-[17%]" title="Destination" detail="Country + study fit" icon={Globe2} delay={.22} />
+        <FloatingSignal className="left-[0%] bottom-[14%]" title="Evidence" detail="Docs + signals" icon={Target} delay={.34} />
+        <FloatingSignal className="right-[1%] bottom-[5%]" title="Career" detail="Skills + roles" icon={BriefcaseBusiness} delay={.46} />
+        <motion.div aria-hidden className="absolute left-[17%] top-[46%] h-px w-[25%] bg-gradient-to-r from-transparent via-[oklch(0.85_0.19_158/.34)] to-transparent" style={{ transform: "translateZ(20px) rotate(20deg)" }} animate={reducedMotion ? undefined : { opacity: [.2, .75, .2] }} transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }} />
+        <motion.div aria-hidden className="absolute right-[17%] top-[42%] h-px w-[26%] bg-gradient-to-r from-transparent via-[oklch(0.85_0.19_158/.28)] to-transparent" style={{ transform: "translateZ(20px) rotate(-18deg)" }} animate={reducedMotion ? undefined : { opacity: [.7, .15, .7] }} transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }} />
       </div>
-
-      {nodes.map(({ icon: Icon, title, text, x, delay }) => <motion.div key={title} style={{ transform: `translateZ(${28 + delay * 30}px)` }} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: [0, -5, 0] }} transition={{ opacity: { duration: .5, delay: .4 + delay }, y: { duration: 4.5 + delay, repeat: Infinity, ease: "easeInOut", delay } }} className={`absolute z-20 ${x} hidden w-[178px] rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.12_0.016_165/.88)] p-3 shadow-[0_18px_50px_oklch(0.04_0.01_165/.45)] backdrop-blur-xl sm:block`}><div className="flex items-center gap-2"><span className="flex h-8 w-8 items-center justify-center rounded-xl border border-[oklch(0.74_0.17_162/0.26)] bg-[oklch(0.74_0.17_162/0.08)]"><Icon className="h-4 w-4 text-[oklch(0.85_0.19_158)]"/></span><div><div className="text-[10px] font-semibold">{title}</div><div className="text-[9px] text-[var(--shield-text-faint)]">{text}</div></div></div></motion.div>)}
     </motion.div>
-
-    <div className="pointer-events-none absolute bottom-[2%] left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] uppercase tracking-[.18em] text-[var(--shield-text-faint)] opacity-70">move across the product surface</div>
+    <motion.div aria-hidden className="absolute left-[12%] bottom-[3%] flex items-center gap-2 rounded-full border border-[var(--shield-border)] bg-[oklch(0.08_0.012_165/.72)] px-3 py-2 text-[8px] font-semibold text-[var(--shield-text-faint)] shadow-lg backdrop-blur-xl" animate={reducedMotion ? undefined : { y: [0, -5, 0] }} transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}><span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.85_0.19_158)]" />Reasoning layer</motion.div>
+    <motion.div aria-hidden className="absolute right-[12%] bottom-[10%] flex items-center gap-2 rounded-full border border-[var(--shield-border)] bg-[oklch(0.08_0.012_165/.72)] px-3 py-2 text-[8px] font-semibold text-[var(--shield-text-faint)] shadow-lg backdrop-blur-xl" animate={reducedMotion ? undefined : { y: [0, 5, 0] }} transition={{ duration: 5.1, repeat: Infinity, ease: "easeInOut", delay: .4 }}><span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.86_0.2_135)]" />Human control</motion.div>
+    <div className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] uppercase tracking-[.2em] text-[var(--shield-text-faint)] opacity-75">Move across the surface</div>
   </motion.div>;
+}
+
+function FloatingSignal({ className, title, detail, icon: Icon, delay }: { className: string; title: string; detail: string; icon: typeof FileText; delay: number }) {
+  return <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: [0, -4, 0] }} transition={{ opacity: { duration: .5, delay }, y: { duration: 4.8 + delay, repeat: Infinity, ease: "easeInOut", delay } }} className={`absolute z-20 hidden w-[170px] rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.10_0.013_165/.86)] p-3 shadow-[0_18px_55px_oklch(0.03_0.008_165/.5)] backdrop-blur-xl sm:block ${className}`} style={{ transform: "translateZ(40px)" }}><div className="flex items-center gap-2"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[oklch(0.74_0.17_162/.2)] bg-[oklch(0.74_0.17_162/.05)]"><Icon className="h-3.5 w-3.5 text-[oklch(0.85_0.19_158)]" /></span><div><div className="text-[10px] font-semibold">{title}</div><div className="text-[8px] text-[var(--shield-text-faint)]">{detail}</div></div></div></motion.div>;
 }
