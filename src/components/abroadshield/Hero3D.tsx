@@ -19,7 +19,7 @@ export default function Hero3D({ onNavigate }: { onNavigate?: (view: string) => 
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-[var(--shield-ink)] to-transparent" />
       <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl flex-col px-6 sm:px-10">
         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .7, delay: .1 }} className="mt-24 flex items-center justify-between sm:mt-28">
-          <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.2em] text-[oklch(0.78_0.08_165)]"><span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.74_0.17_162)]" />{t.kicker || "The AI operating system for your move abroad"}</span>
+          <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[.2em] text-[oklch(0.78_0.08_165)]"><span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.74_0.17_162)]" />{t.eyebrow}</span>
           <LanguageToggle locale={locale} onChange={setLocale} />
         </motion.div>
         <div className="mt-8 grid flex-1 items-center gap-12 pb-10 lg:grid-cols-[.92fr_1.08fr] lg:gap-14 lg:pb-14">
