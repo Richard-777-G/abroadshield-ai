@@ -16,25 +16,19 @@ async function generateIntelligence() {
   const email = session?.user?.email;
   if (!sessionId && !email) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
 
-  const user = sessionId
-    ? await db.user.findUnique({ where: { id: sessionId } })
-    : await db.user.findUnique({ where: { email: email! } });
+  const user = sessionId ? await db.user.findUnique({ where: { id: sessionId } }) : await db.user.findUnique({ where: { email: email! } });
   if (!user) return NextResponse.json({ ok: false, error: "Profile not found." }, { status: 404 });
-
   const journey = await db.journeyProfile.findUnique({ where: { userId: user.id } });
   const currentPhase = normalizePhase(journey?.currentPhase);
   const [recentEvents, recentTasks] = await Promise.all([
     db.journeyEvent.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 12 }),
     db.journeyTask.findMany({ where: { userId: user.id }, orderBy: { updatedAt: "desc" }, take: 12 }),
   ]);
-
   const profile: AgentProfile = {
-    name: user.name ?? undefined, email: user.email, origin: journey?.origin, destination: journey?.destination,
-    course: journey?.course, university: journey?.university, intake: journey?.intake, currentPhase,
-    documentsTotal: journey?.documentsTotal, documentsVerified: journey?.documentsVerified,
+    name: user.name ?? undefined, email: user.email, origin: journey?.origin, destination: journey?.destination, course: journey?.course,
+    university: journey?.university, intake: journey?.intake, currentPhase, documentsTotal: journey?.documentsTotal, documentsVerified: journey?.documentsVerified,
     visaAppointment: journey?.visaAppointment ?? undefined, funding: journey?.funding ?? undefined, homeLanguage: journey?.homeLanguage ?? undefined,
   };
-
   const prompt = [
     "You are AbroadShield AI's Journey Intelligence layer.",
     "Build an explainable, student-specific four-stage strategy from the authenticated profile and persisted journey history.",
@@ -49,37 +43,17 @@ async function generateIntelligence() {
     "PERSISTED RECENT TASKS:", recentTasks.map((t) => `- [${t.phase}] ${t.status}: ${t.title}${t.completedAt ? ` — completed ${t.completedAt.toISOString()}` : ""}`).join("\n") || "none yet",
     "CANONICAL STAGE POLICIES:", JSON.stringify(STAGE_POLICIES),
   ].join("\n\n");
-
-  const raw = await generateText({
-    messages: [{ role: "system", content: prompt }],
-    timeoutMs: 25_000,
-    jsonMode: true,
-  });
-
+  const raw = await generateText({ messages: [{ role: "system", content: prompt }], timeoutMs: 25_000, jsonMode: true });
   let intelligence: unknown;
-  try {
-    intelligence = parseModelJson(raw);
-  } catch {
-    return NextResponse.json({ ok: false, error: "Journey intelligence returned invalid JSON." }, { status: 502 });
-  }
-
+  try { intelligence = parseModelJson(raw); } catch { return NextResponse.json({ ok: false, error: "Journey intelligence returned invalid JSON." }, { status: 502 }); }
   return NextResponse.json({ ok: true, currentPhase, generatedAt: new Date().toISOString(), intelligence });
 }
 
 export async function GET() {
   try { return await generateIntelligence(); }
-  catch (error) {
-    console.error("[abroadshield/journey-intelligence GET]", error);
-    if (error instanceof AIRuntimeError) return NextResponse.json({ ok: false, error: error.message }, { status: error.status });
-    return NextResponse.json({ ok: false, error: "Unable to generate journey intelligence." }, { status: 500 });
-  }
+  catch (error) { console.error("[abroadshield/journey-intelligence GET]", error); if (error instanceof AIRuntimeError) return NextResponse.json({ ok: false, error: error.message }, { status: error.status }); return NextResponse.json({ ok: false, error: "Unable to generate journey intelligence." }, { status: 500 }); }
 }
-
 export async function POST() {
   try { return await generateIntelligence(); }
-  catch (error) {
-    console.error("[abroadshield/journey-intelligence POST]", error);
-    if (error instanceof AIRuntimeError) return NextResponse.json({ ok: false, error: error.message }, { status: error.status });
-    return NextResponse.json({ ok: false, error: "Unable to generate journey intelligence." }, { status: 500 });
-  }
+  catch (error) { console.error("[abroadshield/journey-intelligence POST]", error); if (error instanceof AIRuntimeError) return NextResponse.json({ ok: false, error: error.message }, { status: error.status }); return NextResponse.json({ ok: false, error: "Unable to generate journey intelligence." }, { status: 500 }); }
 }
