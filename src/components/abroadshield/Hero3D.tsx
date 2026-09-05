@@ -13,12 +13,13 @@ const FLOW = [
   { label: "Prioritize", detail: "Next best move", icon: BrainCircuit },
   { label: "Build", detail: "Skills + role", icon: BriefcaseBusiness },
 ];
+const HERO_EASE = [0.22, 1, 0.36, 1] as const;
 
 export default function Hero3D({ onNavigate }: { onNavigate?: (view: string) => void }) {
   const [locale, setLocale] = useState<LocaleId>("en");
   const t = HERO_STRINGS[locale];
   const reducedMotion = useReducedMotion();
-  const reveal = { hidden: { opacity: 0, y: 24 }, show: (delay = 0) => ({ opacity: 1, y: 0, transition: { duration: reducedMotion ? 0 : .7, delay, ease: [0.22, 1, 0.36, 1] } }) };
+  const reveal = { hidden: { opacity: 0, y: 24 }, show: (delay = 0) => ({ opacity: 1, y: 0, transition: { duration: reducedMotion ? 0 : .7, delay, ease: HERO_EASE } }) };
 
   return (
     <section id="top" className="relative isolate min-h-[92svh] overflow-hidden border-b border-[var(--shield-border)] bg-[radial-gradient(circle_at_76%_27%,oklch(0.28_0.05_162/.32),transparent_34%),radial-gradient(circle_at_18%_88%,oklch(0.30_0.055_135/.18),transparent_28%),var(--shield-ink)]">
@@ -58,7 +59,7 @@ function HeroProductVisual({ reducedMotion }: { reducedMotion: boolean }) {
   const shift = useTransform(px, [-.5, .5], [-10, 10]);
   function handleMove(event: React.PointerEvent<HTMLDivElement>) { const rect = ref.current?.getBoundingClientRect(); if (!rect || reducedMotion) return; px.set((event.clientX - rect.left) / rect.width - .5); py.set((event.clientY - rect.top) / rect.height - .5); }
 
-  return <motion.div ref={ref} onPointerMove={handleMove} onPointerLeave={() => { px.set(0); py.set(0); }} className="relative mx-auto h-[500px] w-full max-w-[660px] sm:h-[560px]" style={{ perspective: 1500 }} initial={{ opacity: 0, scale: .96, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : 1, delay: .18, ease: [0.22, 1, 0.36, 1] }}>
+  return <motion.div ref={ref} onPointerMove={handleMove} onPointerLeave={() => { px.set(0); py.set(0); }} className="relative mx-auto h-[500px] w-full max-w-[660px] sm:h-[560px]" style={{ perspective: 1500 }} initial={{ opacity: 0, scale: .96, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: reducedMotion ? 0 : 1, delay: .18, ease: HERO_EASE }}>
     <motion.div aria-hidden className="absolute inset-[6%_7%_5%_8%] rounded-[38px] border border-[oklch(0.74_0.17_162/.15)] bg-[oklch(0.11_0.014_165/.48)] shadow-[0_40px_120px_oklch(0.04_0.01_165/.55)] backdrop-blur-2xl" style={{ x: shift }} />
     <motion.div aria-hidden className="absolute inset-[11%_12%_10%_13%] rounded-[32px] border border-[oklch(0.74_0.17_162/.12)] bg-[linear-gradient(145deg,oklch(0.18_0.022_165/.88),oklch(0.09_0.012_165/.88))]" style={{ x: useTransform(px, [-.5, .5], [-5, 5]) }} />
     <motion.div style={{ rotateX, rotateY, transformStyle: "preserve-3d" }} className="absolute inset-[10%] [transform-style:preserve-3d]">
