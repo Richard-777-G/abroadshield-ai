@@ -23,8 +23,8 @@ const VisionCTA = dynamic(() => import("@/components/abroadshield/VisionCTA"));
 const DashboardView = dynamic(() => import("@/components/abroadshield/DashboardView"), { loading: () => <FeatureLoading label="Loading workspace…" /> });
 const OnboardingWizard = dynamic(() => import("@/components/abroadshield/OnboardingWizard"), { ssr: false });
 
-type PublicView = "home" | "journey" | "agent" | "countries" | "pricing";
-type Route = PublicView | WorkspaceView;
+type PublicView = "home" | "journey" | "countries" | "pricing";
+type Route = PublicView | "agent" | WorkspaceView;
 type AuthMode = "login" | "signup";
 const PUBLIC_VIEWS: { id: PublicView; label: string }[] = [
   { id: "home", label: "Home" },
@@ -81,7 +81,7 @@ export default function Home() {
 
   return <div className="relative flex min-h-screen flex-col bg-transparent">
     <AnimatePresence>{showOnboarding && <OnboardingWizard onComplete={() => { setShowOnboarding(false); navigateTo("dashboard"); }} />}</AnimatePresence>
-    {isWorkspace ? <AppShell activeView={activeRoute as WorkspaceView} onNavigate={navigateTo as (v: WorkspaceView) => void}>{workspaceContent}</AppShell> : <><SiteHeader activeView={activeRoute} onViewChange={navigateTo} views={PUBLIC_VIEWS} onTryAgent={() => { if (status !== "authenticated") { requestAuth("login"); return; } if (profile.onboarded) navigateTo("agent"); else setShowOnboarding(true); }} onAuthRequest={requestAuth} /><main className="flex-1">{contentFor(activeRoute, status, session, profile, navigateTo, requestAuth)}</main><SiteFooter /></>}
+    {isWorkspace ? <AppShell activeView={activeRoute as WorkspaceView} onNavigate={navigateTo as (v: WorkspaceView) => void}>{workspaceContent}</AppShell> : <><SiteHeader activeView={activeRoute} onViewChange={navigateTo} views={PUBLIC_VIEWS} onTryAgent={() => { if (status !== "authenticated") { requestAuth("login"); return; } if (profile.onboarded) navigateTo("agent"); else setShowOnboarding(true); }} onAuthRequest={requestAuth} /><main className="flex-1">{contentFor(activeRoute, status, session, profile, navigateTo, requestAuth)}</main><SiteFooter onNavigate={navigateTo} /></>}
     <AuthModal open={showAuth} onClose={() => setShowAuth(false)} mode={authMode} />
   </div>;
 }
