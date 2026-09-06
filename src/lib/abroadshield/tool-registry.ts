@@ -36,7 +36,7 @@ export const TOOL_REGISTRY: Record<AgentCapability, ToolDefinition> = {
   work_rule_check: { capability: "work_rule_check", label: "Check work-rule budget", execution: "task-engine", requiresLiveData: false, requiresApproval: false },
   cvec_payment: { capability: "cvec_payment", label: "Prepare CVEC payment", execution: "task-engine", requiresLiveData: false, requiresApproval: true },
   vlsts_validation: { capability: "vlsts_validation", label: "Check VLS-TS validation", execution: "task-engine", requiresLiveData: false, requiresApproval: false },
-  caf_housing_check: { capability: "caf_housing_check", label: "Check CAF housing workflow", execution: "task-engine", requiresLiveData: true, requiresApproval: false },
+  caf_housing_check: { capability: "caf_housing_check", label: "Check CAF housing workflow", execution: "live-search", requiresLiveData: true, requiresApproval: false },
   ameli_registration: { capability: "ameli_registration", label: "Prepare health registration", execution: "task-engine", requiresLiveData: false, requiresApproval: false },
 };
 
