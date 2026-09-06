@@ -41,10 +41,23 @@ export const STAGE_POLICIES: Record<PhaseId, StagePolicy> = {
   },
 };
 
+const FRANCE_ONLY_CAPABILITIES = new Set<AgentCapability>([
+  "cvec_payment",
+  "vlsts_validation",
+  "caf_housing_check",
+  "ameli_registration",
+  "work_rule_check",
+]);
+
 export function getStagePolicy(phase: PhaseId): StagePolicy { return STAGE_POLICIES[phase]; }
 
 export function isCapabilityAllowedInStage(phase: PhaseId, capability: AgentCapability): boolean {
   return STAGE_POLICIES[phase].capabilities.includes(capability);
+}
+
+export function isCapabilitySupportedForDestination(destination: string | undefined, capability: AgentCapability): boolean {
+  if (!FRANCE_ONLY_CAPABILITIES.has(capability)) return true;
+  return destination?.trim().toLowerCase() === "france";
 }
 
 export function buildStageSystemDirective(phase: PhaseId): string {
