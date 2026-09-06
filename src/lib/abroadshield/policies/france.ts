@@ -30,18 +30,8 @@ export const FRANCE_CVEC_RULE: PolicyRule<{ academicYear: string }, { feeEuros: 
 };
 
 export type VlsTsValidationStatus = "ON_TRACK" | "WARNING_30_DAYS" | "CRITICAL_14_DAYS" | "DUE_TODAY" | "OVERDUE" | "REQUIRES_MANUAL_CHECK";
-
 export interface VlsTsValidationInput { entryDateIntoFrance: string; currentDate: string; }
-
-export interface VlsTsValidationResult {
-  deadline: string | null;
-  monthsWindow: number;
-  daysRemaining: number | null;
-  taxStampCostEuros: number | null;
-  status: VlsTsValidationStatus;
-  reason?: string;
-  evidence: StatutoryEvidence;
-}
+export interface VlsTsValidationResult { deadline: string | null; monthsWindow: number; daysRemaining: number | null; taxStampCostEuros: number | null; status: VlsTsValidationStatus; reason?: string; evidence: StatutoryEvidence; }
 
 function parseIsoDate(value: string): { year: number; month: number; day: number } | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
@@ -67,7 +57,7 @@ const FRANCE_VLS_TS_EVIDENCE = verifiedEvidence({
   sourceAuthority: "Direction de l'information légale et administrative (Service-Public)",
   sourceUrl: "https://www.service-public.fr/particuliers/vosdroits/F2231",
   retrievedAt: "2026-09-06T00:00:00.000Z",
-  effectiveDate: "2026-09-06",
+  effectiveDate: "2026-05-01",
   jurisdiction: "FR",
   applicablePhase: "arrival",
 });
@@ -75,7 +65,6 @@ const FRANCE_VLS_TS_EVIDENCE = verifiedEvidence({
 export const calculateVlsTsValidationDeadline = (input: VlsTsValidationInput): VlsTsValidationResult => {
   const entry = parseIsoDate(input.entryDateIntoFrance); const current = parseIsoDate(input.currentDate);
   if (!entry || !current) return { deadline: null, monthsWindow: 3, daysRemaining: null, taxStampCostEuros: null, status: "REQUIRES_MANUAL_CHECK", reason: "A valid ISO calendar date is required for both entry date and current date.", evidence: FRANCE_VLS_TS_EVIDENCE };
-
   const deadline = addCalendarMonths(entry, 3);
   const daysRemaining = Math.ceil((toUtcMs(deadline) - toUtcMs(current)) / 86_400_000);
   let status: VlsTsValidationStatus = "ON_TRACK";
@@ -83,8 +72,7 @@ export const calculateVlsTsValidationDeadline = (input: VlsTsValidationInput): V
   else if (daysRemaining === 0) status = "DUE_TODAY";
   else if (daysRemaining <= 14) status = "CRITICAL_14_DAYS";
   else if (daysRemaining <= 30) status = "WARNING_30_DAYS";
-
-  return { deadline: iso(deadline), monthsWindow: 3, daysRemaining, taxStampCostEuros: 50, status, evidence: FRANCE_VLS_TS_EVIDENCE };
+  return { deadline: iso(deadline), monthsWindow: 3, daysRemaining, taxStampCostEuros: 150, status, evidence: FRANCE_VLS_TS_EVIDENCE };
 };
 
 export type FrenchWorkComplianceState = "SAFE" | "WARNING_80_PERCENT" | "BREACH" | "REQUIRES_MANUAL_CHECK";
@@ -110,7 +98,6 @@ export const calculateFrenchWorkBudget = (input: StudentWorkBudgetInput): Studen
 };
 
 export type FrancePolicyId = "fr-cvec-2026-2027" | "fr-vls-ts-validation-3-months" | "fr-student-work-964-hours";
-
 export const FRANCE_POLICY_RULES = [
   FRANCE_CVEC_RULE,
   { id: "fr-vls-ts-validation-3-months", title: "VLS-TS validation within 3 months of arrival", evidence: FRANCE_VLS_TS_EVIDENCE, calculate: calculateVlsTsValidationDeadline },
