@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { calculateFrenchWorkBudget, calculateVlsTsValidationDeadline } from "./france";
+import { calculateFrenchWorkBudget, calculateVlsTsValidationDeadline, FRANCE_CVEC_RULE } from "./france";
 
 describe("France VLS-TS validation deadline", () => {
   test("uses three calendar months rather than a fixed 90-day approximation", () => {
@@ -7,6 +7,7 @@ describe("France VLS-TS validation deadline", () => {
     expect(result.deadline).toBe("2026-04-30");
     expect(result.daysRemaining).toBe(29);
     expect(result.status).toBe("WARNING_30_DAYS");
+    expect(result.taxStampCostEuros).toBe(150);
   });
 
   test("handles leap-year February correctly", () => {
@@ -29,8 +30,22 @@ describe("France VLS-TS validation deadline", () => {
   });
 });
 
+describe("France CVEC", () => {
+  test("uses the verified 2026-2027 CVEC value", () => {
+    const result = FRANCE_CVEC_RULE.calculate({ academicYear: "2026-2027" });
+    expect(result.feeEuros).toBe(105);
+    expect(result.verificationState).toBe("VERIFIED");
+  });
+
+  test("does not invent fees for an unknown academic year", () => {
+    const result = FRANCE_CVEC_RULE.calculate({ academicYear: "2027-2028" });
+    expect(result.feeEuros).toBeNull();
+    expect(result.verificationState).toBe("REQUIRES_MANUAL_CHECK");
+  });
+});
+
 describe("France student work budget", () => {
-  test("stays safe below the 80 percent warning threshold", () => {
+  test("triggers the 80 percent warning threshold", () => {
     const result = calculateFrenchWorkBudget({ annualLoggedHours: 771, calendarYear: 2026 });
     expect(result.annualMaxHours).toBe(964);
     expect(result.remainingHours).toBe(193);
