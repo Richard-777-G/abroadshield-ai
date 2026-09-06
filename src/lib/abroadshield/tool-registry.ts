@@ -6,6 +6,11 @@ export const AGENT_CAPABILITIES = [
   "deadline_scan",
   "housing_search",
   "visa_check",
+  "work_rule_check",
+  "cvec_payment",
+  "vlsts_validation",
+  "caf_housing_check",
+  "ameli_registration",
 ] as const;
 
 export type AgentCapability = (typeof AGENT_CAPABILITIES)[number];
@@ -28,6 +33,11 @@ export const TOOL_REGISTRY: Record<AgentCapability, ToolDefinition> = {
   deadline_scan: { capability: "deadline_scan", label: "Scan deadlines", execution: "task-engine", requiresLiveData: false, requiresApproval: false },
   housing_search: { capability: "housing_search", label: "Find housing", execution: "live-search", requiresLiveData: true, requiresApproval: false },
   visa_check: { capability: "visa_check", label: "Check visa guidance", execution: "live-search", requiresLiveData: true, requiresApproval: false },
+  work_rule_check: { capability: "work_rule_check", label: "Check work-rule budget", execution: "task-engine", requiresLiveData: false, requiresApproval: false },
+  cvec_payment: { capability: "cvec_payment", label: "Prepare CVEC payment", execution: "task-engine", requiresLiveData: false, requiresApproval: true },
+  vlsts_validation: { capability: "vlsts_validation", label: "Check VLS-TS validation", execution: "task-engine", requiresLiveData: false, requiresApproval: false },
+  caf_housing_check: { capability: "caf_housing_check", label: "Check CAF housing workflow", execution: "task-engine", requiresLiveData: true, requiresApproval: false },
+  ameli_registration: { capability: "ameli_registration", label: "Prepare health registration", execution: "task-engine", requiresLiveData: false, requiresApproval: false },
 };
 
 export function getTool(capability: string): ToolDefinition | undefined {
