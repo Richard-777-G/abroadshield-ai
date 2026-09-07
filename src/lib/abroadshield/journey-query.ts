@@ -3,7 +3,7 @@ import { buildRequirementSnapshot } from "./requirements";
 import { normalizePhase } from "./journey";
 import { getStagePolicy } from "./stage-orchestrator";
 
-export async function getJourneyApplicationSnapshot(userId: string) {
+export async function getJourneyApplicationSnapshot(userId: string, asOf = new Date().toISOString().slice(0, 10)) {
   const [user, profile] = await Promise.all([
     db.user.findUnique({ where: { id: userId }, include: { journey: true } }),
     db.journeyProfile.findUnique({ where: { userId } }),
@@ -59,6 +59,15 @@ export async function getJourneyApplicationSnapshot(userId: string) {
     completedCount: completed,
     blocked,
     recentCompleted,
-    requirements: buildRequirementSnapshot(user.journey ?? undefined),
+    requirements: buildRequirementSnapshot({
+      destination: profile?.destination ?? undefined,
+      currentPhase: profile?.currentPhase ?? undefined,
+      documentsTotal: profile?.documentsTotal ?? undefined,
+      documentsVerified: profile?.documentsVerified ?? undefined,
+      readiness: profile?.readiness ?? undefined,
+      visaAppointment: profile?.visaAppointment ?? undefined,
+      funding: profile?.funding ?? undefined,
+      asOf,
+    }),
   };
 }
