@@ -80,13 +80,14 @@ export async function getAgentProfile(userId: string): Promise<AgentProfile | nu
   };
 }
 
-export async function updateJourneyProfile(userId: string, input: JourneyProfileInput) {
+export async function updateJourneyProfile(userId: string, input: JourneyProfileInput): Promise<JourneyProfileViewModel> {
   const data = sanitizeJourneyProfile(input);
   const previous = await db.journeyProfile.findUnique({ where: { userId } });
   const profile = await db.journeyProfile.upsert({ where: { userId }, update: data, create: { userId, ...data } });
   const phaseChanged = previous ? previous.currentPhase !== profile.currentPhase : false;
   await db.journeyEvent.create({ data: { userId, phase: profile.currentPhase, type: phaseChanged ? "phase_changed" : "profile_updated", title: phaseChanged ? `Moved to ${profile.currentPhase}` : "Journey profile updated", detail: "Journey strategy saved to the persistent record." } });
-  return profile;
+  const user = await db.user.findUnique({ where: { id: userId }, select: { name: true, email: true } });
+  return toProfileViewModel(profile, user ?? { name: null, email: null });
 }
 
 export async function generateJourneyIntelligence(userId: string) {
