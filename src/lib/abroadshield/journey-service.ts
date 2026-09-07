@@ -1,6 +1,9 @@
 import { db } from "@/lib/db";
+import { generateText, AIRuntimeError } from "./ai-runtime";
+import { buildAgentContext, type AgentProfile } from "./task-context";
 import { normalizePhase } from "./journey";
-import type { AgentProfile } from "./task-context";
+import { STAGE_POLICIES } from "./stage-orchestrator";
+import { parseModelJson } from "./parse-json";
 
 type JourneyProfileInput = Partial<Record<"origin" | "destination" | "course" | "university" | "preferredUniversities" | "careerGoal" | "intake" | "currentPhase" | "readiness" | "onboarded" | "documentsTotal" | "documentsVerified" | "visaAppointment" | "funding" | "homeLanguage", string | number | boolean | null>>;
 
@@ -63,4 +66,28 @@ export async function updateJourneyProfile(userId: string, input: JourneyProfile
     },
   });
   return profile;
+}
+
+export async function generateJourneyIntelligence(userId: string) {
+  const profile = await getAgentProfile(userId);
+  if (!profile) return null;
+  const { events, tasks } = await getJourneyWorkspaceData(userId);
+  const prompt = [
+    "You are AbroadShield AI's Journey Intelligence layer.",
+    "Build an explainable, student-specific four-stage strategy from the authenticated profile and persisted journey history.",
+    "Do not invent facts. Surface missing information explicitly.",
+    "Current stage gets immediate priorities; future stages get preparation guidance.",
+    "For every stage provide objective, whyItMatters, abroadShieldWill, studentWill, prerequisites, risks, firstActions.",
+    "Also provide studentSummary, careerDirection, biggestUnknowns, next90Days.",
+    "Use persisted events and tasks to avoid recommending work already completed unless it needs follow-up.",
+    "Return valid JSON only.",
+    "PROFILE:", buildAgentContext(profile),
+    "PERSISTED RECENT EVENTS:", events.slice(0, 12).map((e) => `- [${e.phase}] ${e.type}: ${e.title}${e.detail ? ` — ${e.detail}` : ""}`).join("\n") || "none yet",
+    "PERSISTED RECENT TASKS:", tasks.slice(0, 12).map((t) => `- [${t.phase}] ${t.status}: ${t.title}${t.completedAt ? ` — completed ${t.completedAt.toISOString()}` : ""}`).join("\n") || "none yet",
+    "CANONICAL STAGE POLICIES:", JSON.stringify(STAGE_POLICIES),
+  ].join("\n\n");
+  const raw = await generateText({ messages: [{ role: "system", content: prompt }], timeoutMs: 25_000, jsonMode: true });
+  let intelligence: unknown;
+  try { intelligence = parseModelJson(raw); } catch { throw new AIRuntimeError("Journey intelligence returned invalid JSON.", 502); }
+  return { currentPhase: normalizePhase(profile.currentPhase), generatedAt: new Date().toISOString(), intelligence };
 }
