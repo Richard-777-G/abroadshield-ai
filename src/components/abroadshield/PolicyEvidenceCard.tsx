@@ -1,15 +1,7 @@
 "use client";
 
 import { ExternalLink, ShieldCheck } from "lucide-react";
-
-export type PolicyEvidenceView = {
-  ruleId: string;
-  ruleVersionId: string | null;
-  status: string;
-  authority: string | null;
-  sourceUrl: string | null;
-  reason?: string;
-};
+import type { PolicyEvidenceView } from "@/lib/abroadshield/types/view-models";
 
 export default function PolicyEvidenceCard({ evidence }: { evidence: PolicyEvidenceView | null }) {
   return <section className="mt-6 rounded-[28px] border border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-5 sm:p-7">
