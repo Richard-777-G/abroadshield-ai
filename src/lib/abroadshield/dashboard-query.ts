@@ -2,6 +2,16 @@ import { db } from "@/lib/db";
 import { buildRequirementSnapshot } from "./requirements";
 import { normalizePhase } from "./journey";
 import { getStagePolicy } from "./stage-orchestrator";
+import type { PhaseId } from "./phase";
+
+const PHASE_VIEW: Record<PhaseId, { name: string; copy: string }> = {
+  "pre-departure": { name: "Pre-Departure", copy: "Define the path, strengthen the profile and prepare the move." },
+  arrival: { name: "Arrival", copy: "Settle in and turn the study move into a career-building plan." },
+  studying: { name: "Studying & Part-Time", copy: "Build evidence, skills and network while you study." },
+  "job-success": { name: "Job Success", copy: "Convert your experience into targeted roles and full-time opportunities." },
+};
+
+const PHASE_ORDER: PhaseId[] = ["pre-departure", "arrival", "studying", "job-success"];
 
 export async function getDashboardSnapshot(userId: string) {
   const [user, profile] = await Promise.all([
@@ -39,9 +49,19 @@ export async function getDashboardSnapshot(userId: string) {
   const next = active[0] ?? null;
   const requirements = buildRequirementSnapshot(user.journey ?? undefined);
   const policyEvidence = requirements.requirements.find((item) => item.policyEvidence)?.policyEvidence ?? null;
+  const phaseIndex = PHASE_ORDER.indexOf(phase);
+  const phaseView = PHASE_VIEW[phase];
 
   return {
-    phase,
+    profile: {
+      goal: profile?.careerGoal || "Define the full-time career outcome you want to build toward.",
+      destination: profile?.destination ?? null,
+      course: profile?.course ?? null,
+      university: profile?.university ?? null,
+      intake: profile?.intake ?? null,
+    },
+    phase: { id: phase, index: phaseIndex, name: phaseView.name, copy: phaseView.copy },
+    route: PHASE_ORDER.map((id, index) => ({ id, name: PHASE_VIEW[id].name, current: index === phaseIndex, complete: index < phaseIndex })),
     stage: { title: policy.title, mission: policy.mission, objective: policy.objective, capabilities: policy.capabilities },
     readiness,
     next: next ? { id: next.id, type: next.type, title: next.title, status: next.status, priority: next.priority, dueAt: next.dueAt, result: next.result } : {
