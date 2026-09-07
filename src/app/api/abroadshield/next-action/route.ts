@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { db } from "@/lib/db";
+import { getAuthenticatedUserId } from "@/lib/abroadshield/authenticated-user";
 import { getJourneyApplicationSnapshot } from "@/lib/abroadshield/journey-query";
 
 export const runtime = "nodejs";
@@ -8,15 +7,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const session = await getServerSession();
-    const id = (session?.user as { id?: string } | undefined)?.id;
-    const email = session?.user?.email;
-    if (!id && !email) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
+    const userId = await getAuthenticatedUserId();
+    if (!userId) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
 
-    const user = id ? await db.user.findUnique({ where: { id }, select: { id: true } }) : await db.user.findUnique({ where: { email: email! }, select: { id: true } });
-    if (!user) return NextResponse.json({ ok: false, error: "Journey profile not found." }, { status: 404 });
-
-    const snapshot = await getJourneyApplicationSnapshot(user.id);
+    const snapshot = await getJourneyApplicationSnapshot(userId);
     if (!snapshot) return NextResponse.json({ ok: false, error: "Journey profile not found." }, { status: 404 });
 
     return NextResponse.json({
