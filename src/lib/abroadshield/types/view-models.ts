@@ -9,6 +9,47 @@ export type PolicyEvidenceView = {
   reason?: string;
 };
 
+export type JourneyProfileViewModel = {
+  name: string;
+  email: string;
+  origin: string;
+  destination: string;
+  course: string;
+  university: string;
+  preferredUniversities: string;
+  careerGoal: string;
+  intake: string;
+  currentPhase: PhaseId;
+  readiness: number;
+  onboarded: boolean;
+  documentsTotal: number;
+  documentsVerified: number;
+  visaAppointment?: string;
+  funding?: string;
+  homeLanguage?: string;
+};
+
+export type JourneyWorkspaceViewModel = {
+  profile: JourneyProfileViewModel;
+  events: Array<{
+    phase: PhaseId;
+    type: string;
+    title: string;
+    detail: string | null;
+    createdAt: string;
+  }>;
+  tasks: Array<{
+    id: string;
+    phase: PhaseId;
+    type: string;
+    title: string;
+    status: string;
+    priority: string | number;
+    dueAt: string | null;
+    completedAt: string | null;
+  }>;
+};
+
 export type DashboardViewModel = {
   profile: {
     goal: string;
