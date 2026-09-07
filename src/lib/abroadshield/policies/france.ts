@@ -57,7 +57,7 @@ const FRANCE_VLS_TS_EVIDENCE = verifiedEvidence({
   sourceAuthority: "Direction de l'information légale et administrative (Service-Public)",
   sourceUrl: "https://www.service-public.fr/particuliers/vosdroits/F2231",
   retrievedAt: "2026-09-06T00:00:00.000Z",
-  effectiveDate: "2026-05-01",
+  effectiveDate: "2024-09-06",
   jurisdiction: "FR",
   applicablePhase: "arrival",
 });
@@ -72,7 +72,7 @@ export const calculateVlsTsValidationDeadline = (input: VlsTsValidationInput): V
   else if (daysRemaining === 0) status = "DUE_TODAY";
   else if (daysRemaining <= 14) status = "CRITICAL_14_DAYS";
   else if (daysRemaining <= 30) status = "WARNING_30_DAYS";
-  return { deadline: iso(deadline), monthsWindow: 3, daysRemaining, taxStampCostEuros: 150, status, evidence: FRANCE_VLS_TS_EVIDENCE };
+  return { deadline: iso(deadline), monthsWindow: 3, daysRemaining, taxStampCostEuros: 50, status, evidence: FRANCE_VLS_TS_EVIDENCE };
 };
 
 export type FrenchWorkComplianceState = "SAFE" | "WARNING_80_PERCENT" | "BREACH" | "REQUIRES_MANUAL_CHECK";
