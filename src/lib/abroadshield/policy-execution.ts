@@ -1,11 +1,34 @@
 import type { Applicability, EvidenceVerificationState, PolicyRuleVersion, PolicySelection } from "./policy-versioning";
-import { francePolicyRegistry, FRANCE_POLICY_CALCULATORS } from "./policies/france-registry";
+import {
+  calculateFrenchWorkBudget,
+  calculateVlsTsValidationDeadline,
+  FRANCE_CVEC_RULE,
+} from "./policies/france";
+import { francePolicyRegistry } from "./policies/france-registry";
+import type {
+  StudentWorkBudgetInput,
+  StudentWorkBudgetResult,
+  VlsTsValidationInput,
+  VlsTsValidationResult,
+} from "./policies/france";
 
 export type PolicyExecutionQuery = Applicability & { asOf: string };
 export type FrancePolicyRuleId =
   | "fr-cvec-2026-2027"
   | "fr-vls-ts-validation-3-months"
   | "fr-student-work-964-hours";
+
+export type FrancePolicyInputMap = {
+  "fr-cvec-2026-2027": Parameters<typeof FRANCE_CVEC_RULE.calculate>[0];
+  "fr-vls-ts-validation-3-months": VlsTsValidationInput;
+  "fr-student-work-964-hours": StudentWorkBudgetInput;
+};
+
+export type FrancePolicyOutputMap = {
+  "fr-cvec-2026-2027": ReturnType<typeof FRANCE_CVEC_RULE.calculate>;
+  "fr-vls-ts-validation-3-months": VlsTsValidationResult;
+  "fr-student-work-964-hours": StudentWorkBudgetResult;
+};
 
 export type PolicyExecutionResult<T> = {
   selection: PolicySelection;
@@ -32,11 +55,11 @@ function provenance(selection: PolicySelection): PolicyExecutionResult<never>["p
   };
 }
 
-export function executeFrancePolicy<TInput, TOutput>(
-  ruleId: FrancePolicyRuleId,
+export function executeFrancePolicy<K extends FrancePolicyRuleId>(
+  ruleId: K,
   query: PolicyExecutionQuery,
-  input: TInput,
-): PolicyExecutionResult<TOutput> {
+  input: FrancePolicyInputMap[K],
+): PolicyExecutionResult<FrancePolicyOutputMap[K]> {
   const selection = francePolicyRegistry.current(ruleId, query);
   const executionProvenance = provenance(selection);
 
@@ -57,6 +80,18 @@ export function executeFrancePolicy<TInput, TOutput>(
     };
   }
 
-  const calculator = FRANCE_POLICY_CALCULATORS[ruleId];
-  return { selection, result: calculator(input), provenance: executionProvenance };
+  let result: FrancePolicyOutputMap[K];
+  switch (ruleId) {
+    case "fr-cvec-2026-2027":
+      result = FRANCE_CVEC_RULE.calculate(input as FrancePolicyInputMap["fr-cvec-2026-2027"]) as FrancePolicyOutputMap[K];
+      break;
+    case "fr-vls-ts-validation-3-months":
+      result = calculateVlsTsValidationDeadline(input as VlsTsValidationInput) as FrancePolicyOutputMap[K];
+      break;
+    case "fr-student-work-964-hours":
+      result = calculateFrenchWorkBudget(input as StudentWorkBudgetInput) as FrancePolicyOutputMap[K];
+      break;
+  }
+
+  return { selection, result, provenance: executionProvenance };
 }
