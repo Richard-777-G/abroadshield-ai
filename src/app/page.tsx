@@ -94,7 +94,7 @@ function contentFor(activeRoute: Route, status: string, session: ReturnType<type
     {activeRoute === "countries" && <CountryRules />}
     {activeRoute === "pricing" && <><PricingTiers onStart={() => { if (status === "authenticated") navigateTo("agent"); else requestAuth("signup"); }} /><VisionCTA onNavigate={navigateTo} /></>}
     {activeRoute === "dashboard" && (status === "authenticated" ? <DashboardView onNavigate={navigateTo} /> : <SignInPanel onSignIn={() => requestAuth("login")} />)}
-    {activeRoute === "network" && status === "authenticated" && <NetworkingJobs />}
+    {activeRoute === "network" && status === "authenticated" && <NetworkingJobs onNavigate={navigateTo} />}
     {activeRoute === "connectors" && status === "authenticated" && <Connectors />}
   </motion.div></AnimatePresence>;
 }
