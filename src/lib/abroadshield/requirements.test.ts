@@ -8,7 +8,9 @@ describe("Requirement policy integration", () => {
     expect(requirement).toBeDefined();
     expect(requirement?.policyEvidence?.ruleVersionId).toBe("fr-vls-ts-validation-3-months-v1");
     expect(requirement?.policyEvidence?.status).toBe("VERIFIED");
-    expect(requirement?.reason).toContain("configured destination journey checklist");
+    expect(requirement?.policyEvidence?.effectivePeriodStatus).toBe("UNKNOWN");
+    expect(requirement?.status).toBe("needs_review");
+    expect(requirement?.reason).toContain("effective start date");
     expect(requirement?.policyEvidence?.authority).toContain("Service-Public");
   });
 
@@ -21,6 +23,7 @@ describe("Requirement policy integration", () => {
     const snapshot = buildRequirementSnapshot({ destination: "France", currentPhase: "arrival", asOf: "2020-01-01" });
     const requirement = snapshot.requirements.find((item) => item.policyEvidence?.ruleId === "fr-vls-ts-validation-3-months");
     expect(requirement?.status).toBe("needs_review");
+    expect(requirement?.policyEvidence?.status).toBe("REQUIRES_MANUAL_CHECK");
   });
 
   test("rejects an invalid application date boundary", () => {
