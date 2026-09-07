@@ -1,9 +1,8 @@
 import type { Applicability, EvidenceVerificationState, PolicyRuleVersion, PolicySelection } from "./policy-versioning";
 import { francePolicyRegistry, FRANCE_POLICY_CALCULATORS } from "./policies/france-registry";
 
-export type PolicyExecutionQuery = Applicability & {
-  asOf: string;
-};
+export type PolicyExecutionQuery = Applicability & { asOf: string };
+export type FrancePolicyRuleId = keyof typeof FRANCE_POLICY_CALCULATORS;
 
 export type PolicyExecutionResult<T> = {
   selection: PolicySelection;
@@ -31,7 +30,7 @@ function provenance(selection: PolicySelection): PolicyExecutionResult<never>["p
 }
 
 export function executeFrancePolicy<TInput, TOutput>(
-  ruleId: keyof typeof FRANCE_POLICY_CALCULATORS,
+  ruleId: FrancePolicyRuleId,
   query: PolicyExecutionQuery,
   input: TInput,
 ): PolicyExecutionResult<TOutput> {
@@ -39,9 +38,20 @@ export function executeFrancePolicy<TInput, TOutput>(
   const executionProvenance = provenance(selection);
 
   if (selection.rule === null) return { selection, result: null, provenance: executionProvenance };
-
   if (selection.status !== "VERIFIED" && selection.status !== "PROVISIONALLY_VERIFIED") {
     return { selection, result: null, provenance: executionProvenance };
+  }
+  if (selection.rule.effectivePeriodStatus === "UNKNOWN") {
+    const manualSelection: PolicySelection = {
+      ...selection,
+      status: "REQUIRES_MANUAL_CHECK",
+      reason: "The policy's legal effective period has not been established.",
+    };
+    return {
+      selection: manualSelection,
+      result: null,
+      provenance: { ...executionProvenance, verificationStatus: "REQUIRES_MANUAL_CHECK" },
+    };
   }
 
   const calculator = FRANCE_POLICY_CALCULATORS[ruleId] as (value: TInput) => TOutput;
