@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { db } from "@/lib/db";
+import { getAuthenticatedUser } from "@/lib/abroadshield/authenticated-user";
 import { generateText, AIRuntimeError } from "@/lib/abroadshield/ai-runtime";
 import { buildAgentContext, type AgentProfile } from "@/lib/abroadshield/task-context";
 import { detectCapability } from "@/lib/abroadshield/capability-router";
@@ -23,17 +23,6 @@ The student can inspect, understand and plan any stage of the journey at any tim
 Act instead of merely advising when a permitted real tool or artifact is available. Never claim an external action happened unless the application actually executed it. Never fabricate live jobs, listings, deadlines, URLs, legal requirements, or connector state. If live data or a connector is unavailable, say so clearly and give the next executable step.
 For emails and outbound communications, draft first and require explicit approval before sending. For visa/legal matters, distinguish general guidance from official advice and point to the relevant official authority.
 Keep responses concise, practical and professional.`;
-
-async function resolveUser() {
-  const session = await getServerSession().catch(() => null);
-  const id = (session?.user as { id?: string } | undefined)?.id;
-  const email = session?.user?.email;
-  if (!id && !email) return null;
-  const user = id
-    ? await db.user.upsert({ where: { id }, update: { name: session?.user?.name ?? undefined, email: email ?? undefined }, create: { id, email: email || `${id}@local.invalid`, name: session?.user?.name ?? undefined } })
-    : await db.user.upsert({ where: { email: email! }, update: { name: session?.user?.name ?? undefined }, create: { email: email!, name: session?.user?.name ?? undefined } });
-  return { user, session };
-}
 
 function summarizeTask(capability: string, result: unknown): string {
   const label = capability.replaceAll("_", " ");
@@ -90,21 +79,21 @@ async function persistDeterministic(userId: string, phase: ReturnType<typeof nor
 
 export async function POST(req: NextRequest) {
   try {
-    const resolved = await resolveUser();
-    if (!resolved) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
+    const user = await getAuthenticatedUser();
+    if (!user) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
     const body = await req.json().catch(() => ({}));
     const messages: ChatMessage[] = Array.isArray(body.messages) ? body.messages : [];
     const userMessage = typeof body.message === "string" ? body.message : messages.find((m) => m.role === "user")?.content ?? "";
     if (!userMessage.trim()) return NextResponse.json({ ok: false, error: "Message is required." }, { status: 400 });
-    const journey = await db.journeyProfile.findUnique({ where: { userId: resolved.user.id } });
+    const journey = await db.journeyProfile.findUnique({ where: { userId: user.id } });
     const phase = normalizePhase(journey?.currentPhase);
     const policy = getStagePolicy(phase);
     const capability = detectCapability(userMessage) as AgentCapability | null;
     const exploring = isExplorationRequest(userMessage);
 
-    if (isGreeting(userMessage)) return persistDeterministic(resolved.user.id, phase, userMessage, buildGreeting(resolved.user.name ?? resolved.session?.user?.name, phase, journey?.destination), "greeting");
-    if (isCapabilityQuestion(userMessage)) return persistDeterministic(resolved.user.id, phase, userMessage, buildCapabilityReply(phase), "capabilities");
-    if (isPositioningQuestion(userMessage)) return persistDeterministic(resolved.user.id, phase, userMessage, buildPositioningReply(phase), "positioning");
+    if (isGreeting(userMessage)) return persistDeterministic(user.id, phase, userMessage, buildGreeting(user.name, phase, journey?.destination), "greeting");
+    if (isCapabilityQuestion(userMessage)) return persistDeterministic(user.id, phase, userMessage, buildCapabilityReply(phase), "capabilities");
+    if (isPositioningQuestion(userMessage)) return persistDeterministic(user.id, phase, userMessage, buildPositioningReply(phase), "positioning");
 
     if (capability && exploring) {
       const tool = getTool(capability)!;
@@ -112,34 +101,34 @@ export async function POST(req: NextRequest) {
         ? `That capability is available in **${policy.title}**.`
         : `That capability is not enabled for **${policy.title}**, but you can plan for it without changing stages.`;
       const reply = `${status}\n\n**${tool.label}** uses ${tool.requiresLiveData ? "verified live data" : tool.requiresApproval ? "a draft-and-approval workflow" : "the task engine"}. I will only execute it when the active stage and request allow execution.`;
-      return persistDeterministic(resolved.user.id, phase, userMessage, reply, "stage");
+      return persistDeterministic(user.id, phase, userMessage, reply, "stage");
     }
     if (capability && !isCapabilityAllowedInStage(phase, capability) && !exploring) {
       const reply = `That action belongs to a different journey stage. You are currently in **${policy.title}**. You can still explore or plan that future stage with me; to execute the action, make the relevant stage active first.`;
-      return persistDeterministic(resolved.user.id, phase, userMessage, reply, "stage");
+      return persistDeterministic(user.id, phase, userMessage, reply, "stage");
     }
     if (capability && !exploring && isCapabilityAllowedInStage(phase, capability)) {
       const profile: AgentProfile = {
-        name: resolved.user.name ?? resolved.session?.user?.name ?? undefined, email: resolved.user.email,
+        name: user.name ?? undefined, email: user.email,
         origin: journey?.origin, destination: journey?.destination, course: journey?.course, university: journey?.university,
         intake: journey?.intake, currentPhase: phase, documentsTotal: journey?.documentsTotal, documentsVerified: journey?.documentsVerified,
         visaAppointment: journey?.visaAppointment ?? undefined, funding: journey?.funding ?? undefined, homeLanguage: journey?.homeLanguage ?? undefined,
       };
-      const taskResult = await executeAgentTask(resolved.user.id, profile, { taskType: capability, context: userMessage, phase, mode: "execute" });
+      const taskResult = await executeAgentTask(user.id, profile, { taskType: capability, context: userMessage, phase, mode: "execute" });
       const reply = summarizeTask(capability, taskResult.result);
       await db.agentMessage.createMany({ data: [
-        { userId: resolved.user.id, role: "user", content: userMessage, phase },
-        { userId: resolved.user.id, role: "assistant", content: reply, phase },
+        { userId: user.id, role: "user", content: userMessage, phase },
+        { userId: user.id, role: "assistant", content: reply, phase },
       ] });
       return NextResponse.json({ ok: true, reply, phase, capability, taskId: taskResult.taskId, result: taskResult.result, executed: true });
     }
 
     const [recentEvents, recentTasks] = await Promise.all([
-      db.journeyEvent.findMany({ where: { userId: resolved.user.id }, orderBy: { createdAt: "desc" }, take: 8 }),
-      db.journeyTask.findMany({ where: { userId: resolved.user.id }, orderBy: { updatedAt: "desc" }, take: 8 }),
+      db.journeyEvent.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 8 }),
+      db.journeyTask.findMany({ where: { userId: user.id }, orderBy: { updatedAt: "desc" }, take: 8 }),
     ]);
     const profile: AgentProfile = {
-      name: resolved.user.name ?? resolved.session?.user?.name ?? undefined, email: resolved.user.email,
+      name: user.name ?? undefined, email: user.email,
       origin: journey?.origin, destination: journey?.destination, course: journey?.course, university: journey?.university,
       intake: journey?.intake, currentPhase: phase, documentsTotal: journey?.documentsTotal, documentsVerified: journey?.documentsVerified,
       visaAppointment: journey?.visaAppointment ?? undefined, funding: journey?.funding ?? undefined, homeLanguage: journey?.homeLanguage ?? undefined,
@@ -148,8 +137,8 @@ export async function POST(req: NextRequest) {
     const history = messages.slice(-6).map((m) => ({ role: m.role, content: String(m.content).slice(0, 4000) }));
     const reply = await generateText({ messages: [{ role: "system", content: SYSTEM_RULES + "\n\n" + memory }, ...history, { role: "user", content: userMessage }], timeoutMs: 25_000 });
     await db.agentMessage.createMany({ data: [
-      { userId: resolved.user.id, role: "user", content: userMessage, phase },
-      { userId: resolved.user.id, role: "assistant", content: reply, phase },
+      { userId: user.id, role: "user", content: userMessage, phase },
+      { userId: user.id, role: "assistant", content: reply, phase },
     ] });
     return NextResponse.json({ ok: true, reply, phase, executed: false });
   } catch (error) {
