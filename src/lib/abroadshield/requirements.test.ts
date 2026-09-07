@@ -25,5 +25,6 @@ describe("Requirement policy integration", () => {
 
   test("rejects an invalid application date boundary", () => {
     expect(() => buildRequirementSnapshot({ destination: "France", currentPhase: "arrival", asOf: "not-a-date" })).toThrow("valid asOf date");
+    expect(() => buildRequirementSnapshot({ destination: "France", currentPhase: "arrival", asOf: "2026-02-30" })).toThrow("valid asOf date");
   });
 });
