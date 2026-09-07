@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import { WorkspaceHeader, WorkspaceMobileNav, WorkspaceSidebar } from "./WorkspaceNavigation";
@@ -34,14 +35,12 @@ export default function AppShell({
           email={session?.user?.email}
           onNavigate={navigate}
         />
-
         <WorkspaceMobileNav
           activeView={activeView}
           mobileOpen={mobileOpen}
           onNavigate={navigate}
           onCloseMobile={() => setMobileOpen(false)}
         />
-
         <div className="min-w-0 flex-1 lg:pl-64">
           <WorkspaceHeader
             activeView={activeView}
