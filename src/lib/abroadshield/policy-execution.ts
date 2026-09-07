@@ -2,7 +2,10 @@ import type { Applicability, EvidenceVerificationState, PolicyRuleVersion, Polic
 import { francePolicyRegistry, FRANCE_POLICY_CALCULATORS } from "./policies/france-registry";
 
 export type PolicyExecutionQuery = Applicability & { asOf: string };
-export type FrancePolicyRuleId = string;
+export type FrancePolicyRuleId =
+  | "fr-cvec-2026-2027"
+  | "fr-vls-ts-validation-3-months"
+  | "fr-student-work-964-hours";
 
 export type PolicyExecutionResult<T> = {
   selection: PolicySelection;
@@ -54,6 +57,6 @@ export function executeFrancePolicy<TInput, TOutput>(
     };
   }
 
-  const calculator = FRANCE_POLICY_CALCULATORS[ruleId as keyof typeof FRANCE_POLICY_CALCULATORS] as (value: TInput) => TOutput;
+  const calculator = FRANCE_POLICY_CALCULATORS[ruleId];
   return { selection, result: calculator(input), provenance: executionProvenance };
 }
