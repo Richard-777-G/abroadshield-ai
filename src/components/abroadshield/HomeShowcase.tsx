@@ -27,11 +27,16 @@ export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: strin
           <h2 className="as-public-title mt-3 text-3xl sm:text-4xl">The problem is not a lack of information. It is a lack of continuity.</h2>
           <p className="as-public-copy mt-4 max-w-2xl">Students move between university portals, spreadsheets, consultants, email, visa checklists, job boards and networking tools. Each system sees one slice. AbroadShield is designed around the journey itself.</p>
         </Reveal>
-        <div className="mt-7 grid gap-3 lg:grid-cols-2">
-          {SIGNALS.map(([title, detail, n]) => <div key={title} className="as-public-card as-public-card--quiet flex items-start gap-4 p-4">
-            <span className="font-mono text-[9px] text-[var(--shield-text-faint)]">{n}</span>
-            <div><div className="text-sm font-semibold">{title}</div><div className="mt-1 text-[11px] leading-5 text-[var(--shield-text-dim)]">{detail}</div></div>
-          </div>)}
+        <div className="mt-7 grid gap-4 lg:grid-cols-[.8fr_1.2fr] lg:items-stretch">
+          <div className="as-public-card as-public-card--raised overflow-hidden p-2 sm:p-3">
+            <img src="/visuals/journey-continuity.svg" alt="A continuous AbroadShield route connecting profile, destination, evidence and career" className="h-full min-h-[280px] w-full rounded-2xl object-cover" loading="lazy" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {SIGNALS.map(([title, detail, n]) => <div key={title} className="as-public-card as-public-card--quiet flex items-start gap-4 p-5">
+              <span className="font-mono text-[9px] text-[var(--shield-text-faint)]">{n}</span>
+              <div><div className="text-sm font-semibold">{title}</div><div className="mt-1 text-[11px] leading-5 text-[var(--shield-text-dim)]">{detail}</div></div>
+            </div>)}
+          </div>
         </div>
       </div>
     </section>
@@ -56,13 +61,16 @@ export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: strin
           <h2 className="as-public-title mt-3 text-3xl sm:text-4xl">Four phases. One evolving strategy.</h2>
           <p className="as-public-copy mt-3">The route stays visible while the current mission changes.</p>
         </Reveal>
-        <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {PHASES.map(([n, title, detail]) => <button key={n} type="button" onClick={() => onNavigate?.("journey")} className="as-public-card as-public-card--quiet group p-4 text-left transition hover:-translate-y-0.5 hover:border-[var(--shield-border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--shield-emerald)]/50">
-            <div className="text-[9px] font-semibold tracking-[.18em] text-[var(--shield-text-faint)]">{n}</div>
-            <h3 className="mt-4 text-sm font-semibold">{title}</h3>
-            <p className="mt-2 text-[11px] leading-5 text-[var(--shield-text-dim)]">{detail}</p>
-            <span className="mt-3 inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[.13em] text-[var(--shield-emerald-bright)]">See the route <ArrowRight className="h-3 w-3" /></span>
-          </button>)}
+        <div className="mt-7 grid gap-4 lg:grid-cols-[1.2fr_.8fr] lg:items-stretch">
+          <div className="as-public-card as-public-card--raised overflow-hidden p-2 sm:p-3">
+            <img src="/visuals/four-phase-route.svg" alt="Four-phase AbroadShield route from choosing the move to landing the role" className="h-full min-h-[360px] w-full rounded-2xl object-cover" loading="lazy" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+            {PHASES.map(([n, title, detail]) => <button key={n} type="button" onClick={() => onNavigate?.("journey")} className="as-public-card as-public-card--quiet group flex items-start gap-4 p-4 text-left transition hover:-translate-y-0.5 hover:border-[var(--shield-border-strong)] focus:outline-none focus:ring-2 focus:ring-[var(--shield-emerald)]/50">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--shield-border)] bg-[oklch(0.74_0.17_162/.07)] text-[9px] font-semibold text-[var(--shield-emerald-bright)]">{n}</div>
+              <div className="min-w-0"><h3 className="text-sm font-semibold">{title}</h3><p className="mt-1 text-[11px] leading-5 text-[var(--shield-text-dim)]">{detail}</p><span className="mt-2 inline-flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[.13em] text-[var(--shield-emerald-bright)]">See the route <ArrowRight className="h-3 w-3" /></span></div>
+            </button>)}
+          </div>
         </div>
       </div>
     </section>
