@@ -20,6 +20,7 @@ export async function GET() {
     const user = await resolveUser();
     if (!user) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
     const workspace = await getJourneyWorkspaceData(user.id);
+    if (!workspace) return NextResponse.json({ ok: false, error: "Journey not found." }, { status: 404 });
     return NextResponse.json({ ok: true, ...workspace });
   } catch (error) {
     console.error("[abroadshield/journey GET]", error);
