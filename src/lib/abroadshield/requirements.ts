@@ -45,6 +45,7 @@ type Profile = {
   readiness?: number;
   visaAppointment?: string | null;
   funding?: string | null;
+  asOf?: string;
 };
 
 const sourceFor = (country: CountryRule, index: number) => country.embassyLinks[index] ?? country.embassyLinks[0];
@@ -53,14 +54,14 @@ const POLICY_BY_CHECKLIST_TEXT: Record<string, { ruleId: string; topic: string }
   "validate vls-ts online within 3 months": { ruleId: "fr-vls-ts-validation-3-months", topic: "vls-ts-validation" },
 };
 
-function policyEvidenceFor(destination: string | undefined, phase: PhaseId, title: string): RequirementPolicyEvidence | undefined {
+function policyEvidenceFor(destination: string | undefined, phase: PhaseId, title: string, asOf: string): RequirementPolicyEvidence | undefined {
   const policy = POLICY_BY_CHECKLIST_TEXT[title.trim().toLowerCase()];
   if (!policy) return undefined;
   const registry = getCountryPolicyRegistry(destination);
   if (!registry) return undefined;
   const context = countryContext(destination);
   const selection = registry.current(policy.ruleId, {
-    asOf: new Date().toISOString().slice(0, 10),
+    asOf,
     country: context.code,
     jurisdiction: context.code,
     phase,
@@ -76,12 +77,18 @@ function policyEvidenceFor(destination: string | undefined, phase: PhaseId, titl
   };
 }
 
+function isValidAsOf(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`));
+}
+
 export function buildRequirementSnapshot(profile: Profile = {}): RequirementSnapshot {
   const country = profile.destination ? COUNTRY_RULE_MAP[profile.destination] ?? null : null;
   const phase = normalizePhase(profile.currentPhase);
   const totalDocuments = Math.max(0, profile.documentsTotal ?? 0);
   const verifiedDocuments = Math.min(totalDocuments, Math.max(0, profile.documentsVerified ?? 0));
   const readiness = Math.max(0, Math.min(100, profile.readiness ?? (totalDocuments ? Math.round((verifiedDocuments / totalDocuments) * 100) : 0)));
+  const asOf = profile.asOf ?? new Date().toISOString().slice(0, 10);
+  if (!isValidAsOf(asOf)) throw new Error("Requirement snapshot requires a valid asOf date (YYYY-MM-DD).");
 
   if (!country) return { country: null, phase, requirements: [], verifiedDocuments, totalDocuments, readiness, summary: { critical: 0, high: 0, review: 0, ready: 0 } };
 
@@ -89,12 +96,13 @@ export function buildRequirementSnapshot(profile: Profile = {}): RequirementSnap
     const normalized = item.item.toLowerCase();
     const fundingMissing = /fund|financial|bank statement|sperrkonto|gic/.test(normalized) && !profile.funding;
     const appointmentMissing = /appointment|interview/.test(normalized) && !profile.visaAppointment;
-    const evidence = policyEvidenceFor(profile.destination, phase, item.item);
-    const policyNeedsReview = evidence && evidence.status !== "VERIFIED";
-    const status: RequirementStatus = fundingMissing || appointmentMissing ? "blocked" : policyNeedsReview ? "needs_review" : "needs_review";
-    const priority: RequirementPriority = fundingMissing || appointmentMissing ? "critical" : policyNeedsReview ? "high" : phase === "pre-departure" ? "high" : "medium";
-    const reason = fundingMissing ? "Your persistent profile does not contain funding evidence yet." : appointmentMissing ? "Your persistent profile does not contain a visa appointment yet." : policyNeedsReview ? `Policy evidence requires review: ${evidence?.reason ?? evidence?.status}.` : "This requirement is sourced from the configured destination journey checklist.";
-    const nextAction = fundingMissing ? "Add your funding evidence/details to the journey profile." : appointmentMissing ? "Add the appointment details or ask the agent to prepare the booking workflow." : policyNeedsReview ? "Review the authoritative source and establish the applicable policy before relying on this requirement." : "Upload or verify the supporting evidence before marking this complete.";
+    const evidence = policyEvidenceFor(profile.destination, phase, item.item, asOf);
+    const policyNeedsReview = evidence && evidence.status !== "VERIFIED" && evidence.status !== "PROVISIONALLY_VERIFIED";
+    const blocked = fundingMissing || appointmentMissing;
+    const status: RequirementStatus = blocked ? "blocked" : policyNeedsReview ? "needs_review" : "ready";
+    const priority: RequirementPriority = blocked ? "critical" : policyNeedsReview ? "high" : phase === "pre-departure" ? "high" : "medium";
+    const reason = fundingMissing ? "Your persistent profile does not contain funding evidence yet." : appointmentMissing ? "Your persistent profile does not contain a visa appointment yet." : policyNeedsReview ? `Policy evidence requires review: ${evidence?.reason ?? evidence?.status}.` : "This requirement is sourced from the configured destination journey checklist and has no current evidence conflict or verification blocker.";
+    const nextAction = fundingMissing ? "Add your funding evidence/details to the journey profile." : appointmentMissing ? "Add the appointment details or ask the agent to prepare the booking workflow." : policyNeedsReview ? "Review the authoritative source and establish the applicable policy before relying on this requirement." : "Proceed with the requirement and attach supporting evidence when it becomes available.";
     return { id: `${country.country}-${phase}-${index}`, title: item.item, phase, status, priority, reason, nextAction, source: sourceFor(country, index), policyEvidence: evidence };
   });
 
