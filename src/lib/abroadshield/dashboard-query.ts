@@ -10,8 +10,8 @@ const PHASE_VIEW: Record<PhaseId, { name: string; copy: string }> = {
 
 const PHASE_ORDER: PhaseId[] = ["pre-departure", "arrival", "studying", "job-success"];
 
-export async function getDashboardSnapshot(userId: string) {
-  const snapshot = await getJourneyApplicationSnapshot(userId);
+export async function getDashboardSnapshot(userId: string, asOf = new Date().toISOString().slice(0, 10)) {
+  const snapshot = await getJourneyApplicationSnapshot(userId, asOf);
   if (!snapshot) return null;
 
   const phaseIndex = PHASE_ORDER.indexOf(snapshot.phase);
