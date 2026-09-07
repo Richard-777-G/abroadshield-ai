@@ -2,7 +2,7 @@ import type { Applicability, EvidenceVerificationState, PolicyRuleVersion, Polic
 import { francePolicyRegistry, FRANCE_POLICY_CALCULATORS } from "./policies/france-registry";
 
 export type PolicyExecutionQuery = Applicability & { asOf: string };
-export type FrancePolicyRuleId = keyof typeof FRANCE_POLICY_CALCULATORS;
+export type FrancePolicyRuleId = string;
 
 export type PolicyExecutionResult<T> = {
   selection: PolicySelection;
@@ -54,6 +54,6 @@ export function executeFrancePolicy<TInput, TOutput>(
     };
   }
 
-  const calculator = FRANCE_POLICY_CALCULATORS[ruleId] as (value: TInput) => TOutput;
+  const calculator = FRANCE_POLICY_CALCULATORS[ruleId as keyof typeof FRANCE_POLICY_CALCULATORS] as (value: TInput) => TOutput;
   return { selection, result: calculator(input), provenance: executionProvenance };
 }
