@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/abroadshield/authenticated-user";
-import { getAgentProfile } from "@/lib/abroadshield/journey-service";
+import { getJourneyWorkspaceData } from "@/lib/abroadshield/journey-service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,8 +18,9 @@ export async function POST() {
   try {
     const user = await getAuthenticatedUser();
     if (!user) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
-    const profile = await getAgentProfile(user.id);
-    if (!profile) return NextResponse.json({ ok: false, error: "Journey profile not found." }, { status: 404 });
+    const workspace = await getJourneyWorkspaceData(user.id);
+    if (!workspace) return NextResponse.json({ ok: false, error: "Journey profile not found." }, { status: 404 });
+    const profile = workspace.profile;
 
     const results = checks.map(([field, label, guidance]) => ({
       field,
@@ -29,18 +30,17 @@ export async function POST() {
     }));
     const passed = results.filter((item) => item.passed).length;
     const score = Math.round((passed / results.length) * 100);
-    const criticalMissing = results.filter((item) => !item.passed).map((item) => item.field);
-    const phase = profile.currentPhase;
+    const missing = results.filter((item) => !item.passed);
 
     return NextResponse.json({
       ok: true,
       score,
-      phase,
+      phase: profile.currentPhase,
       passed,
       total: results.length,
       status: score === 100 ? "ready_for_agent_work" : score >= 67 ? "usable_with_gaps" : "profile_incomplete",
       results,
-      next: criticalMissing.length ? results.find((item) => !item.passed)?.guidance : "Run a real journey task with the agent to test execution.",
+      next: missing[0]?.guidance || "Run a real journey task with the agent to test execution.",
     });
   } catch (error) {
     console.error("[abroadshield/profile-test]", error);
