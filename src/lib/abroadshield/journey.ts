@@ -3,7 +3,8 @@ import { VALID_PHASES, type PhaseId } from "./phase";
 export { VALID_PHASES, type PhaseId } from "./phase";
 
 export function normalizePhase(value?: string): PhaseId {
-  return VALID_PHASES.includes(value as PhaseId) ? (value as PhaseId) : "pre-departure";
+  const normalized = value?.trim().toLowerCase();
+  return VALID_PHASES.includes(normalized as PhaseId) ? (normalized as PhaseId) : "pre-departure";
 }
 
 export const COUNTRY_DEFAULTS: Record<string, { flag: string; code: string; authority: string }> = {
@@ -20,5 +21,7 @@ export const COUNTRY_DEFAULTS: Record<string, { flag: string; code: string; auth
 };
 
 export function countryContext(destination?: string) {
-  return COUNTRY_DEFAULTS[destination || ""] ?? { flag: "🌍", code: "", authority: "the relevant official authority for the destination" };
+  const normalized = destination?.trim().toLowerCase();
+  const entry = Object.entries(COUNTRY_DEFAULTS).find(([country]) => country.toLowerCase() === normalized)?.[1];
+  return entry ?? { flag: "🌍", code: "", authority: "the relevant official authority for the destination" };
 }
