@@ -19,7 +19,7 @@ export type DashboardViewModel = {
   };
   phase: { id: PhaseId; index: number; name: string; copy: string };
   route: Array<{ id: PhaseId; name: string; current: boolean; complete: boolean }>;
-  stage: { title: string; mission: string; objective: string; capabilities: string[] };
+  stage: { title: string; mission: string; objective: string; capabilities: readonly string[] };
   readiness: number;
   next: {
     id?: string;
@@ -37,6 +37,6 @@ export type DashboardViewModel = {
   completedCount: number;
   blocked: Array<Record<string, unknown>>;
   recentCompleted: Array<Record<string, unknown>>;
-  allowedCapabilities: string[];
+  allowedCapabilities: readonly string[];
   policyEvidence: PolicyEvidenceView | null;
 };
