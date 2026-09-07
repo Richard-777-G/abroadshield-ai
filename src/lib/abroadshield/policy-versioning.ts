@@ -8,6 +8,8 @@ export type EvidenceVerificationState =
   | "UNVERIFIED"
   | "REQUIRES_MANUAL_CHECK";
 
+export type EffectivePeriodStatus = "KNOWN" | "UNKNOWN";
+
 export type Applicability = {
   country: string;
   jurisdiction: string;
@@ -20,6 +22,8 @@ export type PolicySource = {
   id: string;
   authority: string;
   canonicalUrl: string;
+  retrievedAt: string;
+  sourceVersion?: string;
 };
 
 export type PolicyExtraction = {
@@ -35,7 +39,8 @@ export type PolicyRuleVersion = {
   version: number;
   source: PolicySource;
   extraction: PolicyExtraction;
-  effectiveFrom: string;
+  effectivePeriodStatus: EffectivePeriodStatus;
+  effectiveFrom?: string;
   effectiveUntil?: string;
   applicability: Applicability;
   verificationStatus: EvidenceVerificationState;
@@ -57,20 +62,21 @@ function dateOnly(value: string): number | null {
 
 function isEffective(version: PolicyRuleVersion, asOf: string): boolean {
   const at = dateOnly(asOf);
-  const from = dateOnly(version.effectiveFrom);
-  const until = version.effectiveUntil ? dateOnly(version.effectiveUntil) : null;
-  if (at === null || from === null || (version.effectiveUntil && until === null)) return false;
-  return from <= at && (until === null || at <= until);
+  if (at === null) return false;
+  if (version.effectiveFrom && (dateOnly(version.effectiveFrom) ?? NaN) > at) return false;
+  if (version.effectiveUntil && (dateOnly(version.effectiveUntil) ?? NaN) < at) return false;
+  return true;
 }
 
 export function validatePolicyVersion(version: PolicyRuleVersion): void {
   if (!version.id || !version.ruleId || version.version < 1) throw new Error("Policy version identity is invalid.");
-  if (dateOnly(version.effectiveFrom) === null) throw new Error("effectiveFrom must be a valid ISO calendar date.");
+  if (version.effectiveFrom && dateOnly(version.effectiveFrom) === null) throw new Error("effectiveFrom must be a valid ISO calendar date.");
   if (version.effectiveUntil && dateOnly(version.effectiveUntil) === null) throw new Error("effectiveUntil must be a valid ISO calendar date.");
-  if (version.effectiveUntil && version.effectiveUntil < version.effectiveFrom) throw new Error("effectiveUntil cannot precede effectiveFrom.");
-  if (!version.source.authority || !version.source.canonicalUrl) throw new Error("A policy source authority and canonical URL are required.");
+  if (version.effectiveFrom && version.effectiveUntil && version.effectiveUntil < version.effectiveFrom) throw new Error("effectiveUntil cannot precede effectiveFrom.");
+  if (!version.source.authority || !version.source.canonicalUrl || !version.source.retrievedAt) throw new Error("A policy source authority, canonical URL and retrieval timestamp are required.");
   if (!version.extraction.claim || version.extraction.sourceId !== version.source.id) throw new Error("Policy extraction must reference its source and contain a claim.");
   if (version.applicability.country.length !== 2) throw new Error("Applicability country must be an ISO-3166 alpha-2 code.");
+  if (version.effectivePeriodStatus === "KNOWN" && !version.effectiveFrom) throw new Error("Known effective periods require effectiveFrom.");
 }
 
 export class PolicyVersionRegistry {
@@ -85,7 +91,7 @@ export class PolicyVersionRegistry {
   list(ruleId?: string): PolicyRuleVersion[] {
     return [...this.versions.values()]
       .filter((version) => !ruleId || version.ruleId === ruleId)
-      .sort((a, b) => b.version - a.version || b.effectiveFrom.localeCompare(a.effectiveFrom));
+      .sort((a, b) => b.version - a.version || (b.effectiveFrom ?? "").localeCompare(a.effectiveFrom ?? ""));
   }
 
   getCurrent(ruleId: string, asOf: string, applicability: Applicability): PolicySelection {
@@ -101,8 +107,9 @@ export class PolicyVersionRegistry {
 
     if (candidates.length === 0) return { rule: null, status: "REQUIRES_MANUAL_CHECK", reason: "No applicable policy version is available for the requested date and scope." };
 
-    const conflicting = candidates.filter((candidate) => candidate.verificationStatus === "CONFLICTING");
-    if (conflicting.length > 0) return { rule: null, status: "CONFLICTING", reason: "Applicable policy evidence is explicitly marked as conflicting." };
+    if (candidates.some((candidate) => candidate.verificationStatus === "CONFLICTING")) {
+      return { rule: null, status: "CONFLICTING", reason: "Applicable policy evidence is explicitly marked as conflicting." };
+    }
 
     const usable = candidates.filter((candidate) => candidate.verificationStatus === "VERIFIED" || candidate.verificationStatus === "PROVISIONALLY_VERIFIED");
     if (usable.length === 0) {
@@ -111,7 +118,8 @@ export class PolicyVersionRegistry {
     }
 
     const highestVersion = usable[0];
-    if (highestVersion.verificationStatus !== "VERIFIED") return { rule: highestVersion, status: "PROVISIONALLY_VERIFIED" };
-    return { rule: highestVersion, status: "VERIFIED" };
+    return highestVersion.verificationStatus === "VERIFIED"
+      ? { rule: highestVersion, status: "VERIFIED", reason: highestVersion.effectivePeriodStatus === "UNKNOWN" ? "The authoritative source is verified, but its legal effective start date is not explicitly established by the source." : undefined }
+      : { rule: highestVersion, status: "PROVISIONALLY_VERIFIED", reason: "The evidence is usable provisionally and requires stronger verification before consequential reliance." };
   }
 }
