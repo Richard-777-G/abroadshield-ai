@@ -19,11 +19,13 @@ describe("Requirement policy integration", () => {
     expect(snapshot.requirements.some((item) => item.policyEvidence)).toBe(false);
   });
 
-  test("marks an unavailable policy version as needs_review", () => {
+  test("keeps verified evidence distinct from an unavailable policy version", () => {
     const snapshot = buildRequirementSnapshot({ destination: "France", currentPhase: "arrival", asOf: "2020-01-01" });
     const requirement = snapshot.requirements.find((item) => item.policyEvidence?.ruleId === "fr-vls-ts-validation-3-months");
     expect(requirement?.status).toBe("needs_review");
-    expect(requirement?.policyEvidence?.status).toBe("REQUIRES_MANUAL_CHECK");
+    expect(requirement?.policyEvidence?.status).toBe("VERIFIED");
+    expect(requirement?.policyEvidence?.ruleVersionId).toBe("fr-vls-ts-validation-3-months-v1");
+    expect(requirement?.reason).toContain("effective start date");
   });
 
   test("rejects an invalid application date boundary", () => {
