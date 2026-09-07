@@ -1,25 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { db } from "@/lib/db";
+import { getAuthenticatedUserId } from "@/lib/abroadshield/authenticated-user";
 import { AIRuntimeError } from "@/lib/abroadshield/ai-runtime";
 import { generateJourneyIntelligence } from "@/lib/abroadshield/journey-service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function resolveUserId() {
-  const session = await getServerSession();
-  const id = (session?.user as { id?: string } | undefined)?.id;
-  const email = session?.user?.email;
-  if (!id && !email) return null;
-  const user = id
-    ? await db.user.findUnique({ where: { id }, select: { id: true } })
-    : await db.user.findUnique({ where: { email: email! }, select: { id: true } });
-  return user?.id ?? null;
-}
-
 async function handle() {
-  const userId = await resolveUserId();
+  const userId = await getAuthenticatedUserId();
   if (!userId) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
   const result = await generateJourneyIntelligence(userId);
   if (!result) return NextResponse.json({ ok: false, error: "Profile not found." }, { status: 404 });
