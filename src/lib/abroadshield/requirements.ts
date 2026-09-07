@@ -2,6 +2,7 @@ import { COUNTRY_RULE_MAP, type CountryRule } from "./country-rules";
 import { normalizePhase, type PhaseId, countryContext } from "./journey";
 import { getCountryPolicyRegistry } from "./country-policy-catalog";
 import type { EvidenceVerificationState } from "./policy-versioning";
+import { isValidCalendarDate } from "./date-validation";
 
 export type RequirementStatus = "ready" | "needs_review" | "blocked";
 export type RequirementPriority = "critical" | "high" | "medium" | "info";
@@ -54,6 +55,12 @@ const POLICY_BY_CHECKLIST_TEXT: Record<string, { ruleId: string; topic: string }
   "validate vls-ts online within 3 months": { ruleId: "fr-vls-ts-validation-3-months", topic: "vls-ts-validation" },
 };
 
+function countryRuleFor(destination: string | undefined): CountryRule | null {
+  if (!destination) return null;
+  const normalized = destination.trim().toLowerCase();
+  return Object.values(COUNTRY_RULE_MAP).find((country) => country.country.trim().toLowerCase() === normalized) ?? null;
+}
+
 function policyEvidenceFor(destination: string | undefined, phase: PhaseId, title: string, asOf: string): RequirementPolicyEvidence | undefined {
   const policy = POLICY_BY_CHECKLIST_TEXT[title.trim().toLowerCase()];
   if (!policy) return undefined;
@@ -77,21 +84,14 @@ function policyEvidenceFor(destination: string | undefined, phase: PhaseId, titl
   };
 }
 
-function isValidAsOf(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
-}
-
 export function buildRequirementSnapshot(profile: Profile = {}): RequirementSnapshot {
-  const country = profile.destination ? COUNTRY_RULE_MAP[profile.destination] ?? null : null;
+  const country = countryRuleFor(profile.destination);
   const phase = normalizePhase(profile.currentPhase);
   const totalDocuments = Math.max(0, profile.documentsTotal ?? 0);
   const verifiedDocuments = Math.min(totalDocuments, Math.max(0, profile.documentsVerified ?? 0));
   const readiness = Math.max(0, Math.min(100, profile.readiness ?? (totalDocuments ? Math.round((verifiedDocuments / totalDocuments) * 100) : 0)));
   const asOf = profile.asOf ?? new Date().toISOString().slice(0, 10);
-  if (!isValidAsOf(asOf)) throw new Error("Requirement snapshot requires a valid asOf date (YYYY-MM-DD).");
+  if (!isValidCalendarDate(asOf)) throw new Error("Requirement snapshot requires a valid asOf date (YYYY-MM-DD).");
 
   if (!country) return { country: null, phase, requirements: [], verifiedDocuments, totalDocuments, readiness, summary: { critical: 0, high: 0, review: 0, ready: 0 } };
 
