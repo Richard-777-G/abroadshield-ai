@@ -88,6 +88,10 @@ export async function generateJourneyIntelligence(userId: string) {
   ].join("\n\n");
   const raw = await generateText({ messages: [{ role: "system", content: prompt }], timeoutMs: 25_000, jsonMode: true });
   let intelligence: unknown;
-  try { intelligence = parseModelJson(raw); } catch { throw new AIRuntimeError("Journey intelligence returned invalid JSON.", 502); }
+  try {
+    intelligence = parseModelJson(raw);
+  } catch {
+    throw new AIRuntimeError("AI_INVALID_RESPONSE", "Journey intelligence returned invalid JSON.", 502);
+  }
   return { currentPhase: normalizePhase(profile.currentPhase), generatedAt: new Date().toISOString(), intelligence };
 }
