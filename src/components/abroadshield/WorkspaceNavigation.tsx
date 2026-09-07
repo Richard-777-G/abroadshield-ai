@@ -2,7 +2,7 @@
 
 import { Activity, Bot, CalendarClock, ChevronRight, LayoutDashboard, LogOut, Mail, Menu, Plug, Shield, UserRound, X } from "lucide-react";
 import { signOut } from "next-auth/react";
-import type { WorkspaceView } from "./AppShell";
+import type { WorkspaceView } from "./workspace-types";
 
 export const NAV: { id: WorkspaceView; label: string; description: string; icon: typeof LayoutDashboard }[] = [
   { id: "dashboard", label: "Command center", description: "See the route and next move", icon: LayoutDashboard },
@@ -12,24 +12,15 @@ export const NAV: { id: WorkspaceView; label: string; description: string; icon:
   { id: "connectors", label: "Connections", description: "Services the agent can use", icon: Plug },
 ];
 
-type Props = {
-  activeView: WorkspaceView;
-  firstName: string;
-  email?: string | null;
-  mobileOpen: boolean;
-  onNavigate: (view: WorkspaceView) => void;
-  onCloseMobile: () => void;
-};
+type Props = { activeView: WorkspaceView; firstName: string; email?: string | null; mobileOpen: boolean; onNavigate: (view: WorkspaceView) => void; onCloseMobile: () => void };
 
 export function WorkspaceSidebar({ activeView, firstName, email, onNavigate }: Omit<Props, "mobileOpen" | "onCloseMobile">) {
-  return (
-    <aside aria-label="Workspace navigation" className="fixed inset-y-0 left-0 z-[80] hidden w-64 border-r border-[var(--shield-border)] bg-[oklch(0.12_0.016_165/0.97)] lg:flex lg:flex-col">
-      <div className="flex h-16 items-center gap-3 border-b border-[var(--shield-border)] px-5"><div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[oklch(0.74_0.17_162/0.45)] bg-[oklch(0.74_0.17_162/0.1)]"><Shield className="h-4 w-4 text-[oklch(0.85_0.19_158)]" aria-hidden="true" /></div><div><div className="text-sm font-semibold">AbroadShield<span className="text-[oklch(0.74_0.17_162)]"> AI</span></div><div className="text-[9px] uppercase tracking-[0.16em] text-[var(--shield-text-faint)]">Journey operating system</div></div></div>
-      <div className="px-4 pt-5"><div className="rounded-xl border border-[var(--shield-border)] bg-[oklch(0.18_0.022_165/0.65)] p-3"><div className="flex items-center gap-2.5"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[oklch(0.74_0.17_162/0.12)] text-xs font-semibold text-[oklch(0.85_0.19_158)]">{firstName.slice(0, 2).toUpperCase()}</div><div className="min-w-0"><div className="truncate text-xs font-semibold">{firstName}</div><div className="truncate text-[10px] text-[var(--shield-text-faint)]">{email || "Authenticated account"}</div></div></div></div></div>
-      <nav className="flex-1 space-y-1 px-3 py-5"><div className="px-2 pb-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--shield-text-faint)]">Your route</div>{NAV.map(({ id, label, description, icon: Icon }) => { const active = activeView === id; return <button key={id} type="button" aria-current={active ? "page" : undefined} onClick={() => onNavigate(id)} className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${active ? "bg-[oklch(0.74_0.17_162/0.12)] text-[var(--shield-text)]" : "text-[var(--shield-text-dim)] hover:bg-[oklch(0.22_0.025_165/0.45)] hover:text-[var(--shield-text)]"}`}><Icon className={`h-4 w-4 shrink-0 ${active ? "text-[oklch(0.85_0.19_158)]" : "text-[var(--shield-text-faint)]"}`} aria-hidden="true" /><span className="min-w-0 flex-1"><span className="block text-xs font-semibold">{label}</span><span className="block truncate text-[9px] text-[var(--shield-text-faint)]">{description}</span></span>{active && <ChevronRight className="h-3.5 w-3.5 text-[oklch(0.74_0.17_162)]" aria-hidden="true" />}</button>; })}</nav>
-      <div className="space-y-1 border-t border-[var(--shield-border)] p-3"><button type="button" onClick={() => onNavigate("agent")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs text-[var(--shield-text-dim)] hover:bg-[oklch(0.22_0.025_165/0.45)]"><Mail className="h-4 w-4" aria-hidden="true" /><span>Message agent</span></button><button type="button" onClick={() => signOut({ callbackUrl: "/" })} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs text-[var(--shield-text-dim)] hover:bg-[oklch(0.22_0.025_165/0.45)] hover:text-[var(--shield-text)]"><LogOut className="h-4 w-4" aria-hidden="true" /><span>Sign out</span></button></div>
-    </aside>
-  );
+  return <aside aria-label="Workspace navigation" className="fixed inset-y-0 left-0 z-[80] hidden w-64 border-r border-[var(--shield-border)] bg-[oklch(0.12_0.016_165/0.97)] lg:flex lg:flex-col">
+    <div className="flex h-16 items-center gap-3 border-b border-[var(--shield-border)] px-5"><div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[oklch(0.74_0.17_162/0.45)] bg-[oklch(0.74_0.17_162/0.1)]"><Shield className="h-4 w-4 text-[oklch(0.85_0.19_158)]" aria-hidden="true" /></div><div><div className="text-sm font-semibold">AbroadShield<span className="text-[oklch(0.74_0.17_162)]"> AI</span></div><div className="text-[9px] uppercase tracking-[0.16em] text-[var(--shield-text-faint)]">Journey operating system</div></div></div>
+    <div className="px-4 pt-5"><div className="rounded-xl border border-[var(--shield-border)] bg-[oklch(0.18_0.022_165/0.65)] p-3"><div className="flex items-center gap-2.5"><div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[oklch(0.74_0.17_162/0.12)] text-xs font-semibold text-[oklch(0.85_0.19_158)]">{firstName.slice(0, 2).toUpperCase()}</div><div className="min-w-0"><div className="truncate text-xs font-semibold">{firstName}</div><div className="truncate text-[10px] text-[var(--shield-text-faint)]">{email || "Authenticated account"}</div></div></div></div></div>
+    <nav className="flex-1 space-y-1 px-3 py-5"><div className="px-2 pb-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--shield-text-faint)]">Your route</div>{NAV.map(({ id, label, description, icon: Icon }) => { const active = activeView === id; return <button key={id} type="button" aria-current={active ? "page" : undefined} onClick={() => onNavigate(id)} className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${active ? "bg-[oklch(0.74_0.17_162/0.12)] text-[var(--shield-text)]" : "text-[var(--shield-text-dim)] hover:bg-[oklch(0.22_0.025_165/0.45)] hover:text-[var(--shield-text)]"}`}><Icon className={`h-4 w-4 shrink-0 ${active ? "text-[oklch(0.85_0.19_158)]" : "text-[var(--shield-text-faint)]"}`} aria-hidden="true" /><span className="min-w-0 flex-1"><span className="block text-xs font-semibold">{label}</span><span className="block truncate text-[9px] text-[var(--shield-text-faint)]">{description}</span></span>{active && <ChevronRight className="h-3.5 w-3.5 text-[oklch(0.74_0.17_162)]" aria-hidden="true" />}</button>; })}</nav>
+    <div className="space-y-1 border-t border-[var(--shield-border)] p-3"><button type="button" onClick={() => onNavigate("agent")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs text-[var(--shield-text-dim)] hover:bg-[oklch(0.22_0.025_165/0.45)]"><Mail className="h-4 w-4" aria-hidden="true" /><span>Message agent</span></button><button type="button" onClick={() => signOut({ callbackUrl: "/" })} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs text-[var(--shield-text-dim)] hover:bg-[oklch(0.22_0.025_165/0.45)] hover:text-[var(--shield-text)]"><LogOut className="h-4 w-4" aria-hidden="true" /><span>Sign out</span></button></div>
+  </aside>;
 }
 
 export function WorkspaceMobileNav({ activeView, mobileOpen, onNavigate, onCloseMobile }: Pick<Props, "activeView" | "mobileOpen" | "onNavigate" | "onCloseMobile">) {
