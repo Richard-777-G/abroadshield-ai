@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { db } from "@/lib/db";
-import { normalizePhase } from "@/lib/abroadshield/journey";
-import { getStagePolicy } from "@/lib/abroadshield/stage-orchestrator";
+import { getDashboardSnapshot } from "@/lib/abroadshield/dashboard-query";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,41 +13,24 @@ export async function GET() {
     const email = session?.user?.email;
     if (!id && !email) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
 
-    const user = id ? await db.user.findUnique({ where: { id } }) : await db.user.findUnique({ where: { email: email! } });
+    const user = id ? await db.user.findUnique({ where: { id }, select: { id: true } }) : await db.user.findUnique({ where: { email: email! }, select: { id: true } });
     if (!user) return NextResponse.json({ ok: false, error: "Journey profile not found." }, { status: 404 });
 
-    const profile = await db.journeyProfile.findUnique({ where: { userId: user.id } });
-    const phase = normalizePhase(profile?.currentPhase);
-    const policy = getStagePolicy(phase);
-
-    const active = await db.journeyTask.findMany({
-      where: { userId: user.id, phase, status: { in: ["queued", "running"] } },
-      orderBy: [{ priority: "asc" }, { dueAt: "asc" }, { createdAt: "asc" }], take: 10,
-    });
-    const blocked = await db.journeyTask.findMany({
-      where: { userId: user.id, phase, status: "blocked" },
-      orderBy: { createdAt: "desc" }, take: 10,
-      select: { id: true, type: true, title: true, status: true, priority: true, dueAt: true, result: true, createdAt: true },
-    });
-    const completed = await db.journeyTask.count({ where: { userId: user.id, phase, status: "completed" } });
-    const recentCompleted = await db.journeyTask.findMany({
-      where: { userId: user.id, phase, status: "completed" },
-      orderBy: { completedAt: "desc" }, take: 3,
-      select: { title: true, type: true, completedAt: true },
-    });
-    const next = active[0] ?? null;
-    const blockedTypes = new Set(blocked.map((task) => task.type));
-    const fallbackCapability = policy.capabilities.find((capability) => !blockedTypes.has(capability)) ?? policy.capabilities[0];
-    const readiness = profile?.documentsTotal ? Math.round((profile.documentsVerified / Math.max(profile.documentsTotal, 1)) * 100) : profile?.readiness ?? 0;
-    const fallback = !next ? { type: fallbackCapability, title: phase === "pre-departure" ? "Review your next pre-departure action" : `Review your next ${policy.title.toLowerCase()} action`, reason: policy.objective, capability: fallbackCapability } : null;
+    const snapshot = await getDashboardSnapshot(user.id);
+    if (!snapshot) return NextResponse.json({ ok: false, error: "Journey profile not found." }, { status: 404 });
 
     return NextResponse.json({
-      ok: true, phase, stage: policy.title, readiness,
-      next: next ? { id: next.id, type: next.type, title: next.title, status: next.status, priority: next.priority, dueAt: next.dueAt, result: next.result } : fallback,
-      activeCount: active.length, blockedCount: blocked.length, completedCount: completed,
-      blocked: blocked.map((task) => ({ id: task.id, type: task.type, title: task.title, status: task.status, priority: task.priority, dueAt: task.dueAt, result: task.result, createdAt: task.createdAt })),
-      recentCompleted: recentCompleted.map((task) => ({ title: task.title, type: task.type, completedAt: task.completedAt })),
-      allowedCapabilities: policy.capabilities,
+      ok: true,
+      phase: snapshot.phase.id,
+      stage: snapshot.stage.title,
+      readiness: snapshot.readiness,
+      next: snapshot.next,
+      activeCount: snapshot.activeCount,
+      blockedCount: snapshot.blockedCount,
+      completedCount: snapshot.completedCount,
+      blocked: snapshot.blocked,
+      recentCompleted: snapshot.recentCompleted,
+      allowedCapabilities: snapshot.allowedCapabilities,
     });
   } catch (error) {
     console.error("[abroadshield/next-action GET]", error);
