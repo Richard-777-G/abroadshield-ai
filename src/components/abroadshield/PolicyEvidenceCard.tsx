@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { ExternalLink, ShieldCheck } from "lucide-react";
 
-type PolicyEvidence = {
+export type PolicyEvidenceView = {
   ruleId: string;
   ruleVersionId: string | null;
   status: string;
@@ -12,26 +11,7 @@ type PolicyEvidence = {
   reason?: string;
 };
 
-type Requirement = { title: string; policyEvidence?: PolicyEvidence };
-
-export default function PolicyEvidenceCard() {
-  const [evidence, setEvidence] = useState<PolicyEvidence | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/abroadshield/requirements", { cache: "no-store" })
-      .then(async (response) => response.ok ? response.json() : null)
-      .then((data) => {
-        if (cancelled) return;
-        const requirements = (data?.snapshot?.requirements ?? []) as Requirement[];
-        setEvidence(requirements.find((item) => item.policyEvidence)?.policyEvidence ?? null);
-      })
-      .catch(() => { if (!cancelled) setEvidence(null); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
-
+export default function PolicyEvidenceCard({ evidence }: { evidence: PolicyEvidenceView | null }) {
   return <section className="mt-6 rounded-[28px] border border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-5 sm:p-7">
     <div className="flex items-start justify-between gap-4">
       <div>
@@ -39,14 +19,13 @@ export default function PolicyEvidenceCard() {
         <h2 className="mt-2 text-lg font-semibold">Rules are shown with their evidence state.</h2>
         <p className="mt-1 max-w-2xl text-xs leading-5 text-[var(--shield-text-dim)]">The workspace does not silently turn a policy source into a legal certainty. Provenance and uncertainty stay visible.</p>
       </div>
-      {loading ? <span className="text-[10px] text-[var(--shield-text-faint)]">Checking…</span> : null}
     </div>
-    {!loading && evidence ? <div className="mt-5 grid gap-3 sm:grid-cols-3">
+    {evidence ? <div className="mt-5 grid gap-3 sm:grid-cols-3">
       <div className="rounded-2xl border border-[var(--shield-border)] p-4"><div className="text-[9px] uppercase tracking-wider text-[var(--shield-text-faint)]">Verification</div><div className="mt-2 text-sm font-semibold">{evidence.status}</div></div>
       <div className="rounded-2xl border border-[var(--shield-border)] p-4"><div className="text-[9px] uppercase tracking-wider text-[var(--shield-text-faint)]">Policy version</div><div className="mt-2 break-all text-xs font-semibold">{evidence.ruleVersionId ?? "No selected version"}</div></div>
       <div className="rounded-2xl border border-[var(--shield-border)] p-4"><div className="text-[9px] uppercase tracking-wider text-[var(--shield-text-faint)]">Authority</div><div className="mt-2 text-xs font-semibold">{evidence.authority ?? "Not available"}</div></div>
-    </div> : !loading ? <div className="mt-5 rounded-2xl border border-[var(--shield-border)] p-4 text-xs text-[var(--shield-text-dim)]">No versioned policy is currently attached to this destination requirement. The system will not invent one.</div> : null}
-    {!loading && evidence?.reason ? <div className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-xs leading-5 text-[var(--shield-text-dim)]"><span className="font-semibold text-[var(--shield-text)]">Review state:</span> {evidence.reason}</div> : null}
-    {!loading && evidence?.sourceUrl ? <a href={evidence.sourceUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-[10px] font-semibold text-[oklch(0.85_0.19_158)]">Open authoritative source <ExternalLink className="h-3 w-3"/></a> : null}
+    </div> : <div className="mt-5 rounded-2xl border border-[var(--shield-border)] p-4 text-xs text-[var(--shield-text-dim)]">No versioned policy is currently attached to this destination requirement. The system will not invent one.</div>}
+    {evidence?.reason ? <div className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/5 p-4 text-xs leading-5 text-[var(--shield-text-dim)]"><span className="font-semibold text-[var(--shield-text)]">Review state:</span> {evidence.reason}</div> : null}
+    {evidence?.sourceUrl ? <a href={evidence.sourceUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1.5 text-[10px] font-semibold text-[oklch(0.85_0.19_158)]">Open authoritative source <ExternalLink className="h-3 w-3"/></a> : null}
   </section>;
 }
