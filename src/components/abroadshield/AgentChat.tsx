@@ -36,14 +36,17 @@ type Message = {
 function isDraftMessage(content: string): boolean {
   const lower = content.toLowerCase();
   const hasApprovalInstruction =
-    lower.includes("approve to send") || lower.includes("approve / edit / decline");
+    lower.includes("approve to send") ||
+    lower.includes("approve / edit / decline");
   const hasSubject = /^subject:\s*.+$/im.test(content);
   const hasRecipient = /^(?:to|recipient):\s*.+$/im.test(content);
   const hasBodyMarker = /^body:\s*$/im.test(content);
 
   return (
     hasApprovalInstruction ||
-    (hasSubject && hasRecipient && (hasBodyMarker || /^dear\b/im.test(content)))
+    (hasSubject &&
+      hasRecipient &&
+      (hasBodyMarker || /^dear\b/im.test(content)))
   );
 }
 
@@ -62,14 +65,18 @@ function buildWelcome(profile: StudentProfile): Message {
     id: "welcome",
     role: "assistant",
     content: `Hi **${name}** — I’m your AbroadShield agent.\n\n${
-      context ? `I have your journey context: **${context}**.\n\n` : ""
+      context
+        ? `I have your journey context: **${context}**.\n\n`
+        : ""
     }Give me a task in plain language. I’ll execute what the current stage allows, use live sources where required, and never claim an external action happened unless the system actually did it.`,
   };
 }
 
 function getAgentError(data: unknown, status: number): string {
   const error =
-    data && typeof data === "object" && typeof (data as { error?: unknown }).error === "string"
+    data &&
+    typeof data === "object" &&
+    typeof (data as { error?: unknown }).error === "string"
       ? (data as { error: string }).error
       : "";
 
@@ -267,7 +274,12 @@ export default function AgentChat() {
           <div className="relative flex items-center justify-between border-b border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] px-5 py-3.5">
             <div className="relative flex items-center gap-3">
               <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-[oklch(0.74_0.17_162/0.5)] bg-[oklch(0.74_0.17_162/0.12)]">
-                <img src="/sections/agent-avatar.png" alt="AI agent" className="h-full w-full object-cover" loading="lazy" />
+                <img
+                  src="/sections/agent-avatar.png"
+                  alt="AI agent"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
                 <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[oklch(0.22_0.025_165)] bg-[oklch(0.74_0.17_162)] as-pulse" />
               </div>
               <div>
