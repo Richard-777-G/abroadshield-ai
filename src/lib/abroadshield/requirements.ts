@@ -1,7 +1,7 @@
 import { COUNTRY_RULE_MAP, type CountryRule } from "./country-rules";
 import { normalizePhase, type PhaseId, countryContext } from "./journey";
 import { getCountryPolicyRegistry } from "./country-policy-catalog";
-import type { EvidenceVerificationState } from "./policy-versioning";
+import type { EvidenceVerificationState, EffectivePeriodStatus } from "./policy-versioning";
 import { isValidCalendarDate } from "./date-validation";
 
 export type RequirementStatus = "ready" | "needs_review" | "blocked";
@@ -11,6 +11,7 @@ export interface RequirementPolicyEvidence {
   ruleId: string;
   ruleVersionId: string | null;
   status: EvidenceVerificationState;
+  effectivePeriodStatus?: EffectivePeriodStatus;
   authority: string | null;
   sourceUrl: string | null;
   reason?: string;
@@ -78,6 +79,7 @@ function policyEvidenceFor(destination: string | undefined, phase: PhaseId, titl
     ruleId: policy.ruleId,
     ruleVersionId: selection.rule?.id ?? null,
     status: selection.status,
+    effectivePeriodStatus: selection.rule?.effectivePeriodStatus,
     authority: selection.rule?.source.authority ?? null,
     sourceUrl: selection.rule?.source.canonicalUrl ?? null,
     reason: selection.reason,
@@ -100,7 +102,7 @@ export function buildRequirementSnapshot(profile: Profile = {}): RequirementSnap
     const fundingMissing = /fund|financial|bank statement|sperrkonto|gic/.test(normalized) && !profile.funding;
     const appointmentMissing = /appointment|interview/.test(normalized) && !profile.visaAppointment;
     const evidence = policyEvidenceFor(profile.destination, phase, item.item, asOf);
-    const policyNeedsReview = evidence && evidence.status !== "VERIFIED" && evidence.status !== "PROVISIONALLY_VERIFIED";
+    const policyNeedsReview = Boolean(evidence && (evidence.status !== "VERIFIED" && evidence.status !== "PROVISIONALLY_VERIFIED" || evidence.effectivePeriodStatus === "UNKNOWN"));
     const blocked = fundingMissing || appointmentMissing;
     const status: RequirementStatus = blocked ? "blocked" : policyNeedsReview ? "needs_review" : "ready";
     const priority: RequirementPriority = blocked ? "critical" : policyNeedsReview ? "high" : phase === "pre-departure" ? "high" : "medium";
