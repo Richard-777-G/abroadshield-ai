@@ -7,6 +7,7 @@ import { AGENT_CAPABILITIES, type AgentCapability } from "./tool-registry";
 import { buildStageSystemDirective, getStagePolicy, isCapabilityAllowedInStage, isCapabilitySupportedForDestination } from "./stage-orchestrator";
 import { parseModelJson } from "./parse-json";
 import { executeFrancePolicy } from "./policy-execution";
+import { requireCalendarDate } from "./date-validation";
 
 export type TaskExecutionRequest = { taskType: string; context?: string; phase?: string; mode?: "execute" | "plan" };
 export type TaskExecutionResult = { taskId: string; taskType: AgentCapability; phase: string; mode: "execute" | "plan"; planningAnotherStage: boolean; result: unknown; live: boolean };
@@ -29,9 +30,8 @@ function requireYear(request: string): number {
   return value;
 }
 function requireDate(request: string, name: string): string {
-  const value = extractParam(request, name);
-  if (!value || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value) || Number.isNaN(Date.parse(`${value}T00:00:00Z`))) throw new TaskExecutionError(`Missing or invalid ${name}. Use YYYY-MM-DD.`, 400);
-  return value;
+  try { return requireCalendarDate(extractParam(request, name), name); }
+  catch (error) { throw new TaskExecutionError(error instanceof Error ? error.message : `Missing or invalid ${name}. Use YYYY-MM-DD.`, 400); }
 }
 function requireAcademicYear(request: string): string {
   const value = extractParam(request, "academicYear");
