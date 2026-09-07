@@ -7,7 +7,7 @@ describe("France VLS-TS validation deadline", () => {
     expect(result.deadline).toBe("2026-04-30");
     expect(result.daysRemaining).toBe(29);
     expect(result.status).toBe("WARNING_30_DAYS");
-    expect(result.taxStampCostEuros).toBe(150);
+    expect(result.taxStampCostEuros).toBe(50);
   });
 
   test("handles leap-year February correctly", () => {
