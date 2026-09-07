@@ -1,8 +1,19 @@
 import { COUNTRY_RULE_MAP, type CountryRule } from "./country-rules";
-import { normalizePhase, type PhaseId } from "./journey";
+import { normalizePhase, type PhaseId, countryContext } from "./journey";
+import { getCountryPolicyRegistry } from "./country-policy-catalog";
+import type { EvidenceVerificationState } from "./policy-versioning";
 
 export type RequirementStatus = "ready" | "needs_review" | "blocked";
 export type RequirementPriority = "critical" | "high" | "medium" | "info";
+
+export interface RequirementPolicyEvidence {
+  ruleId: string;
+  ruleVersionId: string | null;
+  status: EvidenceVerificationState;
+  authority: string | null;
+  sourceUrl: string | null;
+  reason?: string;
+}
 
 export interface JourneyRequirement {
   id: string;
@@ -13,6 +24,7 @@ export interface JourneyRequirement {
   reason: string;
   nextAction: string;
   source?: { label: string; url: string };
+  policyEvidence?: RequirementPolicyEvidence;
 }
 
 export interface RequirementSnapshot {
@@ -37,6 +49,33 @@ type Profile = {
 
 const sourceFor = (country: CountryRule, index: number) => country.embassyLinks[index] ?? country.embassyLinks[0];
 
+const POLICY_BY_CHECKLIST_TEXT: Record<string, { ruleId: string; topic: string }> = {
+  "validate vls-ts online within 3 months": { ruleId: "fr-vls-ts-validation-3-months", topic: "vls-ts-validation" },
+};
+
+function policyEvidenceFor(destination: string | undefined, phase: PhaseId, title: string): RequirementPolicyEvidence | undefined {
+  const policy = POLICY_BY_CHECKLIST_TEXT[title.trim().toLowerCase()];
+  if (!policy) return undefined;
+  const registry = getCountryPolicyRegistry(destination);
+  if (!registry) return undefined;
+  const context = countryContext(destination);
+  const selection = registry.current(policy.ruleId, {
+    asOf: new Date().toISOString().slice(0, 10),
+    country: context.code,
+    jurisdiction: context.code,
+    phase,
+    topic: policy.topic,
+  });
+  return {
+    ruleId: policy.ruleId,
+    ruleVersionId: selection.rule?.id ?? null,
+    status: selection.status,
+    authority: selection.rule?.source.authority ?? null,
+    sourceUrl: selection.rule?.source.canonicalUrl ?? null,
+    reason: selection.reason,
+  };
+}
+
 export function buildRequirementSnapshot(profile: Profile = {}): RequirementSnapshot {
   const country = profile.destination ? COUNTRY_RULE_MAP[profile.destination] ?? null : null;
   const phase = normalizePhase(profile.currentPhase);
@@ -50,11 +89,13 @@ export function buildRequirementSnapshot(profile: Profile = {}): RequirementSnap
     const normalized = item.item.toLowerCase();
     const fundingMissing = /fund|financial|bank statement|sperrkonto|gic/.test(normalized) && !profile.funding;
     const appointmentMissing = /appointment|interview/.test(normalized) && !profile.visaAppointment;
-    const status: RequirementStatus = fundingMissing || appointmentMissing ? "blocked" : "needs_review";
-    const priority: RequirementPriority = fundingMissing || appointmentMissing ? "critical" : phase === "pre-departure" ? "high" : "medium";
-    const reason = fundingMissing ? "Your persistent profile does not contain funding evidence yet." : appointmentMissing ? "Your persistent profile does not contain a visa appointment yet." : "This is required by the configured destination checklist for your current journey stage.";
-    const nextAction = fundingMissing ? "Add your funding evidence/details to the journey profile." : appointmentMissing ? "Add the appointment details or ask the agent to prepare the booking workflow." : "Upload or verify the supporting evidence before marking this complete.";
-    return { id: `${country.country}-${phase}-${index}`, title: item.item, phase, status, priority, reason, nextAction, source: sourceFor(country, index) };
+    const evidence = policyEvidenceFor(profile.destination, phase, item.item);
+    const policyNeedsReview = evidence && evidence.status !== "VERIFIED";
+    const status: RequirementStatus = fundingMissing || appointmentMissing ? "blocked" : policyNeedsReview ? "needs_review" : "needs_review";
+    const priority: RequirementPriority = fundingMissing || appointmentMissing ? "critical" : policyNeedsReview ? "high" : phase === "pre-departure" ? "high" : "medium";
+    const reason = fundingMissing ? "Your persistent profile does not contain funding evidence yet." : appointmentMissing ? "Your persistent profile does not contain a visa appointment yet." : policyNeedsReview ? `Policy evidence requires review: ${evidence?.reason ?? evidence?.status}.` : "This requirement is sourced from the configured destination journey checklist.";
+    const nextAction = fundingMissing ? "Add your funding evidence/details to the journey profile." : appointmentMissing ? "Add the appointment details or ask the agent to prepare the booking workflow." : policyNeedsReview ? "Review the authoritative source and establish the applicable policy before relying on this requirement." : "Upload or verify the supporting evidence before marking this complete.";
+    return { id: `${country.country}-${phase}-${index}`, title: item.item, phase, status, priority, reason, nextAction, source: sourceFor(country, index), policyEvidence: evidence };
   });
 
   if (requirements.length === 0) requirements.push({ id: `${country.country}-${phase}-rules`, title: `${phase} rule review`, phase, status: "needs_review", priority: "info", reason: "No checklist items are currently configured for this stage in the destination rule table.", nextAction: "Ask the agent to review this stage against the official destination authority before taking action.", source: sourceFor(country, 0) });
