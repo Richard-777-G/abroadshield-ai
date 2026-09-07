@@ -6,7 +6,7 @@ import { executeLiveTool } from "./live-tool-adapter";
 import { AGENT_CAPABILITIES, type AgentCapability } from "./tool-registry";
 import { buildStageSystemDirective, getStagePolicy, isCapabilityAllowedInStage, isCapabilitySupportedForDestination } from "./stage-orchestrator";
 import { parseModelJson } from "./parse-json";
-import { calculateFrenchWorkBudget, calculateVlsTsValidationDeadline, FRANCE_CVEC_RULE } from "./policies/france";
+import { executeFrancePolicy, type FrancePolicyRuleId } from "./policy-execution";
 
 export type TaskExecutionRequest = {
   taskType: string;
@@ -41,9 +41,13 @@ function extractParam(request: string, name: string): string | undefined {
   return match?.[1];
 }
 
-function buildInstruction(taskType: AgentCapability, profileContext: string, request: string, phase: string, mode: "execute" | "plan") {
+function buildInstruction(taskType: AgentCapability, profileContext: string, request: string, phase: string, mode: "execute" | "plan", deterministicPolicyResult?: unknown) {
   const policy = getStagePolicy(normalizePhase(phase));
   const common = `You are an execution agent inside AbroadShield AI.\n${buildStageSystemDirective(policy.phase)}\nMODE: ${mode === "plan" ? "FUTURE-STAGE PLANNING" : "CURRENT-STAGE EXECUTION"}\nAUTHENTICATED STUDENT PROFILE:\n${profileContext}\n\nRules:\n- Work only with facts supplied by the profile, verified live sources, deterministic policy outputs, or the task request.\n- Never claim an external action happened unless this request actually performs it.\n- Never fabricate live URLs, employers, deadlines, prices, legal requirements, listings, or verification results.\n- Deterministic policy results are authoritative inputs; do not recalculate or alter their statutory values.\n- If live external data or a connector is required but unavailable, say so explicitly.\n- In planning mode, explain what should be prepared and what must wait until that stage.\n- Return valid JSON only.`;
+
+  const policyContext = deterministicPolicyResult === undefined
+    ? ""
+    : `\n\nDETERMINISTIC POLICY RESULT (authoritative; do not recalculate):\n${JSON.stringify(deterministicPolicyResult)}`;
 
   const instructions: Record<AgentCapability, string> = {
     document_check: `${common}\nPerform an informational document pre-check, not legal certification. Return {"status":"verified|issue|missing|needs_review","summary":string,"issues":string[],"agentActions":string[],"priority":"critical|high|medium|low","verificationNote":string}.`,
@@ -60,7 +64,7 @@ function buildInstruction(taskType: AgentCapability, profileContext: string, req
     ameli_registration: `${common}\nPrepare a French student health-registration checklist using only the supplied official-source facts. Do not claim registration was completed. Return {"summary":string,"steps":string[],"officialSource":object,"nextAction":string}.`,
   };
 
-  return `${instructions[taskType]}\n\nTASK REQUEST: ${request}`;
+  return `${instructions[taskType]}${policyContext}\n\nTASK REQUEST: ${request}`;
 }
 
 function buildDeterministicPlan(taskType: AgentCapability, profile: AgentProfile, phase: string, request: string) {
@@ -92,22 +96,32 @@ function buildDeterministicPlan(taskType: AgentCapability, profile: AgentProfile
   return { status: "plan_ready", capability: taskType, request, summary: plans[taskType].summary, context: common, nextSteps: plans[taskType].nextSteps, prerequisites: plans[taskType].prerequisites };
 }
 
-function executeDeterministicFrancePolicy(taskType: AgentCapability, request: string) {
+function executeFranceStatutoryPolicy(taskType: AgentCapability, profile: AgentProfile, request: string, phase: string) {
+  if (profile.destination?.trim().toLowerCase() !== "france") return null;
+
+  const asOf = new Date().toISOString().slice(0, 10);
+  const query = {
+    asOf,
+    country: "FR",
+    jurisdiction: "FR",
+    phase: normalizePhase(phase),
+  } as const;
+
   if (taskType === "work_rule_check") {
     const annualLoggedHours = Number(extractParam(request, "loggedHours"));
     const calendarYear = Number(extractParam(request, "calendarYear"));
-    return calculateFrenchWorkBudget({ annualLoggedHours, calendarYear });
+    return executeFrancePolicy("fr-student-work-964-hours", { ...query, topic: "student-work" }, { annualLoggedHours, calendarYear });
   }
 
   if (taskType === "vlsts_validation") {
-    const entryDateIntoFrance = extractParam(request, "entryDate");
-    const currentDate = extractParam(request, "currentDate");
-    return calculateVlsTsValidationDeadline({ entryDateIntoFrance: entryDateIntoFrance ?? "", currentDate: currentDate ?? "" });
+    const entryDateIntoFrance = extractParam(request, "entryDate") ?? "";
+    const currentDate = extractParam(request, "currentDate") ?? asOf;
+    return executeFrancePolicy("fr-vls-ts-validation-3-months", { ...query, topic: "vls-ts-validation" }, { entryDateIntoFrance, currentDate });
   }
 
   if (taskType === "cvec_payment") {
     const academicYear = extractParam(request, "academicYear") ?? "";
-    return FRANCE_CVEC_RULE.calculate({ academicYear });
+    return executeFrancePolicy("fr-cvec-2026-2027", { ...query, topic: "cvec", conditions: { academicYear } }, { academicYear });
   }
 
   return null;
@@ -150,7 +164,7 @@ export async function executeAgentTask(userId: string, profile: AgentProfile, in
 
     let result: unknown;
     let live = false;
-    const deterministicResult = executeDeterministicFrancePolicy(taskType, request);
+    const deterministicResult = executeFranceStatutoryPolicy(taskType, profile, request, phase);
 
     if (deterministicResult) {
       result = deterministicResult;
@@ -175,8 +189,8 @@ export async function executeAgentTask(userId: string, profile: AgentProfile, in
     } else {
       const raw = await generateText({
         messages: [
-          { role: "system", content: buildInstruction(taskType, buildAgentContext(profile), request, phase, mode) },
-          { role: "user", content: request },
+          { role: "system", content: buildInstruction(taskType, buildAgentContext(profile), request, phase, mode, deterministicResult) },
+          { role: "user", content: deterministicResult ? JSON.stringify(deterministicResult) : request },
         ],
         timeoutMs: 25_000,
         jsonMode: true,
