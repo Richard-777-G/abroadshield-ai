@@ -9,6 +9,9 @@ import { normalizePhase } from "@/lib/abroadshield/journey";
 import { executeAgentTask } from "@/lib/abroadshield/task-executor";
 import { AGENT_CAPABILITIES, getTool } from "@/lib/abroadshield/tool-registry";
 import type { AgentCapability } from "@/lib/abroadshield/tool-registry";
+import { getStudentContextSnapshot } from "@/lib/abroadshield/student-context";
+import { searchOpportunities, type OpportunityIntent } from "@/lib/abroadshield/opportunity-engine";
+import { createFranceTravailAdapter } from "@/lib/abroadshield/france-travail-adapter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,6 +80,41 @@ async function persistDeterministic(userId: string, phase: ReturnType<typeof nor
   return NextResponse.json({ ok: true, reply, phase, executed: false, deterministic: true, kind });
 }
 
+function opportunityIntentFromMessage(message: string, student: Awaited<ReturnType<typeof getStudentContextSnapshot>>): OpportunityIntent {
+  const lower = message.toLowerCase();
+  const category = /internship|intern|stage|internships|stages/.test(lower)
+    ? "internship"
+    : /apprenticeship|apprenticeships|alternance|apprentice/.test(lower)
+      ? "apprenticeship"
+      : /full[- ]?time|full time|permanent/.test(lower)
+        ? "full_time"
+        : /temporary|temp job|seasonal/.test(lower)
+          ? "temporary"
+          : /freelance|freelancing|self[- ]employed/.test(lower)
+            ? "freelance"
+            : "part_time";
+  const paris = /\bparis\b/i.test(message);
+  const location = paris ? "Paris" : student?.destination.city ?? student?.destination.country;
+  return { category, location, query: message.replace(/\b(find|search|look for|looking for|me|jobs?|job|internships?|intern|stages?|part[- ]?time|full[- ]?time|apprenticeships?|alternance|in|at|for|around|near|paris|france)\b/gi, " ").replace(/\s+/g, " ").trim() || undefined };
+}
+
+function formatOpportunitySearch(reply: Awaited<ReturnType<typeof searchOpportunities>>, intent: OpportunityIntent): string {
+  const label = intent.category.replaceAll("_", " ");
+  if (!reply.opportunities.length) {
+    const source = reply.sourceErrors.length ? `\n\n**Source status:** ${reply.sourceErrors.map((item) => item.sourceId).join(", ")} is currently unavailable.` : "";
+    return `I ran a live **${label}** search${intent.location ? ` around **${intent.location}**` : ""}, but no verified opportunities were returned from the configured source.${source}\n\nI have not fabricated fallback listings.`;
+  }
+  const rows = reply.opportunities.slice(0, 10).map((opportunity, index) => {
+    const match = reply.matches.find((item) => item.opportunityId === opportunity.canonicalId);
+    const fit = match?.fit ?? "unknown";
+    const eligibility = opportunity.eligibility === "eligible" ? "eligible" : "work authorization check required";
+    const url = opportunity.applicationUrl ?? opportunity.sourceUrl;
+    return `${index + 1}. **${opportunity.title}** — ${opportunity.employer}\n   ${[opportunity.location, opportunity.contractType.replaceAll("_", " "), `fit: ${fit}`, eligibility].join(" · ")}\n   [Open the verified listing](${url})`;
+  }).join("\n\n");
+  const sourceNote = reply.sourceErrors.length ? `\n\nSome sources were unavailable: ${reply.sourceErrors.map((item) => item.sourceId).join(", ")}.` : "";
+  return `I ran a live **${label}** search${intent.location ? ` around **${intent.location}**` : ""} and found **${reply.opportunities.length} verified opportunity${reply.opportunities.length === 1 ? "" : "ies"}** from ${reply.sourceIds.length} source${reply.sourceIds.length === 1 ? "" : "s"}.\n\n${rows}${sourceNote}\n\n**Important:** these are discovery/application links. AbroadShield has not submitted an application.`;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const user = await getAuthenticatedUser();
@@ -94,6 +132,28 @@ export async function POST(req: NextRequest) {
     if (isGreeting(userMessage)) return persistDeterministic(user.id, phase, userMessage, buildGreeting(user.name, phase, journey?.destination), "greeting");
     if (isCapabilityQuestion(userMessage)) return persistDeterministic(user.id, phase, userMessage, buildCapabilityReply(phase), "capabilities");
     if (isPositioningQuestion(userMessage)) return persistDeterministic(user.id, phase, userMessage, buildPositioningReply(phase), "positioning");
+
+    // Opportunity discovery is a research operation, not a stage transition. A student
+    // may search future-city employment/internships before arrival without executing an
+    // employment action. The application layer performs live retrieval and returns only
+    // canonical provider-backed records.
+    if (capability === "job_search" && /\b(find|search|look for|looking for|show me|opportunities|jobs?|internships?|stages?|part[- ]?time|full[- ]?time|apprenticeships?|alternance)\b/i.test(userMessage)) {
+      const student = await getStudentContextSnapshot(user.id);
+      if (!student) return NextResponse.json({ ok: false, error: "Student journey context is not available." }, { status: 409 });
+      const intent = opportunityIntentFromMessage(userMessage, student);
+      const country = student.destination.country?.toLowerCase();
+      if (country !== "france" && country !== "fr") {
+        const reply = `I can structure this search, but the live opportunity adapter currently configured for this workspace is France Travail for France. I will not present unverified listings as live results.`;
+        return persistDeterministic(user.id, phase, userMessage, reply, "stage");
+      }
+      const searchResult = await searchOpportunities({ student, intent, asOf: new Date().toISOString() }, [createFranceTravailAdapter()]);
+      const reply = formatOpportunitySearch(searchResult, intent);
+      await db.agentMessage.createMany({ data: [
+        { userId: user.id, role: "user", content: userMessage, phase },
+        { userId: user.id, role: "assistant", content: reply, phase },
+      ] });
+      return NextResponse.json({ ok: true, reply, phase, capability, executed: false, opportunitySearch: true, opportunities: searchResult.opportunities, matches: searchResult.matches, sourceIds: searchResult.sourceIds, sourceErrors: searchResult.sourceErrors });
+    }
 
     if (capability && exploring) {
       const tool = getTool(capability)!;
