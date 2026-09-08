@@ -31,10 +31,13 @@ export async function searchOpportunities(request: OpportunitySearchRequest, ada
   });
 
   const unique = deduplicateOpportunities(opportunities);
-  const normalized = unique.map((opportunity) => ({ ...opportunity, eligibility: evaluateOpportunityEligibility({ student: request.student, opportunity, asOf: request.asOf }).eligibility }));
-  const matches = normalized.map((opportunity) => matchOpportunity(opportunity, request.student)).sort((a, b) => fitRank(b.fit) - fitRank(a.fit));
-  const byId = new Map(normalized.map((item) => [item.canonicalId, item]));
-  const ranked = matches.map((match) => byId.get(match.opportunityId)).filter((item): item is Opportunity => Boolean(item));
+  const normalized = unique.map((opportunity) => ({
+    opportunity,
+    eligibility: evaluateOpportunityEligibility({ student: request.student, opportunity, asOf: request.asOf }).eligibility,
+  }));
+  const matches = normalized.map(({ opportunity, eligibility }) => matchOpportunity({ ...opportunity, eligibility }, request.student)).sort((a, b) => fitRank(b.fit) - fitRank(a.fit));
+  const byId = new Map(normalized.map(({ opportunity, eligibility }) => [opportunity.canonicalId, { ...opportunity, eligibility }]));
+  const ranked = matches.map((match) => byId.get(match.opportunityId)).filter(Boolean);
   return { opportunities: ranked, matches, sourceIds, sourceErrors, invalidRecordCount, retrievedAt: request.asOf };
 }
 
