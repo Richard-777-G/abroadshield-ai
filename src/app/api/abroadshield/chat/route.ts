@@ -111,7 +111,7 @@ function formatOpportunitySearch(
 
   if (!reply.opportunities.length) {
     const source = reply.sourceErrors.length
-      ? `\n\n• **Configured Source Status:** ${reply.sourceErrors.map((item) => `\`${item.sourceId}\`: ${item.message}`).join(", ")}.`
+      ? `\n\n• **Configured Source Status:** ${reply.sourceErrors.map((item) => `\`${item.sourceId}\`: ${item.error}`).join(", ")}.`
       : "";
     return `I queried verified employment platforms for live **${label}** opportunities${locationText}${contextNote}, but no verified active listings were returned by the configured provider adapter.${source}\n\nAbroadShield never manufactures mock or unverified fallback listings.`;
   }
