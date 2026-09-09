@@ -73,6 +73,8 @@ export default function AppShell({
           <WorkspaceHeader
             activeView={activeView}
             firstName={firstName}
+            email={session?.user?.email}
+            onNavigate={navigate}
             onOpenMobile={() => setMobileOpen(true)}
             onToggleArtifacts={() => setArtifactsOpen(!artifactsOpen)}
             artifactsOpen={artifactsOpen}

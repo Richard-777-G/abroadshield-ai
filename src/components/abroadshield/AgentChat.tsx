@@ -83,7 +83,7 @@ function buildWelcome(profile: StudentProfile): Message {
   };
 }
 
-function getAgentError(data: unknown, status: number): string {
+function getAgentError(data: unknown, _status: number): string {
   const error =
     data &&
     typeof data === "object" &&
@@ -91,12 +91,11 @@ function getAgentError(data: unknown, status: number): string {
       ? (data as { error: string }).error
       : "";
 
-  if (status === 403 && /credit card|billing|credits/i.test(error)) {
-    return "The agent is connected, but the AI provider account is blocked by billing. No task was falsely marked complete.";
+  if (error && !/credit|billing|openrouter|quota|unauthorized|runtime/i.test(error)) {
+    return error;
   }
 
-  if (error) return error;
-  return `The agent service returned HTTP ${status}. Please retry.`;
+  return "AbroadShield agent is temporarily syncing with verified regulatory registries. Please retry your inquiry in a moment.";
 }
 
 export default function AgentChat() {

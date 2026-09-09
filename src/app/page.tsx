@@ -13,7 +13,7 @@ import AppShell, { type WorkspaceView } from "@/components/abroadshield/AppShell
 import JourneyWorkspace from "@/components/abroadshield/JourneyWorkspace";
 import { useProfileStore, type StudentProfile } from "@/components/abroadshield/profileStore";
 
-const PublicProduct = dynamic(() => import("@/components/abroadshield/PublicProduct"));
+const SettingsView = dynamic(() => import("@/components/abroadshield/SettingsView"), { loading: () => <FeatureLoading label="Loading settings…" /> });
 const CountryRules = dynamic(() => import("@/components/abroadshield/CountryRules"));
 const AgentChat = dynamic(() => import("@/components/abroadshield/AgentChat"), { loading: () => <FeatureLoading label="Loading agent…" /> });
 const NetworkingJobs = dynamic(() => import("@/components/abroadshield/NetworkingJobs"));
@@ -32,7 +32,7 @@ const PUBLIC_VIEWS: { id: PublicView; label: string }[] = [
   { id: "countries", label: "Country intelligence" },
   { id: "pricing", label: "Pricing" },
 ];
-const WORKSPACE_VIEWS: WorkspaceView[] = ["dashboard", "agent", "journey", "connectors", "network"];
+const WORKSPACE_VIEWS: WorkspaceView[] = ["dashboard", "agent", "journey", "connectors", "network", "settings"];
 
 function isValidRoute(value: string): value is Route {
   return PUBLIC_VIEWS.some((v) => v.id === value) || value === "agent" || WORKSPACE_VIEWS.includes(value as WorkspaceView);
@@ -61,7 +61,10 @@ export default function Home() {
       setShowOnboarding(false);
       setShowAuth(false);
       setActiveRoute("home");
-      if (window.location.hash) window.history.replaceState(null, "", "/");
+      if (typeof window !== "undefined") {
+        window.location.hash = "";
+        window.history.replaceState(null, "", "/");
+      }
     }
   }, [status, hydrateFromServer, resetProfile]);
 
@@ -112,13 +115,14 @@ export default function Home() {
 function contentFor(activeRoute: Route, status: string, session: ReturnType<typeof useSession>["data"], profile: StudentProfile, navigateTo: (view: string) => void, requestAuth: (mode?: AuthMode) => void) {
   return <AnimatePresence mode="wait"><motion.div key={activeRoute} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
     {activeRoute === "home" && <><Hero3D onNavigate={navigateTo} /><HomeShowcase onNavigate={navigateTo} /></>}
-    {activeRoute === "journey" && (session ? <JourneyWorkspace onNavigate={navigateTo} /> : <PublicProduct onNavigate={navigateTo} />)}
+    {activeRoute === "journey" && (session ? <JourneyWorkspace onNavigate={navigateTo} /> : <><Hero3D onNavigate={navigateTo} /><HomeShowcase onNavigate={navigateTo} /></>)}
     {activeRoute === "agent" && status === "authenticated" && <AgentChat />}
     {activeRoute === "countries" && <CountryRules />}
     {activeRoute === "pricing" && <><PricingTiers onStart={() => { if (status === "authenticated") navigateTo("agent"); else requestAuth("signup"); }} /><VisionCTA onNavigate={navigateTo} /></>}
     {activeRoute === "dashboard" && (status === "authenticated" ? <DashboardView onNavigate={navigateTo} /> : <SignInPanel onSignIn={() => requestAuth("login")} />)}
     {activeRoute === "network" && status === "authenticated" && <NetworkingJobs onNavigate={navigateTo} />}
     {activeRoute === "connectors" && status === "authenticated" && <Connectors />}
+    {activeRoute === "settings" && status === "authenticated" && <SettingsView onNavigate={navigateTo as any} />}
   </motion.div></AnimatePresence>;
 }
 

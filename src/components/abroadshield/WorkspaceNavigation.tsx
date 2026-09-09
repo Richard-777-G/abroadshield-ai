@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import {
   Activity,
   Bot,
@@ -17,6 +18,7 @@ import {
   Plus,
   Plug,
   Scale,
+  Settings,
   Shield,
   Sparkles,
   UserRound,
@@ -35,38 +37,45 @@ export const NAV: {
 }[] = [
   {
     id: "agent",
-    label: "AI Co-Pilot",
+    label: "Ask Co-Pilot",
     tag: "LIVE CHAT",
-    description: "Direct conversational co-pilot",
+    description: "Direct conversational execution",
     icon: Bot,
   },
   {
     id: "network",
     label: "Target Opportunities",
-    tag: "FRANCE TRAVAIL",
-    description: "Verified jobs & saved dossier",
+    tag: "LIVE JOBS",
+    description: "Verified listings & application prep",
     icon: Activity,
   },
   {
     id: "dashboard",
-    label: "Statutory Radar",
-    tag: "L1 LIMITS",
-    description: "Mission priorities & statutory limits",
+    label: "Statutory Limits",
+    tag: "LIMITS & STAGE",
+    description: "Work limits, deadlines & mission status",
     icon: LayoutDashboard,
   },
   {
     id: "journey",
     label: "Journey Vector",
     tag: "8-STAGE",
-    description: "Architectural lifecycle blueprint",
+    description: "Full lifecycle progression blueprint",
     icon: Compass,
   },
   {
     id: "connectors",
     label: "Connected Services",
     tag: "GATEWAYS",
-    description: "Official APIs & authorized tools",
+    description: "Official APIs & external tools",
     icon: Plug,
+  },
+  {
+    id: "settings",
+    label: "Settings & Profile",
+    tag: "ACCOUNT",
+    description: "Destination, preferences & security",
+    icon: Settings,
   },
 ];
 
@@ -210,26 +219,34 @@ export function WorkspaceSidebar({
       {/* Student Profile Dock at Bottom */}
       <div className="border-t border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-3">
         <div className="flex items-center justify-between rounded-xl p-1.5">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[oklch(0.76_0.18_160/0.15)] text-xs font-bold text-[var(--shield-emerald-bright)] border border-[oklch(0.76_0.18_160/0.3)]">
+          <button
+            type="button"
+            onClick={() => onNavigate("settings")}
+            className="flex items-center gap-2.5 min-w-0 text-left hover:opacity-85 transition group"
+            title="Open Settings & Preferences"
+          >
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[oklch(0.76_0.18_160/0.15)] text-xs font-bold text-[var(--shield-emerald-bright)] border border-[oklch(0.76_0.18_160/0.3)] group-hover:border-[var(--shield-emerald-bright)]">
               {firstName.slice(0, 2).toUpperCase()}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1">
-                <span className="truncate text-xs font-semibold text-white">{firstName}</span>
+                <span className="truncate text-xs font-semibold text-white group-hover:text-[var(--shield-emerald-bright)]">{firstName}</span>
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--shield-emerald-bright)]" />
               </div>
-              <div className="text-[10px] text-[var(--shield-emerald-bright)] font-mono truncate">
-                🇫🇷 France · Art. R5221-26
+              <div className="text-[10px] text-[var(--shield-text-dim)] truncate">
+                Settings & Preferences
               </div>
             </div>
-          </div>
+          </button>
 
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={() => {
+              if (typeof window !== "undefined") window.location.hash = "";
+              void signOut({ callbackUrl: "/" });
+            }}
             title="Sign out"
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--shield-text-faint)] transition hover:bg-white/5 hover:text-white"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--shield-text-faint)] transition hover:bg-red-500/10 hover:text-red-400"
           >
             <LogOut className="h-3.5 w-3.5" />
           </button>
@@ -313,17 +330,42 @@ export function WorkspaceMobileNav({
 export function WorkspaceHeader({
   activeView,
   firstName,
+  email,
+  onNavigate,
   onOpenMobile,
   onToggleArtifacts,
   artifactsOpen,
 }: {
   activeView: WorkspaceView;
   firstName: string;
+  email?: string | null;
+  onNavigate?: (view: WorkspaceView) => void;
   onOpenMobile: () => void;
   onToggleArtifacts?: () => void;
   artifactsOpen?: boolean;
 }) {
   const currentNav = NAV.find((n) => n.id === activeView);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dropdownOpen]);
+
+  const handleSignOut = async () => {
+    if (typeof window !== "undefined") {
+      window.location.hash = "";
+    }
+    await signOut({ callbackUrl: "/" });
+  };
 
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-[var(--shield-border)] bg-[rgba(8,9,13,0.85)] px-4 backdrop-blur-xl sm:px-6">
@@ -345,7 +387,7 @@ export function WorkspaceHeader({
 
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Dynamic Context Status */}
-        <div className="hidden items-center gap-2 rounded-full border border-[var(--shield-border)] bg-[var(--shield-ink-2)] px-3 py-1 text-[11px] font-mono text-[var(--shield-emerald-bright)] sm:flex">
+        <div className="hidden items-center gap-2 rounded-full border border-[var(--shield-border)] bg-[var(--shield-ink-2)] px-3 py-1 text-[11px] font-mono text-[var(--shield-emerald-bright)] md:flex">
           <span className="h-1.5 w-1.5 rounded-full bg-[var(--shield-emerald-bright)] as-pulse" />
           <span>STATUTORY GUARD: ACTIVE</span>
         </div>
@@ -364,6 +406,62 @@ export function WorkspaceHeader({
           <PanelRight className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">Dossier Inspector</span>
         </button>
+
+        {/* Discoverable Top-Right User Account Dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setDropdownOpen((prev) => !prev)}
+            aria-expanded={dropdownOpen}
+            aria-haspopup="true"
+            className="flex items-center gap-2 rounded-full border border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-1 pr-2.5 transition hover:border-white/30 hover:bg-white/5"
+          >
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--shield-emerald)]/20 text-xs font-bold text-[var(--shield-emerald-bright)] border border-[var(--shield-emerald)]/40">
+              {firstName.slice(0, 2).toUpperCase()}
+            </div>
+            <span className="hidden sm:inline text-xs font-semibold text-white max-w-[100px] truncate">{firstName}</span>
+          </button>
+
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-2 w-64 rounded-2xl border border-[var(--shield-border)] bg-[var(--shield-ink)] p-2 shadow-2xl backdrop-blur-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="px-3 py-2.5 border-b border-white/5">
+                <div className="text-xs font-bold text-white truncate">{firstName}</div>
+                {email && <div className="text-[11px] text-[var(--shield-text-dim)] truncate mt-0.5">{email}</div>}
+                <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono text-[var(--shield-emerald-bright)]">
+                  <span className="h-1 w-1 rounded-full bg-[var(--shield-emerald-bright)]" />
+                  <span>Verified Identity</span>
+                </div>
+              </div>
+
+              <div className="py-1">
+                {onNavigate && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      onNavigate("settings");
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-[var(--shield-text)] hover:bg-white/5 hover:text-white transition"
+                  >
+                    <Settings className="h-3.5 w-3.5 text-[var(--shield-emerald-bright)]" />
+                    <span>Settings & Preferences</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="pt-1 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/10 transition"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
