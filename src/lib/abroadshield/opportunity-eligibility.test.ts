@@ -7,7 +7,7 @@ const student: StudentContextSnapshot = {
   student: { id: "student-1" },
   education: { course: "Business Analytics" },
   destination: { country: "France", city: "Paris" },
-  journey: { phase: "studying", readiness: "ready", documentsTotal: 0, documentsVerified: 0 },
+  journey: { phase: "studying", readiness: 100, documentsTotal: 0, documentsVerified: 0 },
   career: {},
   constraints: {},
 };

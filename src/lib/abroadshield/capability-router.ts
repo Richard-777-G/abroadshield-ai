@@ -7,7 +7,10 @@ const RULES: Array<[AgentCapability, RegExp[]]> = [
   ["work_rule_check", [/\b(work hours|working hours|student work limit|964 hours|part[- ]?time work limit|work[- ]?hour budget)\b/i]],
   ["document_check", [/\b(document|documents|passport|bank statement|cas|certificate|upload|file)\b/i]],
   ["draft_email", [/\b(draft|write|compose)\b.*\b(email|mail|message)\b/i, /\b(email|mail)\b.*\b(draft|write|compose|send)\b/i]],
-  ["job_search", [/\b(find|search|look for|shortlist)\b.*\b(job|jobs|role|roles|employment|vacanc)/i, /\b(job|jobs|role|roles)\b.*\b(find|search|shortlist)/i]],
+  ["job_search", [
+    /\b(find|search|look for|shortlist|show me)\b.*\b(job|jobs|role|roles|employment|vacanc|internship|internships|intern|stage|stages|apprenticeship|apprenticeships|alternance|part[- ]?time|full[- ]?time)\b/i,
+    /\b(job|jobs|role|roles|internship|internships|stage|stages|apprenticeship|apprenticeships|alternance)\b.*\b(find|search|shortlist|in|around|near)\b/i,
+  ]],
   ["tailor_cv", [/\b(tailor|adapt|customize|customise|rewrite)\b.*\b(cv|resume)\b/i]],
   ["deadline_scan", [/\b(deadline|deadlines|due date|due dates|what.*next|upcoming)\b/i]],
   ["housing_search", [/\b(find|search|look for|shortlist)\b.*\b(housing|house|room|rooms|flat|flats|accommodation|rent|rental)\b/i]],

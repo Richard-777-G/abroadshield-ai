@@ -20,6 +20,11 @@ import { CHAT_STARTERS } from "./data";
 import Reveal from "./Reveal";
 import { useApprovalsStore, type ApprovalKind } from "./approvalsStore";
 import { useProfileStore, type StudentProfile } from "./profileStore";
+import OpportunityResultCard from "./OpportunityResultCard";
+import type {
+  Opportunity,
+  OpportunityMatch,
+} from "@/lib/abroadshield/opportunity-types";
 
 type DraftAction = "none" | "approved" | "edited" | "declined";
 
@@ -31,6 +36,11 @@ type Message = {
   action?: DraftAction;
   actionResult?: string;
   actionError?: string;
+  opportunities?: Opportunity[];
+  matches?: OpportunityMatch[];
+  sourceIds?: string[];
+  sourceErrors?: Array<{ sourceId: string; message: string }>;
+  opportunitySearch?: boolean;
 };
 
 function isDraftMessage(content: string): boolean {
@@ -159,7 +169,16 @@ export default function AgentChat() {
       setMessages((current) =>
         current.map((message) =>
           message.id === pendingMsg.id
-            ? { ...message, content: reply, pending: false }
+            ? {
+                ...message,
+                content: reply,
+                pending: false,
+                opportunities: data?.opportunities,
+                matches: data?.matches,
+                sourceIds: data?.sourceIds,
+                sourceErrors: data?.sourceErrors,
+                opportunitySearch: data?.opportunitySearch,
+              }
             : message,
         ),
       );
@@ -435,6 +454,29 @@ function MessageBubble({
             <div className="prose prose-sm prose-invert max-w-none [&_a]:text-[oklch(0.85_0.19_158)] [&_a]:underline [&_code]:rounded [&_code]:bg-[oklch(0.14_0.018_165/0.8)] [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-[oklch(0.86_0.17_80)] [&_code]:font-mono [&_code]:text-xs [&_pre]:rounded-xl [&_pre]:border [&_pre]:border-[var(--shield-border)] [&_pre]:bg-[oklch(0.14_0.018_165/0.8)] [&_pre]:p-3 [&_pre_code]:bg-transparent [&_pre_code]:p-0">
               <ReactMarkdown>{message.content}</ReactMarkdown>
             </div>
+
+            {message.opportunities && message.opportunities.length > 0 && (
+              <div className="mt-4 border-t border-[var(--shield-border)] pt-3">
+                <div className="flex items-center justify-between pb-1 text-[11px] font-semibold uppercase tracking-wider text-[oklch(0.85_0.19_158)]">
+                  <span>Verified Listings ({message.opportunities.length})</span>
+                  <span className="text-[10px] font-normal text-[var(--shield-text-dim)]">L1 Discovery &amp; Prep</span>
+                </div>
+                <div className="space-y-3">
+                  {message.opportunities.map((opportunity) => {
+                    const match = message.matches?.find(
+                      (m) => m.opportunityId === opportunity.canonicalId,
+                    );
+                    return (
+                      <OpportunityResultCard
+                        key={opportunity.canonicalId}
+                        opportunity={opportunity}
+                        match={match}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {isDraft && (
               <div className="mt-3 border-t border-[var(--shield-border)] pt-3">

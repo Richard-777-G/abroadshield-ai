@@ -6,7 +6,7 @@ import type { StudentContextSnapshot } from "./student-context";
 
 const student: StudentContextSnapshot = {
   student: { id: "student-1", name: "Test Student" }, education: { course: "Business Analytics", university: "Example University" },
-  destination: { country: "France", city: "Paris" }, journey: { phase: "studying", readiness: "ready", documentsTotal: 0, documentsVerified: 0 }, career: {}, constraints: {},
+  destination: { country: "France", city: "Paris" }, journey: { phase: "studying", readiness: 100, documentsTotal: 0, documentsVerified: 0 }, career: {}, constraints: {},
 };
 function opportunity(id: string, overrides: Partial<Opportunity> = {}): Opportunity { return {
   canonicalId: id, providerId: "test-provider", sourceType: "job_board", sourceUrl: `https://example.com/jobs/${id}`, title: "Business Analytics Intern", employer: "Example Labs", location: "Paris", contractType: "internship", requiredSkills: ["Business Analytics"], retrievedAt: "2026-09-08T00:00:00.000Z", freshness: "fresh", applicationCapability: "L1", eligibility: "eligible", provenance: { provider: "test-provider", sourceUrl: `https://example.com/jobs/${id}`, retrievedAt: "2026-09-08T00:00:00.000Z" }, ...overrides,

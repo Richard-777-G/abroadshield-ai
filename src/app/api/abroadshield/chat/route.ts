@@ -115,6 +115,24 @@ function formatOpportunitySearch(reply: Awaited<ReturnType<typeof searchOpportun
   return `I ran a live **${label}** search${intent.location ? ` around **${intent.location}**` : ""} and found **${reply.opportunities.length} verified opportunity${reply.opportunities.length === 1 ? "" : "ies"}** from ${reply.sourceIds.length} source${reply.sourceIds.length === 1 ? "" : "s"}.\n\n${rows}${sourceNote}\n\n**Important:** these are discovery/application links. AbroadShield has not submitted an application.`;
 }
 
+function isApplicationCapabilityQuestion(message: string): boolean {
+  return /\b(can you apply|apply for (these|the|them|internships?|jobs?)|submit my application|will you apply|auto[- ]apply|can i apply through you)\b/i.test(message);
+}
+
+function buildApplicationCapabilityReply(): string {
+  return `AbroadShield **does not auto-submit applications** to external employers or portals without verified connector confirmation.
+
+The opportunities discovered through **France Travail** carry an **L1 capability level** (Discovery + Preparation + Deep-link):
+
+| Workflow | Behavior |
+| :--- | :--- |
+| **Discovery** | Canonical provider records with title, contract, location, and verified URL. |
+| **Preparation** | Tailor your CV keywords, identify requirement gaps, and draft motivation letters. |
+| **Submission** | Review your tailored materials and submit directly on the provider's official portal via **Open verified listing**. |
+
+Would you like me to prepare application materials or tailor your CV for one of the listings?`;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const user = await getAuthenticatedUser();
@@ -132,17 +150,19 @@ export async function POST(req: NextRequest) {
     if (isGreeting(userMessage)) return persistDeterministic(user.id, phase, userMessage, buildGreeting(user.name, phase, journey?.destination), "greeting");
     if (isCapabilityQuestion(userMessage)) return persistDeterministic(user.id, phase, userMessage, buildCapabilityReply(phase), "capabilities");
     if (isPositioningQuestion(userMessage)) return persistDeterministic(user.id, phase, userMessage, buildPositioningReply(phase), "positioning");
+    if (isApplicationCapabilityQuestion(userMessage)) return persistDeterministic(user.id, phase, userMessage, buildApplicationCapabilityReply(), "capabilities");
 
-    // Opportunity discovery is a research operation, not a stage transition. A student
-    // may search future-city employment/internships before arrival without executing an
-    // employment action. The application layer performs live retrieval and returns only
-    // canonical provider-backed records.
+    // Opportunity discovery is a research/planning operation, not a stage execution block.
+    // A student in Pre-Departure or Arrival may search future-city employment/internships
+    // before arrival without executing an employment action. The application layer performs
+    // live retrieval and returns only canonical provider-backed records.
     if (capability === "job_search" && /\b(find|search|look for|looking for|show me|opportunities|jobs?|internships?|stages?|part[- ]?time|full[- ]?time|apprenticeships?|alternance)\b/i.test(userMessage)) {
       const student = await getStudentContextSnapshot(user.id);
       if (!student) return NextResponse.json({ ok: false, error: "Student journey context is not available." }, { status: 409 });
       const intent = opportunityIntentFromMessage(userMessage, student);
       const country = student.destination.country?.toLowerCase();
-      if (country !== "france" && country !== "fr") {
+      const isFranceContext = country === "france" || country === "fr" || (intent.location?.toLowerCase().includes("paris") ?? false);
+      if (!isFranceContext) {
         const reply = `I can structure this search, but the live opportunity adapter currently configured for this workspace is France Travail for France. I will not present unverified listings as live results.`;
         return persistDeterministic(user.id, phase, userMessage, reply, "stage");
       }
@@ -152,7 +172,19 @@ export async function POST(req: NextRequest) {
         { userId: user.id, role: "user", content: userMessage, phase },
         { userId: user.id, role: "assistant", content: reply, phase },
       ] });
-      return NextResponse.json({ ok: true, reply, phase, capability, executed: false, opportunitySearch: true, opportunities: searchResult.opportunities, matches: searchResult.matches, sourceIds: searchResult.sourceIds, sourceErrors: searchResult.sourceErrors });
+      return NextResponse.json({
+        ok: true,
+        reply,
+        phase,
+        capability,
+        executed: false,
+        opportunitySearch: true,
+        intent,
+        opportunities: searchResult.opportunities,
+        matches: searchResult.matches,
+        sourceIds: searchResult.sourceIds,
+        sourceErrors: searchResult.sourceErrors,
+      });
     }
 
     if (capability && exploring) {
