@@ -33,16 +33,120 @@ export default function Connectors() {
   const [loadingGmail, setLoadingGmail] = useState(false);
   const loadGmailStatus = async () => {
     if (authStatus !== "authenticated") return;
-    try { const response=await fetch("/api/integrations/gmail",{cache:"no-store"}); const data=await response.json(); setGmailConnected(Boolean(data.connected)); } catch { setGmailConnected(false); }
+    try { const response = await fetch("/api/integrations/gmail", { cache: "no-store" }); const data = await response.json(); setGmailConnected(Boolean(data.connected)); } catch { setGmailConnected(false); }
   };
-  useEffect(()=>{void loadGmailStatus();},[authStatus]);
-  const visible=useMemo(()=>filter==="all"?CONNECTORS:CONNECTORS.filter(c=>c.category===filter),[filter]);
-  const connectGmail=async()=>{setLoadingGmail(true);try{await signIn("google",{callbackUrl:`${window.location.origin}/#connectors`});}finally{setLoadingGmail(false);}};
+  useEffect(() => { void loadGmailStatus(); }, [authStatus]);
+  const visible = useMemo(() => filter === "all" ? CONNECTORS : CONNECTORS.filter(c => c.category === filter), [filter]);
+  const connectGmail = async () => { setLoadingGmail(true); try { await signIn("google", { callbackUrl: `${window.location.origin}/#connectors` }); } finally { setLoadingGmail(false); } };
 
-  return <div className="mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 sm:py-7">
-    <Reveal className="mb-7 max-w-3xl"><div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-[oklch(0.85_0.19_158)]"><span className="h-px w-8 bg-[oklch(0.74_0.17_162/0.5)]"/><Plug className="h-3.5 w-3.5"/>Connectors & Integrations</div><h1 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--shield-text)] sm:text-4xl">Connect the tools the agent can actually operate.</h1><p className="mt-3 text-sm leading-relaxed text-[var(--shield-text-dim)]">Connected means authenticated and usable. External means the platform can be opened, but AbroadShield does not claim direct access.</p></Reveal>
-    <Reveal delay={0.05} className="mb-5"><div className="flex flex-wrap gap-1.5">{CATEGORIES.map(category=><button key={category} type="button" onClick={()=>setFilter(category)} aria-pressed={filter===category} className={`rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition ${filter===category?"border-[oklch(0.74_0.17_162/0.5)] bg-[oklch(0.74_0.17_162/0.12)] text-[oklch(0.85_0.19_158)]":"border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.4)] text-[var(--shield-text-dim)] hover:text-[var(--shield-text)]"}`}>{category}</button>)}</div></Reveal>
-    <Reveal delay={0.1}><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{visible.map((connector,index)=>{const connected=connector.id==="gmail"&&gmailConnected;return <motion.div key={connector.id} initial={{opacity:0,y:10}} whileInView={{opacity:1,y:0}} viewport={{once:true,margin:"-30px"}} transition={{duration:.25,delay:index*.02}} className="rounded-2xl border border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-5"><div className="flex items-start justify-between gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--shield-border)] bg-[oklch(0.74_0.17_162/0.08)]">{connector.category==="jobs"?<Briefcase className="h-4 w-4"/>:connector.category==="email"?<Mail className="h-4 w-4"/>:connector.category==="housing"?<Home className="h-4 w-4"/>:connector.category==="education"?<GraduationCap className="h-4 w-4"/>:connector.category==="travel"?<Plane className="h-4 w-4"/>:connector.category==="finance"?<CreditCard className="h-4 w-4"/>:<Smartphone className="h-4 w-4"/>}</div><span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${connected?"border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.1)] text-[oklch(0.85_0.19_158)]":"border-[var(--shield-border)] text-[var(--shield-text-faint)]"}`}>{connected?"Connected":connector.status==="oauth"?"Not connected":"External"}</span></div><h2 className="mt-4 text-sm font-semibold text-[var(--shield-text)]">{connector.name}</h2><p className="mt-1.5 min-h-12 text-xs leading-relaxed text-[var(--shield-text-dim)]">{connector.description}</p>{connector.id==="gmail"?<button type="button" onClick={connectGmail} disabled={loadingGmail||connected} className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[oklch(0.74_0.17_162/0.35)] bg-[oklch(0.74_0.17_162/0.08)] px-3 py-2 text-xs font-semibold text-[oklch(0.85_0.19_158)] disabled:opacity-50">{connected?<CheckCircle2 className="h-3.5 w-3.5"/>:<ShieldCheck className="h-3.5 w-3.5"/>}{connected?"Gmail connected":loadingGmail?"Connecting…":"Connect Gmail"}</button>:<a href={connector.url==="#"?undefined:connector.url} target={connector.url==="#"?undefined:"_blank"} rel="noopener noreferrer" aria-disabled={connector.url==="#"} className={`mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--shield-border)] px-3 py-2 text-xs font-semibold text-[var(--shield-text-dim)] ${connector.url==="#"?"cursor-not-allowed opacity-50":"hover:text-[var(--shield-text)]"}`}><ExternalLink className="h-3.5 w-3.5"/>Open {connector.name}<ArrowRight className="h-3 w-3"/></a>}</motion.div>})}</div></Reveal>
-    <div className="mt-6 rounded-2xl border border-dashed border-[var(--shield-border)] p-4 text-center text-xs text-[var(--shield-text-dim)]"><ShieldCheck className="mr-1.5 inline h-3.5 w-3.5"/>Approval remains required before outbound actions. No connector is presented as active unless the application can verify it.</div>
-  </div>;
+  return (
+    <div className="mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 sm:py-8 pb-16">
+      <Reveal className="mb-8 max-w-3xl">
+        <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase tracking-[0.18em] text-[var(--shield-emerald-bright)]">
+          <Plug className="h-3.5 w-3.5" />
+          <span>Verified Integrations &amp; Connectors</span>
+        </div>
+        <h1 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          Connect the tools the agent can actually operate.
+        </h1>
+        <p className="mt-3 text-xs leading-relaxed text-[var(--shield-text-dim)] sm:text-sm">
+          Connected means authenticated and usable. External means the platform can be opened, but AbroadShield does not claim direct access.
+        </p>
+      </Reveal>
+
+      <Reveal delay={0.05} className="mb-6">
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map(category => (
+            <button
+              key={category}
+              type="button"
+              onClick={() => setFilter(category)}
+              aria-pressed={filter === category}
+              className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold capitalize transition ${
+                filter === category
+                  ? "border-[oklch(0.76_0.18_160/0.7)] bg-[oklch(0.76_0.18_160/0.15)] text-white shadow-sm"
+                  : "border-[var(--shield-border)] bg-[var(--shield-ink-2)] text-[var(--shield-text-dim)] hover:text-white"
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      </Reveal>
+
+      <Reveal delay={0.1}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visible.map((connector, index) => {
+            const connected = connector.id === "gmail" && gmailConnected;
+            return (
+              <motion.div
+                key={connector.id}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-30px" }}
+                transition={{ duration: 0.25, delay: index * 0.02 }}
+                className="flex flex-col justify-between rounded-3xl border border-[var(--shield-border)] bg-[linear-gradient(180deg,oklch(0.16_0.02_255/0.95),oklch(0.12_0.015_255/0.98))] p-5 shadow-xl transition hover:border-[oklch(0.76_0.18_160/0.4)]"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--shield-border)] bg-[oklch(0.76_0.18_160/0.1)] text-[var(--shield-emerald-bright)]">
+                      {connector.category === "jobs" ? <Briefcase className="h-4 w-4" /> :
+                        connector.category === "email" ? <Mail className="h-4 w-4" /> :
+                        connector.category === "housing" ? <Home className="h-4 w-4" /> :
+                        connector.category === "education" ? <GraduationCap className="h-4 w-4" /> :
+                        connector.category === "travel" ? <Plane className="h-4 w-4" /> :
+                        connector.category === "finance" ? <CreditCard className="h-4 w-4" /> :
+                        <Smartphone className="h-4 w-4" />}
+                    </div>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wide ${
+                      connected
+                        ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-300"
+                        : "border-[var(--shield-border)] text-[var(--shield-text-faint)]"
+                    }`}>
+                      {connected ? "Connected" : connector.status === "oauth" ? "OAuth Available" : "External Portal"}
+                    </span>
+                  </div>
+                  <h2 className="mt-4 text-sm font-bold text-white">{connector.name}</h2>
+                  <p className="mt-1.5 min-h-12 text-xs leading-relaxed text-[var(--shield-text-dim)]">
+                    {connector.description}
+                  </p>
+                </div>
+
+                {connector.id === "gmail" ? (
+                  <button
+                    type="button"
+                    onClick={connectGmail}
+                    disabled={loadingGmail || connected}
+                    className="as-public-button-primary mt-4 w-full rounded-xl py-2 text-xs font-bold disabled:opacity-50"
+                  >
+                    {connected ? <CheckCircle2 className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}
+                    <span>{connected ? "Gmail Connected" : loadingGmail ? "Connecting…" : "Connect Gmail"}</span>
+                  </button>
+                ) : (
+                  <a
+                    href={connector.url === "#" ? undefined : connector.url}
+                    target={connector.url === "#" ? undefined : "_blank"}
+                    rel="noopener noreferrer"
+                    aria-disabled={connector.url === "#"}
+                    className={`as-public-button-secondary mt-4 w-full rounded-xl py-2 text-xs font-semibold ${
+                      connector.url === "#" ? "cursor-not-allowed opacity-40" : "hover:text-white"
+                    }`}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span>Open {connector.name}</span>
+                    <ArrowRight className="h-3 w-3" />
+                  </a>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </Reveal>
+
+      <div className="mt-8 rounded-2xl border border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-4 text-center text-xs text-[var(--shield-text-dim)]">
+        <ShieldCheck className="mr-1.5 inline h-4 w-4 text-[var(--shield-emerald-bright)]" />
+        Approval remains strictly required before outbound actions. No connector is presented as active unless verified.
+      </div>
+    </div>
+  );
 }

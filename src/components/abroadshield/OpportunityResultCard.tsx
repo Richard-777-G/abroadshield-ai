@@ -177,12 +177,12 @@ export default function OpportunityResultCard({
   };
 
   return (
-    <div className="group my-3 overflow-hidden rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.20_0.025_165/0.85)] p-4 shadow-lg backdrop-blur-md transition hover:border-[oklch(0.74_0.17_162/0.4)]">
+    <div className="group my-3 overflow-hidden rounded-2xl border border-[var(--shield-border)] bg-[linear-gradient(180deg,oklch(0.16_0.02_255/0.95),oklch(0.12_0.015_255/0.98))] p-4 shadow-xl transition hover:border-[oklch(0.76_0.18_160/0.45)]">
       {/* Top Bar: Source badge & Freshness & Fit */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-md bg-[oklch(0.15_0.02_165)] px-2 py-0.5 text-[11px] font-mono text-[var(--shield-text-dim)] border border-white/10">
-            <ShieldCheck className="h-3 w-3 text-[oklch(0.74_0.17_162)]" />
+          <span className="inline-flex items-center gap-1 rounded-md bg-[oklch(0.12_0.015_255)] px-2 py-0.5 text-[11px] font-mono text-[var(--shield-text-dim)] border border-white/10">
+            <ShieldCheck className="h-3 w-3 text-[var(--shield-emerald-bright)]" />
             Verified Source: {opportunity.provenance?.provider || "France Travail"} (L1)
           </span>
           {renderFreshnessBadge()}
@@ -192,13 +192,13 @@ export default function OpportunityResultCard({
 
       {/* Title & Employer */}
       <div className="mt-3">
-        <h3 className="text-base font-semibold text-[var(--shield-text)] group-hover:text-[oklch(0.92_0.18_155)] transition">
+        <h3 className="text-base font-bold text-white group-hover:text-[var(--shield-emerald-bright)] transition">
           {opportunity.title}
         </h3>
         <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[var(--shield-text-dim)]">
           <div className="flex items-center gap-1">
-            <Building2 className="h-3.5 w-3.5 text-[oklch(0.74_0.17_162)]" />
-            <span className="font-medium text-[var(--shield-text)]">
+            <Building2 className="h-3.5 w-3.5 text-[var(--shield-emerald-bright)]" />
+            <span className="font-semibold text-white">
               {opportunity.employer || "Employer via France Travail"}
             </span>
           </div>
@@ -219,7 +219,7 @@ export default function OpportunityResultCard({
           {match.reasons.slice(0, 4).map((reason, idx) => (
             <span
               key={idx}
-              className="rounded-full bg-[oklch(0.74_0.17_162/0.09)] border border-[oklch(0.74_0.17_162/0.25)] px-2 py-0.5 text-[11px] text-[oklch(0.85_0.19_158)]"
+              className="rounded-full bg-[oklch(0.76_0.18_160/0.1)] border border-[oklch(0.76_0.18_160/0.3)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--shield-emerald-bright)]"
             >
               ✓ {reason}
             </span>
@@ -237,9 +237,9 @@ export default function OpportunityResultCard({
           href={destinationUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--shield-border)] bg-[oklch(0.14_0.018_165/0.8)] px-3 py-2 text-xs font-medium text-[var(--shield-text)] transition hover:border-[oklch(0.74_0.17_162/0.5)] hover:text-white"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--shield-border)] bg-[var(--shield-ink-2)] px-3 py-2 text-xs font-medium text-[var(--shield-text)] transition hover:border-[oklch(0.76_0.18_160/0.5)] hover:text-white"
         >
-          <ExternalLink className="h-3.5 w-3.5 text-[oklch(0.74_0.17_162)]" />
+          <ExternalLink className="h-3.5 w-3.5 text-[var(--shield-emerald-bright)]" />
           Open verified listing
         </a>
 
@@ -251,7 +251,7 @@ export default function OpportunityResultCard({
           className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition ${
             saved
               ? "border border-emerald-500/40 bg-emerald-500/15 text-emerald-300 cursor-default"
-              : "border border-[var(--shield-border)] bg-[oklch(0.14_0.018_165/0.8)] text-[var(--shield-text)] hover:border-[oklch(0.74_0.17_162/0.5)] hover:text-white"
+              : "border border-[var(--shield-border)] bg-[var(--shield-ink-2)] text-[var(--shield-text)] hover:border-[oklch(0.76_0.18_160/0.5)] hover:text-white"
           }`}
         >
           {saving ? (
@@ -266,7 +266,7 @@ export default function OpportunityResultCard({
             </>
           ) : (
             <>
-              <Bookmark className="h-3.5 w-3.5 text-[oklch(0.74_0.17_162)]" />
+              <Bookmark className="h-3.5 w-3.5 text-[var(--shield-emerald-bright)]" />
               Save to Journey
             </>
           )}
@@ -277,7 +277,7 @@ export default function OpportunityResultCard({
           type="button"
           onClick={handlePrepare}
           disabled={preparing}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.15)] px-3 py-2 text-xs font-medium text-[oklch(0.88_0.18_155)] transition hover:bg-[oklch(0.74_0.17_162/0.25)] hover:border-[oklch(0.74_0.17_162/0.6)]"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-[oklch(0.76_0.18_160/0.45)] bg-[oklch(0.76_0.18_160/0.14)] px-3.5 py-2 text-xs font-semibold text-[var(--shield-emerald-bright)] transition hover:bg-[oklch(0.76_0.18_160/0.25)] hover:border-[oklch(0.76_0.18_160/0.7)]"
         >
           {preparing ? (
             <>
@@ -286,8 +286,8 @@ export default function OpportunityResultCard({
             </>
           ) : (
             <>
-              <Sparkles className="h-3.5 w-3.5 text-[oklch(0.74_0.17_162)]" />
-              Prepare application
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Prepare application</span>
               {prepPlan && (
                 prepExpanded ? (
                   <ChevronUp className="h-3.5 w-3.5 ml-0.5" />

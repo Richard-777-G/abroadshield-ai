@@ -21,6 +21,7 @@ import Reveal from "./Reveal";
 import { useApprovalsStore, type ApprovalKind } from "./approvalsStore";
 import { useProfileStore, type StudentProfile } from "./profileStore";
 import OpportunityResultCard from "./OpportunityResultCard";
+import ProviderDiagnosticsCard from "./ProviderDiagnosticsCard";
 import type {
   Opportunity,
   OpportunityMatch,
@@ -277,33 +278,28 @@ export default function AgentChat() {
     <section id="agent" className="relative w-full bg-transparent py-6 sm:py-8">
       <div className="relative mx-auto w-full max-w-6xl px-5 sm:px-8">
         <Reveal className="mb-7">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.74_0.17_162/0.4)] bg-[oklch(0.74_0.17_162/0.08)] px-3 py-1 text-[11px] font-medium tracking-wide text-[oklch(0.85_0.19_158)]">
-            <Sparkles className="h-3 w-3" />
-            Execution agent · live model
+          <div className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.76_0.18_160/0.4)] bg-[oklch(0.76_0.18_160/0.1)] px-3.5 py-1 text-[11px] font-mono font-bold tracking-wide text-[var(--shield-emerald-bright)]">
+            <Sparkles className="h-3.5 w-3.5" />
+            Autonomous Execution Co-Pilot · Active
           </div>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--shield-text)] sm:text-4xl">
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Ask it <span className="as-text-gradient">to do the work.</span>
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--shield-text-dim)]">
-            One task at a time. The agent carries your journey context, follows the active stage, and returns work you can review.
+            One task at a time. The agent carries your journey context, respects verified statutory rules, and returns interactive work surfaces you control.
           </p>
         </Reveal>
 
-        <div className="overflow-hidden rounded-2xl border border-[var(--shield-border)] as-glass-strong">
-          <div className="relative flex items-center justify-between border-b border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] px-5 py-3.5">
+        <div className="overflow-hidden rounded-3xl border border-[var(--shield-border)] bg-[linear-gradient(180deg,oklch(0.16_0.02_255/0.95),oklch(0.12_0.015_255/0.98))] shadow-2xl">
+          <div className="relative flex items-center justify-between border-b border-[var(--shield-border)] bg-[var(--shield-ink-2)] px-5 py-4">
             <div className="relative flex items-center gap-3">
-              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-[oklch(0.74_0.17_162/0.5)] bg-[oklch(0.74_0.17_162/0.12)]">
-                <img
-                  src="/sections/agent-avatar.png"
-                  alt="AI agent"
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                />
-                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[oklch(0.22_0.025_165)] bg-[oklch(0.74_0.17_162)] as-pulse" />
+              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-[oklch(0.76_0.18_160/0.5)] bg-[oklch(0.76_0.18_160/0.15)] text-[var(--shield-emerald-bright)]">
+                <Bot className="h-5 w-5" />
+                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[var(--shield-ink)] bg-[var(--shield-emerald-bright)] as-pulse" />
               </div>
               <div>
-                <div className="text-sm font-semibold text-[var(--shield-text)]">AbroadShield Agent</div>
-                <div className="text-[11px] text-[var(--shield-text-dim)]">
+                <div className="text-sm font-bold text-white">AbroadShield Agent Co-Pilot</div>
+                <div className="text-[11px] font-mono text-[var(--shield-text-dim)]">
                   {profile.name
                     ? `Carrying ${profile.name}'s journey context`
                     : "Ready for your journey context"}{" "}
@@ -314,10 +310,10 @@ export default function AgentChat() {
             <button
               type="button"
               onClick={reset}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] px-3 py-1.5 text-[11px] font-medium text-[var(--shield-text-dim)] transition hover:text-[var(--shield-text)]"
+              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--shield-border)] bg-[var(--shield-ink)] px-3 py-1.5 text-[11px] font-semibold text-[var(--shield-text-dim)] transition hover:text-white"
             >
               <RotateCcw className="h-3 w-3" />
-              Reset
+              Reset Terminal
             </button>
           </div>
 
@@ -331,9 +327,9 @@ export default function AgentChat() {
           </div>
 
           {messages.length <= 1 && (
-            <div className="border-t border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.4)] px-5 py-4 sm:px-6">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--shield-text-dim)]">
-                Start with a task
+            <div className="border-t border-[var(--shield-border)] bg-[var(--shield-ink-2)] px-5 py-4 sm:px-6">
+              <div className="mb-2.5 text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--shield-text-faint)]">
+                Autonomous Task Starters //
               </div>
               <div className="flex flex-wrap gap-2">
                 {CHAT_STARTERS.map((starter) => (
@@ -342,7 +338,7 @@ export default function AgentChat() {
                     key={starter.label}
                     onClick={() => void send(starter.prompt)}
                     disabled={sending}
-                    className="rounded-full border border-[oklch(0.74_0.17_162/0.35)] bg-[oklch(0.74_0.17_162/0.08)] px-3 py-1.5 text-xs font-medium text-[oklch(0.85_0.19_158)] transition hover:border-[oklch(0.74_0.17_162/0.6)] disabled:opacity-50"
+                    className="rounded-full border border-[oklch(0.76_0.18_160/0.4)] bg-[oklch(0.76_0.18_160/0.1)] px-3.5 py-1.5 text-xs font-semibold text-[var(--shield-emerald-bright)] transition hover:border-[oklch(0.76_0.18_160/0.8)] hover:bg-[oklch(0.76_0.18_160/0.2)] disabled:opacity-50"
                   >
                     {starter.label}
                   </button>
@@ -351,7 +347,7 @@ export default function AgentChat() {
             </div>
           )}
 
-          <div className="border-t border-[var(--shield-border)] bg-[oklch(0.22_0.025_165/0.5)] p-3 sm:p-4">
+          <div className="border-t border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-3 sm:p-4">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
@@ -364,21 +360,24 @@ export default function AgentChat() {
                   }
                 }}
                 rows={1}
-                placeholder="Ask for a real task…"
-                className="as-scroll max-h-32 flex-1 resize-none rounded-2xl border border-[var(--shield-border)] bg-[oklch(0.14_0.018_165/0.7)] px-4 py-3 text-sm text-[var(--shield-text)] placeholder:text-[var(--shield-text-dim)] focus:border-[oklch(0.74_0.17_162/0.5)] focus:outline-none focus:ring-1 focus:ring-[oklch(0.74_0.17_162/0.4)]"
+                placeholder="Ask your co-pilot for a real task or opportunity search…"
+                className="as-scroll max-h-32 flex-1 resize-none rounded-2xl border border-[var(--shield-border)] bg-[var(--shield-ink)] px-4 py-3 text-sm text-[var(--shield-text)] placeholder:text-[var(--shield-text-dim)] focus:border-[oklch(0.76_0.18_160/0.6)] focus:outline-none focus:ring-1 focus:ring-[oklch(0.76_0.18_160/0.4)]"
               />
               <button
                 type="button"
                 onClick={() => void send(input)}
                 disabled={!input.trim() || sending}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[oklch(0.74_0.17_162)] text-[oklch(0.14_0.018_165)] transition hover:bg-[oklch(0.85_0.19_158)] disabled:opacity-40 as-glow-emerald"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--shield-text)] text-[var(--shield-ink)] font-bold transition hover:opacity-90 disabled:opacity-30"
                 aria-label="Send"
               >
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>
             </div>
-            <div className="mt-2 px-1 text-[10px] text-[var(--shield-text-dim)]">
-              Enter to send · Shift+Enter for a new line · External actions remain approval-gated.
+            <div className="mt-2 flex items-center justify-between px-1 text-[10px] text-[var(--shield-text-faint)]">
+              <span>Enter to send · Shift+Enter for newline</span>
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--shield-emerald-bright)]">
+                Approval-Gated External Action
+              </span>
             </div>
           </div>
         </div>
@@ -455,9 +454,9 @@ function MessageBubble({
               <ReactMarkdown>{message.content}</ReactMarkdown>
             </div>
 
-            {message.opportunities && message.opportunities.length > 0 && (
+            {message.opportunities && message.opportunities.length > 0 ? (
               <div className="mt-4 border-t border-[var(--shield-border)] pt-3">
-                <div className="flex items-center justify-between pb-1 text-[11px] font-semibold uppercase tracking-wider text-[oklch(0.85_0.19_158)]">
+                <div className="flex items-center justify-between pb-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--shield-emerald-bright)]">
                   <span>Verified Listings ({message.opportunities.length})</span>
                   <span className="text-[10px] font-normal text-[var(--shield-text-dim)]">L1 Discovery &amp; Prep</span>
                 </div>
@@ -476,7 +475,12 @@ function MessageBubble({
                   })}
                 </div>
               </div>
-            )}
+            ) : (message.opportunitySearch || (message.sourceErrors && message.sourceErrors.length > 0)) ? (
+              <ProviderDiagnosticsCard
+                sourceId="france-travail"
+                sourceErrors={message.sourceErrors}
+              />
+            ) : null}
 
             {isDraft && (
               <div className="mt-3 border-t border-[var(--shield-border)] pt-3">
