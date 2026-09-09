@@ -7,6 +7,7 @@ import { Plug, Briefcase, Mail, Home, GraduationCap, Plane, CreditCard, Smartpho
 import Reveal from "./Reveal";
 
 const CONNECTORS = [
+  { id: "francetravail", name: "France Travail (Pôle Emploi)", category: "jobs", url: "https://www.francetravail.fr", description: "Official French employment service API. Powers verified student internship and work-study search under Art. R5221-26 statutory limits.", status: "api" },
   { id: "gmail", name: "Gmail", category: "email", url: "https://mail.google.com", description: "Draft and send approved emails through your Google account.", status: "oauth" },
   { id: "outlook", name: "Outlook", category: "email", url: "https://outlook.com", description: "External provider. No Outlook connector is enabled yet.", status: "external" },
   { id: "linkedin", name: "LinkedIn", category: "jobs", url: "https://linkedin.com", description: "External provider. Job and outreach actions require a supported integration.", status: "external" },
@@ -103,7 +104,13 @@ export default function Connectors() {
                         ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-300"
                         : "border-[var(--shield-border)] text-[var(--shield-text-faint)]"
                     }`}>
-                      {connected ? "Connected" : connector.status === "oauth" ? "OAuth Available" : "External Portal"}
+                      {connected
+                        ? "Connected"
+                        : connector.status === "api"
+                        ? "Direct API"
+                        : connector.status === "oauth"
+                        ? "OAuth Available"
+                        : "External Portal"}
                     </span>
                   </div>
                   <h2 className="mt-4 text-sm font-bold text-white">{connector.name}</h2>

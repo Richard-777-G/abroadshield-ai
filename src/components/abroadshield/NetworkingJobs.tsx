@@ -1,7 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Activity, ArrowRight, BriefcaseBusiness, Building2, Mail, Network, Search, ShieldCheck, Users, Zap } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Activity,
+  ArrowRight,
+  Bookmark,
+  BriefcaseBusiness,
+  Building2,
+  CheckCircle,
+  ExternalLink,
+  FileText,
+  Loader2,
+  Mail,
+  Network,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Users,
+  Zap,
+} from "lucide-react";
+import type { SavedOpportunityRecord } from "@/lib/abroadshield/opportunity-service";
 
 type Tab = "jobs" | "network";
 
@@ -64,7 +82,30 @@ const ACTIONS: Record<Tab, Action[]> = {
 
 export default function NetworkingJobs({ onNavigate }: { onNavigate?: (view: string) => void }) {
   const [tab, setTab] = useState<Tab>("jobs");
+  const [savedOpportunities, setSavedOpportunities] = useState<SavedOpportunityRecord[]>([]);
+  const [loadingSaved, setLoadingSaved] = useState(false);
   const actions = useMemo(() => ACTIONS[tab], [tab]);
+
+  const loadSavedOpportunities = async () => {
+    setLoadingSaved(true);
+    try {
+      const res = await fetch("/api/abroadshield/opportunities/save", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.opportunities)) {
+          setSavedOpportunities(data.opportunities);
+        }
+      }
+    } catch {
+      // Graceful fallback for offline or unauthenticated mode
+    } finally {
+      setLoadingSaved(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadSavedOpportunities();
+  }, []);
 
   const runInAgent = (prompt: string) => {
     window.dispatchEvent(new CustomEvent("abroadshield:prefill-chat", { detail: prompt }));
@@ -126,6 +167,98 @@ export default function NetworkingJobs({ onNavigate }: { onNavigate?: (view: str
             </article>
           ))}
         </div>
+
+        {/* Saved Opportunities Dossier (Jobs Tab) */}
+        {tab === "jobs" && (
+          <div className="mt-10 rounded-3xl border border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-6 sm:p-8">
+            <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <div className="flex items-center gap-2 text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--shield-emerald-bright)]">
+                  <Bookmark className="h-3.5 w-3.5" />
+                  <span>PERSISTENT CAREER DOSSIER</span>
+                </div>
+                <h2 className="mt-1 text-xl font-bold text-white">Saved Target Opportunities</h2>
+                <p className="text-xs text-[var(--shield-text-dim)]">
+                  Roles saved across your journey sessions, eligible under destination statutory limits.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void loadSavedOpportunities()}
+                disabled={loadingSaved}
+                className="inline-flex items-center gap-1.5 self-start rounded-xl border border-[var(--shield-border)] bg-[var(--shield-ink)] px-3 py-1.5 text-xs font-medium text-white transition hover:border-[var(--shield-border-bright)]"
+              >
+                <RefreshCw className={`h-3 w-3 ${loadingSaved ? "animate-spin text-[var(--shield-emerald-bright)]" : ""}`} />
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            {loadingSaved && savedOpportunities.length === 0 ? (
+              <div className="mt-6 flex items-center justify-center py-10 text-xs text-[var(--shield-text-dim)]">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin text-[var(--shield-emerald-bright)]" />
+                <span>Loading your saved opportunities...</span>
+              </div>
+            ) : savedOpportunities.length > 0 ? (
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {savedOpportunities.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex flex-col justify-between rounded-2xl border border-[var(--shield-border)] bg-[var(--shield-ink)] p-5 transition hover:border-[oklch(0.76_0.18_160/0.4)]"
+                  >
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="rounded-md border border-[oklch(0.76_0.18_160/0.3)] bg-[oklch(0.76_0.18_160/0.1)] px-2 py-0.5 text-[10px] font-mono font-bold text-[var(--shield-emerald-bright)] uppercase">
+                          {item.contractType.replaceAll("_", " ")}
+                        </span>
+                        <span className="text-[10px] font-mono text-[var(--shield-text-faint)]">
+                          {item.location || "Verified Destination"}
+                        </span>
+                      </div>
+                      <h3 className="mt-3 text-sm font-bold text-white line-clamp-1">{item.title}</h3>
+                      <p className="mt-1 text-xs text-[var(--shield-text-dim)]">{item.employer}</p>
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap items-center gap-2 pt-3 border-t border-[var(--shield-border)]">
+                      <button
+                        type="button"
+                        onClick={() => runInAgent(`Prepare my application dossier for "${item.title}" at ${item.employer}. Check European CV formatting and statutory work limits.`)}
+                        className="as-public-button-primary flex-1 rounded-lg py-1.5 text-xs font-semibold"
+                      >
+                        <FileText className="h-3 w-3" />
+                        <span>Prepare Dossier</span>
+                      </button>
+                      {item.sourceUrl && (
+                        <a
+                          href={item.sourceUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-lg border border-[var(--shield-border)] bg-[var(--shield-ink-2)] px-3 py-1.5 text-xs text-[var(--shield-text-dim)] transition hover:text-white"
+                        >
+                          <span>Listing</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6 rounded-2xl border border-dashed border-[var(--shield-border)] p-6 text-center">
+                <p className="text-xs text-[var(--shield-text-dim)]">
+                  No opportunities saved to your dossier yet. Ask the AI Co-Pilot to search verified roles or explore the hero simulator.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => runInAgent("Find internships in Paris related to my course compliant with student visa limits.")}
+                  className="as-public-button-primary mt-4 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold"
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  <span>Search Opportunities with Agent</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Reality Guarantee Notice */}
         <div className="mt-8 rounded-2xl border border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-5">

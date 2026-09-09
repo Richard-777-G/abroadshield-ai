@@ -74,7 +74,16 @@ export default function Home() {
     return () => { window.removeEventListener("hashchange", syncFromLocation); window.removeEventListener("popstate", syncFromLocation); };
   }, [requestAuth, status]);
 
-  useEffect(() => { const handler = (e: Event) => { const route = (e as CustomEvent<string>).detail; if (route) navigateTo(route); }; window.addEventListener("abroadshield:navigate", handler); return () => window.removeEventListener("abroadshield:navigate", handler); }, [navigateTo]);
+  useEffect(() => {
+    const handler = (e: Event) => { const route = (e as CustomEvent<string>).detail; if (route) navigateTo(route); };
+    const onboardingHandler = () => setShowOnboarding(true);
+    window.addEventListener("abroadshield:navigate", handler);
+    window.addEventListener("abroadshield:open-onboarding", onboardingHandler);
+    return () => {
+      window.removeEventListener("abroadshield:navigate", handler);
+      window.removeEventListener("abroadshield:open-onboarding", onboardingHandler);
+    };
+  }, [navigateTo]);
 
   const isWorkspace = status === "authenticated" && WORKSPACE_VIEWS.includes(activeRoute as WorkspaceView);
   const workspaceContent = hydrated ? contentFor(activeRoute, status, session, profile, navigateTo, requestAuth) : <FeatureLoading label="Preparing your private workspace…" />;

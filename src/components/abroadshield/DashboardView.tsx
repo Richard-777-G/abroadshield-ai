@@ -55,11 +55,42 @@ export default function DashboardView({ onNavigate }: { onNavigate: (view: strin
   if (!snapshot) {
     return (
       <section className="w-full">
-        <div className="mx-auto flex min-h-[460px] w-full max-w-7xl items-center justify-center px-5 py-10 sm:px-8">
-          <div className="flex items-center gap-3 text-xs text-[var(--shield-text-dim)]">
-            {loading && <Loader2 className="h-5 w-5 animate-spin text-[var(--shield-emerald-bright)]" />}
-            <span>{loading ? "Synthesizing your journey context…" : "Your journey data is not available yet."}</span>
-          </div>
+        <div className="mx-auto flex min-h-[500px] w-full max-w-2xl items-center justify-center px-5 py-12 sm:px-8">
+          {loading ? (
+            <div className="flex items-center gap-3 text-xs text-[var(--shield-text-dim)]">
+              <Loader2 className="h-5 w-5 animate-spin text-[var(--shield-emerald-bright)]" />
+              <span>Synthesizing your journey context…</span>
+            </div>
+          ) : (
+            <div className="as-dock w-full rounded-3xl p-8 sm:p-10 text-center shadow-2xl">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-[oklch(0.76_0.18_160/0.4)] bg-[oklch(0.76_0.18_160/0.12)] text-[var(--shield-emerald-bright)]">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h2 className="mt-5 text-2xl font-bold text-white">Initialize Your AI Operating Environment</h2>
+              <p className="mt-3 text-xs leading-relaxed text-[var(--shield-text-dim)] sm:text-sm">
+                Set up your destination country, university, course, and target career outcome to activate your continuous statutory intelligence radar.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("abroadshield:open-onboarding"))}
+                  className="as-public-button-primary rounded-xl py-3 px-6 text-xs font-bold shadow-lg"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  <span>Launch Journey Onboarding</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigate("agent")}
+                  className="rounded-xl border border-[var(--shield-border)] bg-[var(--shield-ink)] py-3 px-5 text-xs font-semibold text-white transition hover:border-[var(--shield-border-bright)]"
+                >
+                  <Bot className="inline mr-1.5 h-3.5 w-3.5 text-[var(--shield-emerald-bright)]" />
+                  <span>Open AI Co-Pilot</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
     );
