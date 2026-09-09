@@ -1,10 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
   prepareOpportunityApplication,
+  saveOpportunity,
+  listSavedOpportunities,
   type ApplicationPreparationPlan,
 } from "./opportunity-service";
 import type { Opportunity } from "./opportunity-types";
 import type { StudentContextSnapshot } from "./student-context";
+import { db } from "@/lib/db";
 
 describe("Opportunity Service Application Preparation", () => {
   const mockStudent: StudentContextSnapshot = {
@@ -82,5 +85,81 @@ describe("Opportunity Service Application Preparation", () => {
     );
     const gaps = plan.analysis.potentialGaps.join(" ");
     expect(gaps).toContain("964-hour");
+  });
+
+  test("verifies full Save -> Persist -> Retrieve round trip", async () => {
+    const memoryStore: any[] = [];
+    const eventStore: any[] = [];
+
+    (db as any).journeyTask = {
+      findFirst: async ({ where }: any) => {
+        return (
+          memoryStore.find(
+            (t) =>
+              t.userId === where.userId &&
+              t.type === where.type &&
+              t.title === where.title,
+          ) || null
+        );
+      },
+      create: async ({ data }: any) => {
+        const record = {
+          id: `task-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          ...data,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        memoryStore.push(record);
+        return record;
+      },
+      findMany: async ({ where }: any) => {
+        return memoryStore.filter(
+          (t) => t.userId === where.userId && t.type === where.type,
+        );
+      },
+      update: async ({ where, data }: any) => {
+        const item = memoryStore.find((t) => t.id === where.id);
+        if (item) Object.assign(item, data);
+        return item;
+      },
+    };
+    (db as any).journeyProfile = {
+      findUnique: async () => ({ currentPhase: "studying" }),
+    };
+    (db as any).journeyEvent = {
+      create: async ({ data }: any) => {
+        eventStore.push(data);
+        return data;
+      },
+    };
+
+    // 1. Initial save
+    const saveResult = await saveOpportunity("student-persist-test", sampleOpportunity);
+    expect(saveResult.ok).toBe(true);
+    expect(saveResult.alreadySaved).toBe(false);
+    expect(saveResult.savedId).toBeDefined();
+
+    // Verify durable event logged in journey
+    expect(eventStore.length).toBe(1);
+    expect(eventStore[0].type).toBe("opportunity_saved");
+    expect(eventStore[0].title).toContain(sampleOpportunity.title);
+
+    // 2. Duplicate save detection
+    const dupResult = await saveOpportunity("student-persist-test", sampleOpportunity);
+    expect(dupResult.ok).toBe(true);
+    expect(dupResult.alreadySaved).toBe(true);
+    expect(dupResult.savedId).toBe(saveResult.savedId);
+
+    // 3. Round-trip retrieval
+    const retrieved = await listSavedOpportunities("student-persist-test");
+    expect(retrieved.length).toBe(1);
+    expect(retrieved[0].id).toBe(saveResult.savedId);
+    expect(retrieved[0].opportunityId).toBe(sampleOpportunity.canonicalId);
+    expect(retrieved[0].title).toBe(sampleOpportunity.title);
+    expect(retrieved[0].employer).toBe(sampleOpportunity.employer);
+    expect(retrieved[0].contractType).toBe(sampleOpportunity.contractType);
+    expect(retrieved[0].sourceUrl).toBe(sampleOpportunity.sourceUrl);
+    expect(retrieved[0].status).toBe("saved");
+    expect(retrieved[0].opportunity.canonicalId).toBe(sampleOpportunity.canonicalId);
   });
 });
