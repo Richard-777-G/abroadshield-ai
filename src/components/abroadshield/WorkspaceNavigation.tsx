@@ -33,6 +33,7 @@ export const NAV: {
   label: string;
   tag: string;
   description: string;
+  href: string;
   icon: typeof LayoutDashboard;
 }[] = [
   {
@@ -40,6 +41,7 @@ export const NAV: {
     label: "Ask Co-Pilot",
     tag: "LIVE CHAT",
     description: "Direct conversational execution",
+    href: "/app/agent",
     icon: Bot,
   },
   {
@@ -47,6 +49,7 @@ export const NAV: {
     label: "Target Opportunities",
     tag: "LIVE JOBS",
     description: "Verified listings & application prep",
+    href: "/app/opportunities",
     icon: Activity,
   },
   {
@@ -54,6 +57,7 @@ export const NAV: {
     label: "Statutory Limits",
     tag: "LIMITS & STAGE",
     description: "Work limits, deadlines & mission status",
+    href: "/app/limits",
     icon: LayoutDashboard,
   },
   {
@@ -61,6 +65,7 @@ export const NAV: {
     label: "Journey Vector",
     tag: "8-STAGE",
     description: "Full lifecycle progression blueprint",
+    href: "/app/journey",
     icon: Compass,
   },
   {
@@ -68,6 +73,7 @@ export const NAV: {
     label: "Connected Services",
     tag: "GATEWAYS",
     description: "Official APIs & external tools",
+    href: "/app/connectors",
     icon: Plug,
   },
   {
@@ -75,11 +81,12 @@ export const NAV: {
     label: "Settings & Profile",
     tag: "ACCOUNT",
     description: "Destination, preferences & security",
+    href: "/app/settings",
     icon: Settings,
   },
 ];
 
-const RECENT_MISSIONS = [
+const STARTER_PROMPTS = [
   {
     id: "m-1",
     title: "Paris MSc CS Internship Search",
@@ -122,7 +129,7 @@ export function WorkspaceSidebar({
     onNavigate("agent");
   };
 
-  const selectRecent = (prompt: string) => {
+  const selectStarter = (prompt: string) => {
     window.dispatchEvent(new CustomEvent("abroadshield:prefill-chat", { detail: prompt }));
     onNavigate("agent");
   };
@@ -195,18 +202,18 @@ export function WorkspaceSidebar({
         })}
       </nav>
 
-      {/* Recent Missions / Thread History (ChatGPT / Claude style) */}
+      {/* Starter Prompts / Example Missions */}
       <div className="mt-4 flex-1 overflow-y-auto px-3">
         <div className="flex items-center gap-1.5 px-2 pb-2 text-[9px] font-mono font-bold uppercase tracking-[0.16em] text-[var(--shield-text-faint)]">
-          <History className="h-3 w-3" />
-          <span>Recent Missions</span>
+          <Sparkles className="h-3 w-3 text-[var(--shield-emerald-bright)]" />
+          <span>Starter Prompts</span>
         </div>
         <div className="space-y-1">
-          {RECENT_MISSIONS.map((m) => (
+          {STARTER_PROMPTS.map((m) => (
             <button
               key={m.id}
               type="button"
-              onClick={() => selectRecent(m.prompt)}
+              onClick={() => selectStarter(m.prompt)}
               className="group flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs text-[var(--shield-text-dim)] transition hover:bg-white/5 hover:text-white"
             >
               <MessageSquare className="h-3 w-3 shrink-0 text-[var(--shield-text-faint)] group-hover:text-[var(--shield-emerald-bright)]" />

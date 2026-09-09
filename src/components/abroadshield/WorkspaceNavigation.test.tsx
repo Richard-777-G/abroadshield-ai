@@ -16,6 +16,16 @@ describe("Workspace Navigation & Header Verification", () => {
     const copilotNav = NAV.find((item) => item.id === "agent");
     expect(copilotNav).toBeDefined();
     expect(copilotNav?.label).toBe("Ask Co-Pilot");
+    expect(copilotNav?.href).toBe("/app/agent");
+
+    const oppsNav = NAV.find((item) => item.id === "network");
+    expect(oppsNav?.href).toBe("/app/opportunities");
+
+    const limitsHref = NAV.find((item) => item.id === "dashboard");
+    expect(limitsHref?.href).toBe("/app/limits");
+
+    const settingsHref = NAV.find((item) => item.id === "settings");
+    expect(settingsHref?.href).toBe("/app/settings");
   });
 
   test("WorkspaceHeader renders discoverable user profile trigger and dossier inspector", () => {
@@ -33,3 +43,4 @@ describe("Workspace Navigation & Header Verification", () => {
     expect(html).toContain("STATUTORY GUARD: ACTIVE");
   });
 });
+

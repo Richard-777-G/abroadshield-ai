@@ -10,8 +10,9 @@ import { executeAgentTask } from "@/lib/abroadshield/task-executor";
 import { AGENT_CAPABILITIES, getTool } from "@/lib/abroadshield/tool-registry";
 import type { AgentCapability } from "@/lib/abroadshield/tool-registry";
 import { getStudentContextSnapshot } from "@/lib/abroadshield/student-context";
-import { searchOpportunities, type OpportunityIntent } from "@/lib/abroadshield/opportunity-engine";
 import { createFranceTravailAdapter } from "@/lib/abroadshield/france-travail-adapter";
+import { executeFrancePolicy } from "@/lib/abroadshield/policy-execution";
+import { searchOpportunities, type OpportunityIntent } from "@/lib/abroadshield/opportunity-engine";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -284,8 +285,22 @@ export async function POST(req: NextRequest) {
     try {
       reply = await generateText({ messages: [{ role: "system", content: SYSTEM_RULES + "\n\n" + memory }, ...history, { role: "user", content: userMessage }], timeoutMs: 25_000 });
     } catch (aiError) {
-      console.warn("[abroadshield/chat] External AI provider unavailable or exhausted, activating authoritative statutory fallback:", aiError);
-      reply = synthesizeAuthoritativeFallback(userMessage, profile, phase, recentEvents, recentTasks);
+      console.warn("[abroadshield/chat] AI reasoning service unavailable or quota exhausted:", aiError);
+      
+      // Attempt verified deterministic policy evaluation if query targets a supported policy domain
+      const verifiedPolicyReply = evaluateVerifiedPolicyFallback(userMessage, profile);
+      if (verifiedPolicyReply) {
+        reply = verifiedPolicyReply;
+      } else {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: "The AI reasoning service is temporarily unavailable. Please retry your inquiry in a moment.",
+            serviceUnavailable: true,
+          },
+          { status: 503 }
+        );
+      }
     }
 
     await db.agentMessage.createMany({ data: [
@@ -295,205 +310,77 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, reply, phase, executed: false });
   } catch (error) {
     console.error("[abroadshield/chat] error", error);
-    if (error instanceof AIRuntimeError) return NextResponse.json({ ok: false, error: error.message }, { status: error.status });
+    if (error instanceof AIRuntimeError) {
+      return NextResponse.json(
+        { ok: false, error: "The AI reasoning service is temporarily unavailable. Please retry your inquiry in a moment.", serviceUnavailable: true },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ ok: false, error: "The agent hit an unexpected error. Please try again." }, { status: 500 });
   }
 }
 
-function synthesizeAuthoritativeFallback(
-  userMessage: string,
-  profile: AgentProfile,
-  phase: ReturnType<typeof normalizePhase>,
-  recentEvents: Array<{ phase: string; type: string; title: string; detail: string | null }>,
-  _recentTasks: Array<{ phase: string; status: string; title: string }>,
-): string {
+function evaluateVerifiedPolicyFallback(userMessage: string, profile: AgentProfile): string | null {
   const lower = userMessage.toLowerCase();
-  const dest = (profile.destination || "France").trim();
-  const isFrance = /france|paris|lyon|marseille|toulouse|bordeaux|lille|nantes/i.test(dest);
-  const isUK = /uk|united kingdom|london|england|scotland|wales/i.test(dest);
-  const isGermany = /germany|deutschland|berlin|munich|frankfurt|hamburg/i.test(dest);
-  const policy = getStagePolicy(phase);
-  const studentName = profile.name ? ` ${profile.name}` : "";
-  const university = profile.university ? ` at **${profile.university}**` : "";
-  const course = profile.course ? ` for your **${profile.course}** program` : "";
+  const dest = (profile.destination || "").toLowerCase();
+  const isFrance = dest.includes("france") || dest.includes("paris") || dest.includes("lyon");
 
-  // 1. Student Work Authorization & Statutory Hourly Limits
-  if (/\b(work|working|hour|hours|job|jobs|part[- ]?time|full[- ]?time|964|smic|wage|wages|salary|intern|internship|stage|convention|crous|employ|employment)\b/i.test(lower)) {
-    if (isFrance) {
-      return `### Statutory Student Work Regulations & Framework for France 🇫🇷
-
-Under French labor and immigration legislation, international students holding a valid **VLS-TS (Visa Long Séjour valant Titre de Séjour)** are authorized to work under strict statutory limits:
-
-1. **Annual Hourly Ceiling (Article R5221-26 of the French *Code du travail*)**:
-   - You may work up to **964 hours per calendar year**, which represents 60% of the standard statutory annual working time (1,607 hours).
-   - **No preliminary work permit (APT)** is required. Your employer must simply file a preliminary declaration (*Déclaration Préalable à l'Embauche* - DPAE) with the prefecture at least 48 hours before your start date.
-   - The statutory minimum wage in France is the **SMIC** (currently €11.65 gross/hour, yielding approx. €9.22 net/hour).
-
-2. **Internships (*Convention de Stage*)**:
-   - Compulsory or curriculum-integrated internships do **NOT** count toward the 964-hour employment quota.
-   - Internships must be governed by a formal tripartite agreement (*convention de stage*) signed by you, ${profile.university ? `**${profile.university}**` : "your institution"}, and the host organization.
-   - For internships exceeding **2 months (over 308 hours)**, French law mandates a minimum legal gratification of **€4.35 per hour** (tax-exempt).
-
-3. **Current Journey Alignment**:
-   - Active Stage: **${policy.title}**
-   - Recommendation: Ensure your employer files the DPAE and issues standard monthly pay slips (*bulletins de paie*) to keep your visa compliance audit-proof.`;
+  if (isFrance) {
+    // 1. French student work budget calculation (Article R5221-26)
+    if (/\b(work|working|hour|hours|job|part[- ]?time|964|smic|ceiling|quota|budget)\b/i.test(lower)) {
+      const exec = executeFrancePolicy(
+        "fr-student-work-964-hours",
+        { country: "FR", jurisdiction: "national", asOf: new Date().toISOString() },
+        { annualLoggedHours: 0, calendarYear: new Date().getFullYear() }
+      );
+      if (exec.result) {
+        return `### Verified Statutory Policy: France Student Work Authorization 🇫🇷\n\n` +
+          `* **Statutory Limit:** **${exec.result.annualMaxHours} hours per calendar year** (Article R5221-26 of the French *Code du travail*).\n` +
+          `* **Current Allocation:** ${exec.result.remainingHours} hours remaining.\n` +
+          `* **Compliance State:** \`${exec.result.complianceState}\`\n` +
+          `* **Official Authority:** ${exec.provenance.authority ?? "Direction de l'information légale et administrative"}\n` +
+          `* **Official Source:** [Service-Public.fr](${exec.provenance.canonicalUrl ?? "https://www.service-public.fr/particuliers/vosdroits/F2728"})\n` +
+          `* **Verification Status:** **${exec.provenance.verificationStatus}**\n\n` +
+          `*Note: Internships governed by a tripartite convention de stage do not count against the 964h annual employment ceiling.*`;
+      }
     }
 
-    if (isUK) {
-      return `### Statutory Student Work Regulations for the United Kingdom 🇬🇧
-
-Under official **UKVI (UK Visas and Immigration)** regulations for international students on a Student Visa:
-
-1. **Term-Time Employment Limits**:
-   - Degree-level students are permitted to work up to a maximum of **20 hours per week** during term time.
-   - During official university vacations (as defined by your academic calendar), you may work full-time.
-2. **Prohibited Employment Activities**:
-   - Self-employment, freelance work, contracting, and gig economy apps (e.g., Deliveroo, Uber Eats) are **strictly prohibited** by UKVI.
-   - You cannot take a permanent full-time position or work as a professional entertainer/sports coach.
-3. **National Minimum Wage**:
-   - You are entitled to the UK National Minimum Wage / National Living Wage according to your age group, and you must obtain a National Insurance (NI) number.`;
+    // 2. CVEC contribution check
+    if (/\b(cvec|student life|tax|fee|campus)\b/i.test(lower)) {
+      const exec = executeFrancePolicy(
+        "fr-cvec-2026-2027",
+        { country: "FR", jurisdiction: "national", asOf: new Date().toISOString() },
+        { academicYear: "2026-2027" }
+      );
+      if (exec.result) {
+        return `### Verified Statutory Policy: CVEC Student Contribution 🇫🇷\n\n` +
+          `* **Required Contribution:** **€${exec.result.feeEuros}** for the 2026–2027 academic year.\n` +
+          `* **Verification State:** **${exec.provenance.verificationStatus}**\n` +
+          `* **Official Portal:** [Official CVEC Portal](${exec.result.portalUrl})\n` +
+          `* **Official Authority:** ${exec.provenance.authority ?? "Ministère de l'Enseignement supérieur"}\n\n` +
+          `*Mandatory registration receipt (attestation d'acquittement) is required prior to administrative university registration.*`;
+      }
     }
 
-    if (isGermany) {
-      return `### Statutory Student Work Regulations for Germany 🇩🇪
-
-Under the updated statutory immigration rules (**Section 16b AufenthG**):
-
-1. **Annual Work Days Allocation**:
-   - Non-EU students are entitled to work **140 full days or 280 half days** per calendar year (a half day is up to 4 hours).
-   - Alternatively, under the student employee (*Werkstudent*) privilege, you can work up to 20 hours per week during the semester without forfeiting student social security exemptions.
-2. **Academic & Preparation Phases**:
-   - If enrolled in preparatory language courses (*Studienkolleg*), work is permitted only during vacation periods unless explicit Foreigners' Authority (*Ausländerbehörde*) approval is granted.
-3. **Minimum Wage**:
-   - German statutory minimum wage (*Mindestlohn*) applies (€12.41/hour minimum).`;
+    // 3. VLS-TS validation deadline
+    if (/\b(vls[- ]?ts|validate|validation|anef|ofii|3 months|stamp)\b/i.test(lower)) {
+      const nowIso = new Date().toISOString().slice(0, 10);
+      const exec = executeFrancePolicy(
+        "fr-vls-ts-validation-3-months",
+        { country: "FR", jurisdiction: "national", asOf: new Date().toISOString() },
+        { entryDateIntoFrance: nowIso, currentDate: nowIso }
+      );
+      if (exec.result) {
+        return `### Verified Statutory Policy: VLS-TS Visa Validation Protocol 🇫🇷\n\n` +
+          `* **Validation Window:** Within **${exec.result.monthsWindow} months** of entry into France.\n` +
+          `* **Tax Stamp Cost:** **€${exec.result.taxStampCostEuros}** (taxe de séjour).\n` +
+          `* **Official Authority:** ${exec.provenance.authority ?? "Direction de l'information légale et administrative"}\n` +
+          `* **Official Source:** [Service-Public.fr](${exec.provenance.canonicalUrl ?? "https://www.service-public.fr/particuliers/vosdroits/F2231"})\n` +
+          `* **Verification Status:** **${exec.provenance.verificationStatus}**\n\n` +
+          `*Validation is performed exclusively online via the official ANEF portal (administration-etrangers-en-france.interieur.gouv.fr).*`;
+      }
     }
-
-    return `### International Student Employment Framework for ${dest}
-
-For your studies in **${dest}**${course}:
-- **Statutory Limits**: Most destination jurisdictions allow between 20 hours per week (term-time) and part-time quotas (~964 hours annually in Europe).
-- **Compliance Rules**: Verify your exact visa conditions printed on your biometric residence permit or entry vignette.
-- **Contractual Requirements**: Always ensure a compliant written contract and employer registration before commencing any paid duties.`;
   }
 
-  // 2. Housing, Rent, CAF, Visale, Accommodation
-  if (/\b(house|housing|flat|apartment|rent|crous|visale|caf|apl|deposit|guarantor|accommodation|landlord|bail|bailleur|lease)\b/i.test(lower)) {
-    if (isFrance) {
-      return `### Student Housing & State Entitlements in France 🏠
-
-Securing and maintaining housing in France involves key statutory mechanisms:
-
-1. **Visale Rental Guarantee (Action Logement)**:
-   - Visale acts as a **free government-backed guarantor** for international students aged 18–30.
-   - It guarantees unpaid rent and damages up to 36 months, removing the requirement for a France-based physical guarantor (*garant physique*).
-   - You must obtain your *Visa Visale* online at \`visale.fr\` **before** signing your lease.
-
-2. **CAF Housing Allowance (APL / ALS)**:
-   - All international students residing legally in France with a valid lease are eligible to apply for housing benefit (*Aide Personnalisée au Logement* - APL) via \`caf.fr\`.
-   - The allowance is calculated based on rent, location, and student income, typically providing between €100 and €250/month.
-   - Apply online as soon as your lease is signed and you have entered the apartment; payments are not retroactive.
-
-3. **Entry Inventory (*État des lieux d'entrée*)**:
-   - Inspect every fixture, wall, heating unit, and meter reading. Retain a signed, photographic copy to guarantee complete return of your security deposit (*dépôt de garantie*) within legal deadlines (max 1–2 months post-departure).`;
-    }
-
-    return `### Student Accommodation Guidance for ${dest} 🏠
-
-- **Housing Proof**: Obtain an official tenancy agreement (*lease/contract*) stating your name and rental terms. This serves as your legal proof of address.
-- **Deposit Protection**: Ensure your security deposit is held in an approved statutory tenancy deposit scheme.
-- **Subsidies & Council Exemption**: Check local student housing subsidies and apply for student council tax / local tax exemptions where applicable.`;
-  }
-
-  // 3. Healthcare, CPAM, Ameli, Insurance
-  if (/\b(health|healthcare|insurance|doctor|hospital|ameli|cpam|carte vitale|medicare|medical|mutuelle|prescription)\b/i.test(lower)) {
-    if (isFrance) {
-      return `### Mandatory Healthcare & Social Security (CPAM / Ameli) 🏥
-
-In France, international students benefit from comprehensive statutory health coverage:
-
-1. **Free Mandatory Registration**:
-   - Register on the official portal: **\`etudiant-etranger.ameli.fr\`**.
-   - Registration is 100% free and mandatory under the French general social security regime (*Régime Général de la Sécurité Sociale*).
-2. **Required Documents**:
-   - Certificate of university enrollment (*certificat de scolarité*).
-   - Passport and valid visa / residence validation (VLS-TS confirmation).
-   - Full birth certificate with official sworn French translation (*traduction assermentée*).
-   - French bank account details (RIB) for reimbursement deposits.
-3. **Coverage & Mutuelle**:
-   - *Sécurité Sociale* reimburses approx. 70% of standard doctor consultations and prescription medicines.
-   - To cover the remaining 30% ("ticket modérateur"), consider enrolling in a student complementary health insurance (*mutuelle étudiante*).`;
-    }
-
-    return `### Healthcare and Medical Coverage for ${dest} 🏥
-
-- **Statutory Registration**: Ensure your mandatory student health insurance is active upon entry.
-- **Local Practitioner Registration**: Register with a local medical clinic / GP immediately after arriving so you have access to healthcare and emergency services without delay.`;
-  }
-
-  // 4. Visa Validation, OFII, ANEF, Residence Permit
-  if (/\b(visa|ofii|anef|prefecture|residence|vls[- ]?ts|permit|titre de s[eé]jour|renew|renewal|appointment)\b/i.test(lower)) {
-    if (isFrance) {
-      return `### Visa Validation & Legal Residence Protocol (ANEF / OFII) 🛡️
-
-If you entered France on a **VLS-TS (Visa de Long Séjour valant Titre de Séjour)**:
-
-1. **Mandatory 3-Month Window**:
-   - You **must** validate your visa online within **3 months of your arrival date** at:
-     \`administration-etrangers-en-france.interieur.gouv.fr\` (ANEF portal).
-   - Failing to validate within 90 days turns your stay illegal and voids your right to work and receive CAF housing subsidies.
-2. **Online Steps**:
-   - Enter your visa number, entry date into France, and residential address in France.
-   - Pay the student residence tax stamp (**taxe de séjour**, currently €50) online via credit card or electronic fiscal stamp (*timbre fiscal électronique*).
-3. **Confirmation**:
-   - Download the official confirmation PDF (*Confirmation de la validation de l'enregistrement de votre visa long séjour valant titre de séjour*). Keep this document alongside your passport at all times.`;
-    }
-
-    return `### Visa & Immigration Compliance for ${dest} 🛡️
-
-- **Arrival Registration**: Complete any required police registration, biometric identity issuance, or immigration portal check-ins within the prescribed statutory deadline.
-- **Condition Compliance**: Maintain continuous full-time academic enrollment to protect the validity of your student visa status.`;
-  }
-
-  // 5. Banking, Currency, RIB, Financial Setup
-  if (/\b(bank|account|rib|iban|money|fund|funds|budget|living cost|cost of living|transfer|navigo|expenses)\b/i.test(lower)) {
-    return `### Financial Setup & Banking Protocols for ${dest} 💳
-
-1. **Opening a Local Account**:
-   - Essential for receiving scholarships, housing subsidies (CAF/APL), student wage payments, and transport subscriptions.
-   - Required dossier: Valid passport + student visa, official proof of address (*quittance de loyer* or *attestation d'hébergement* less than 3 months old), and your university enrollment certificate (*certificat de scolarité*).
-2. **Relevé d'Identité Bancaire (RIB) / IBAN**:
-   - Once opened, download your RIB/IBAN immediately. You will need it for:
-     - Health insurance reimbursements (CPAM/Ameli)
-     - Housing allowance payments (CAF)
-     - Mobile phone contracts and transport cards (e.g., Navigo in Paris)
-3. **Budget Modeling**:
-   - Maintain a buffer of at least 1–2 months of living expenses while waiting for initial benefit and payroll disbursements.`;
-  }
-
-  // 6. Stage-Grounded Operating Response
-  const recentEventsSummary = recentEvents.length > 0
-    ? `\n\n**Recent Journey Milestones:**\n${recentEvents.slice(0, 3).map((e) => `• [${e.phase}] ${e.title}`).join("\n")}`
-    : "";
-
-  return `### AbroadShield Co-Pilot Guidance for ${studentName || "Your Journey"} 🛡️
-
-**Active Journey Stage:** ${policy.title}  
-**Primary Mission:** ${policy.mission}  
-**Destination Focus:** ${dest}${university}${course}
-
-Here is your prioritized operational guidance for this stage:
-
-1. **Immediate Mission Priority**:
-   - Align with your stage requirements: focus on completing verified prerequisites before committing to external steps.
-   - Allowed stage capabilities: ${policy.capabilities.map((c) => `\`${c.replaceAll("_", " ")}\``).join(", ")}.
-
-2. **Statutory Integrity**:
-   - AbroadShield grounds all recommendations in official immigration directives and verified university rules.
-   - Never commit to informal or cash-in-hand arrangements; maintain documented proof of compliance across visas, leases, and student contracts.
-${recentEventsSummary}
-
-**How can I assist you right now?**
-- Type **"Find part-time jobs"** or **"Search internships"** to query verified listings.
-- Ask for official verification checklists on visa validation, housing (CAF/Visale), or health insurance (CPAM).
-- Ask any question regarding your current stage checklist and timeline.`;
+  return null;
 }

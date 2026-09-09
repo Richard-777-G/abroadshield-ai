@@ -42,6 +42,7 @@ type Message = {
   sourceIds?: string[];
   sourceErrors?: Array<{ sourceId: string; message: string }>;
   opportunitySearch?: boolean;
+  retryPrompt?: string;
 };
 
 function isDraftMessage(content: string): boolean {
@@ -83,7 +84,11 @@ function buildWelcome(profile: StudentProfile): Message {
   };
 }
 
-function getAgentError(data: unknown, _status: number): string {
+function getAgentError(data: unknown, status: number): string {
+  if (status === 503 || (data && typeof data === "object" && (data as any).serviceUnavailable)) {
+    return "The AI reasoning service is temporarily unavailable. Please retry your inquiry in a moment.";
+  }
+
   const error =
     data &&
     typeof data === "object" &&
@@ -91,11 +96,11 @@ function getAgentError(data: unknown, _status: number): string {
       ? (data as { error: string }).error
       : "";
 
-  if (error && !/credit|billing|openrouter|quota|unauthorized|runtime/i.test(error)) {
+  if (error && !/credit|billing|openrouter|quota|unauthorized|runtime|api_key|502|503/i.test(error)) {
     return error;
   }
 
-  return "AbroadShield agent is temporarily syncing with verified regulatory registries. Please retry your inquiry in a moment.";
+  return "The AI reasoning service is temporarily unavailable. Please retry your inquiry in a moment.";
 }
 
 export default function AgentChat() {
@@ -161,10 +166,8 @@ export default function AgentChat() {
         body: JSON.stringify({ message: trimmed, messages: history }),
       });
       const data = await response.json().catch(() => null);
-      const reply =
-        data?.ok && typeof data.reply === "string"
-          ? data.reply
-          : getAgentError(data, response.status);
+      const isSuccess = data?.ok && typeof data.reply === "string";
+      const reply = isSuccess ? data.reply : getAgentError(data, response.status);
 
       setMessages((current) =>
         current.map((message) =>
@@ -173,6 +176,7 @@ export default function AgentChat() {
                 ...message,
                 content: reply,
                 pending: false,
+                retryPrompt: isSuccess ? undefined : trimmed,
                 opportunities: data?.opportunities,
                 matches: data?.matches,
                 sourceIds: data?.sourceIds,
@@ -190,6 +194,7 @@ export default function AgentChat() {
                 ...message,
                 content: "Network error reaching the agent. Check your connection and retry.",
                 pending: false,
+                retryPrompt: trimmed,
               }
             : message,
         ),
@@ -383,7 +388,7 @@ export default function AgentChat() {
 
           {/* Active Conversation Messages */}
           {messages.map((message) => (
-            <MessageBubble key={message.id} message={message} onAction={markAction} />
+            <MessageBubble key={message.id} message={message} onAction={markAction} onRetry={(prompt) => void send(prompt)} />
           ))}
         </div>
       </div>
@@ -458,9 +463,11 @@ export default function AgentChat() {
 function MessageBubble({
   message,
   onAction,
+  onRetry,
 }: {
   message: Message;
   onAction: (id: string, action: DraftAction) => void;
+  onRetry?: (prompt: string) => void;
 }) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
@@ -591,6 +598,19 @@ function MessageBubble({
                     {message.actionError}
                   </div>
                 )}
+              </div>
+            )}
+            {message.retryPrompt && onRetry && (
+              <div className="mt-3 flex items-center justify-between rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5">
+                <span className="text-[11px] text-amber-200">AI service unavailable for this query.</span>
+                <button
+                  type="button"
+                  onClick={() => onRetry(message.retryPrompt!)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/30"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  <span>Retry</span>
+                </button>
               </div>
             )}
 

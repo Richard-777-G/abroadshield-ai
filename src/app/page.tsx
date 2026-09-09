@@ -1,159 +1,97 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import dynamic from "next/dynamic";
 import SiteHeader from "@/components/abroadshield/SiteHeader";
 import SiteFooter from "@/components/abroadshield/SiteFooter";
 import Hero3D from "@/components/abroadshield/Hero3D";
 import HomeShowcase from "@/components/abroadshield/HomeShowcase";
 import AuthModal from "@/components/abroadshield/AuthModal";
-import AppShell, { type WorkspaceView } from "@/components/abroadshield/AppShell";
-import JourneyWorkspace from "@/components/abroadshield/JourneyWorkspace";
-import { useProfileStore, type StudentProfile } from "@/components/abroadshield/profileStore";
 
-const SettingsView = dynamic(() => import("@/components/abroadshield/SettingsView"), { loading: () => <FeatureLoading label="Loading settings…" /> });
-const CountryRules = dynamic(() => import("@/components/abroadshield/CountryRules"));
-const AgentChat = dynamic(() => import("@/components/abroadshield/AgentChat"), { loading: () => <FeatureLoading label="Loading agent…" /> });
-const NetworkingJobs = dynamic(() => import("@/components/abroadshield/NetworkingJobs"));
-const Connectors = dynamic(() => import("@/components/abroadshield/Connectors"));
-const PricingTiers = dynamic(() => import("@/components/abroadshield/PricingTiers"));
-const VisionCTA = dynamic(() => import("@/components/abroadshield/VisionCTA"));
-const DashboardView = dynamic(() => import("@/components/abroadshield/DashboardView"), { loading: () => <FeatureLoading label="Loading workspace…" /> });
-const OnboardingWizard = dynamic(() => import("@/components/abroadshield/OnboardingWizard"), { ssr: false });
-
-type PublicView = "home" | "journey" | "countries" | "pricing";
-type Route = PublicView | "agent" | WorkspaceView;
 type AuthMode = "login" | "signup";
-const PUBLIC_VIEWS: { id: PublicView; label: string }[] = [
-  { id: "home", label: "Home" },
-  { id: "journey", label: "How it works" },
-  { id: "countries", label: "Country intelligence" },
-  { id: "pricing", label: "Pricing" },
-];
-const WORKSPACE_VIEWS: WorkspaceView[] = ["dashboard", "agent", "journey", "connectors", "network", "settings"];
 
-function isValidRoute(value: string): value is Route {
-  return PUBLIC_VIEWS.some((v) => v.id === value) || value === "agent" || WORKSPACE_VIEWS.includes(value as WorkspaceView);
-}
+const PUBLIC_VIEWS = [
+  { id: "overview", label: "Overview" },
+  { id: "lifecycle", label: "How it works" },
+  { id: "architecture", label: "Architecture" },
+  { id: "gateways", label: "Verified Gateways" },
+];
 
 export default function Home() {
-  const { data: session, status } = useSession();
-  const { profile, hydrated, hydrateFromServer, resetProfile } = useProfileStore();
-  const [activeRoute, setActiveRoute] = useState<Route>("home");
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const router = useRouter();
+  const { status } = useSession();
+  const [activeSection, setActiveSection] = useState("overview");
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("signup");
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      resetProfile();
-      void hydrateFromServer();
-      const currentHash = window.location.hash.slice(1);
-      if (!currentHash || currentHash === "home") {
-        setActiveRoute("agent");
-        window.history.replaceState(null, "", "#agent");
+  const requestAuth = useCallback((mode: AuthMode = "signup") => {
+    setAuthMode(mode);
+    setShowAuth(true);
+  }, []);
+
+  const navigateTo = useCallback(
+    (target: string) => {
+      if (target === "agent" || target === "workspace" || target.startsWith("/app")) {
+        if (status === "authenticated") {
+          router.push("/app");
+        } else {
+          requestAuth("login");
+        }
+        return;
       }
-    }
-    if (status === "unauthenticated") {
-      resetProfile();
-      setShowOnboarding(false);
-      setShowAuth(false);
-      setActiveRoute("home");
-      if (typeof window !== "undefined") {
-        window.location.hash = "";
-        window.history.replaceState(null, "", "/");
+
+      if (target === "overview" || target === "home") {
+        setActiveSection("overview");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
       }
-    }
-  }, [status, hydrateFromServer, resetProfile]);
 
-  const requestAuth = useCallback((mode: AuthMode = "signup") => { setAuthMode(mode); setShowAuth(true); }, []);
-  const navigateTo = useCallback((id: string) => {
-    const route = id as Route;
-    if (!isValidRoute(route)) return;
-    if ((route === "agent" || WORKSPACE_VIEWS.includes(route as WorkspaceView)) && status !== "authenticated") { if (status === "unauthenticated") requestAuth("login"); return; }
-    if (route === activeRoute) return;
-    setActiveRoute(route);
-    window.history.pushState(null, "", route === "home" ? "/" : `#${route}`);
-    window.scrollTo({ top: 0, behavior: "auto" });
-  }, [requestAuth, status, activeRoute]);
+      const elementId =
+        target === "journey" || target === "lifecycle"
+          ? "lifecycle"
+          : target === "architecture" || target === "pillars"
+          ? "architecture"
+          : target === "gateways" || target === "countries" || target === "pricing"
+          ? "gateways"
+          : target;
 
-  useEffect(() => {
-    const syncFromLocation = () => {
-      const hash = window.location.hash.slice(1) as Route;
-      const route = hash || "home";
-      if (!isValidRoute(route)) return;
-      if ((route === "agent" || WORKSPACE_VIEWS.includes(route as WorkspaceView)) && status !== "authenticated") { if (status === "unauthenticated") { requestAuth("login"); window.history.replaceState(null, "", "/"); } return; }
-      setActiveRoute((current) => current === route ? current : route);
-    };
-    syncFromLocation(); window.addEventListener("hashchange", syncFromLocation); window.addEventListener("popstate", syncFromLocation);
-    return () => { window.removeEventListener("hashchange", syncFromLocation); window.removeEventListener("popstate", syncFromLocation); };
-  }, [requestAuth, status]);
-
-  useEffect(() => {
-    const handler = (e: Event) => { const route = (e as CustomEvent<string>).detail; if (route) navigateTo(route); };
-    const onboardingHandler = () => setShowOnboarding(true);
-    window.addEventListener("abroadshield:navigate", handler);
-    window.addEventListener("abroadshield:open-onboarding", onboardingHandler);
-    return () => {
-      window.removeEventListener("abroadshield:navigate", handler);
-      window.removeEventListener("abroadshield:open-onboarding", onboardingHandler);
-    };
-  }, [navigateTo]);
-
-  const isWorkspace = status === "authenticated" && WORKSPACE_VIEWS.includes(activeRoute as WorkspaceView);
-  const workspaceContent = hydrated ? contentFor(activeRoute, status, session, profile, navigateTo, requestAuth) : <FeatureLoading label="Preparing your private workspace…" />;
-
-  return <div className="relative flex min-h-screen flex-col bg-transparent">
-    <AnimatePresence>{showOnboarding && <OnboardingWizard onComplete={() => { setShowOnboarding(false); navigateTo("dashboard"); }} />}</AnimatePresence>
-    {isWorkspace ? <AppShell activeView={activeRoute as WorkspaceView} onNavigate={navigateTo as (v: WorkspaceView) => void}>{workspaceContent}</AppShell> : <><SiteHeader activeView={activeRoute} onViewChange={navigateTo} views={PUBLIC_VIEWS} onTryAgent={() => { if (status !== "authenticated") { requestAuth("login"); return; } if (profile.onboarded) navigateTo("agent"); else setShowOnboarding(true); }} onAuthRequest={requestAuth} /><main className="flex-1">{contentFor(activeRoute, status, session, profile, navigateTo, requestAuth)}</main><SiteFooter onNavigate={navigateTo} /></>}
-    <AuthModal open={showAuth} onClose={() => setShowAuth(false)} mode={authMode} />
-  </div>;
-}
-
-function contentFor(activeRoute: Route, status: string, session: ReturnType<typeof useSession>["data"], profile: StudentProfile, navigateTo: (view: string) => void, requestAuth: (mode?: AuthMode) => void) {
-  return <AnimatePresence mode="wait"><motion.div key={activeRoute} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }}>
-    {activeRoute === "home" && <><Hero3D onNavigate={navigateTo} /><HomeShowcase onNavigate={navigateTo} /></>}
-    {activeRoute === "journey" && (session ? <JourneyWorkspace onNavigate={navigateTo} /> : <><Hero3D onNavigate={navigateTo} /><HomeShowcase onNavigate={navigateTo} /></>)}
-    {activeRoute === "agent" && status === "authenticated" && <AgentChat />}
-    {activeRoute === "countries" && <CountryRules />}
-    {activeRoute === "pricing" && <><PricingTiers onStart={() => { if (status === "authenticated") navigateTo("agent"); else requestAuth("signup"); }} /><VisionCTA onNavigate={navigateTo} /></>}
-    {activeRoute === "dashboard" && (status === "authenticated" ? <DashboardView onNavigate={navigateTo} /> : <SignInPanel onSignIn={() => requestAuth("login")} />)}
-    {activeRoute === "network" && status === "authenticated" && <NetworkingJobs onNavigate={navigateTo} />}
-    {activeRoute === "connectors" && status === "authenticated" && <Connectors />}
-    {activeRoute === "settings" && status === "authenticated" && <SettingsView onNavigate={navigateTo as any} />}
-  </motion.div></AnimatePresence>;
-}
-
-function FeatureLoading({ label }: { label: string }) {
-  return (
-    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-6 text-xs text-[var(--shield-text-dim)]">
-      <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--shield-border)] border-t-[var(--shield-emerald-bright)]" />
-      <span className="font-mono">{label}</span>
-    </div>
+      const el = document.getElementById(elementId);
+      if (el) {
+        setActiveSection(target);
+        el.scrollIntoView({ behavior: "smooth" });
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    },
+    [router, status, requestAuth]
   );
-}
 
-function SignInPanel({ onSignIn }: { onSignIn: () => void }) {
   return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center px-6 text-center">
-      <div className="as-dock max-w-md rounded-3xl p-8 shadow-2xl">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-[oklch(0.76_0.18_160/0.4)] bg-[oklch(0.76_0.18_160/0.12)] text-[var(--shield-emerald-bright)]">
-          <span className="text-2xl">🛡️</span>
-        </div>
-        <h2 className="mt-4 text-2xl font-bold text-white">Private Co-Pilot Workspace</h2>
-        <p className="mt-2 text-xs leading-relaxed text-[var(--shield-text-dim)]">
-          Your AI agent, journey vector, statutory checklists, and saved opportunities are securely associated with your student account.
-        </p>
-        <button
-          type="button"
-          onClick={onSignIn}
-          className="as-public-button-primary mt-6 w-full rounded-xl py-3 text-xs font-bold shadow-lg"
-        >
-          Sign In or Create Account
-        </button>
-      </div>
+    <div className="relative flex min-h-screen flex-col bg-transparent">
+      <SiteHeader
+        activeView={activeSection}
+        onViewChange={navigateTo}
+        views={PUBLIC_VIEWS}
+        onTryAgent={() => {
+          if (status === "authenticated") {
+            router.push("/app");
+          } else {
+            requestAuth("signup");
+          }
+        }}
+        onAuthRequest={requestAuth}
+      />
+      <main className="flex-1">
+        <Hero3D onNavigate={navigateTo} />
+        <HomeShowcase onNavigate={navigateTo} />
+      </main>
+      <SiteFooter onNavigate={navigateTo} />
+      <AuthModal
+        open={showAuth}
+        onClose={() => setShowAuth(false)}
+        mode={authMode}
+      />
     </div>
   );
 }

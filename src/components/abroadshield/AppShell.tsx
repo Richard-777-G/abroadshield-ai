@@ -3,29 +3,54 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { useSession } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
 import { WorkspaceHeader, WorkspaceMobileNav, WorkspaceSidebar } from "./WorkspaceNavigation";
 import WorkstationArtifactPanel, { type ArtifactTab } from "./WorkstationArtifactPanel";
 import type { WorkspaceView } from "./workspace-types";
 
 export type { WorkspaceView } from "./workspace-types";
 
+const VIEW_TO_PATH: Record<WorkspaceView, string> = {
+  agent: "/app/agent",
+  network: "/app/opportunities",
+  dashboard: "/app/limits",
+  journey: "/app/journey",
+  connectors: "/app/connectors",
+  settings: "/app/settings",
+};
+
 export default function AppShell({
-  activeView,
+  activeView: explicitView,
   onNavigate,
   children,
 }: {
-  activeView: WorkspaceView;
-  onNavigate: (view: WorkspaceView) => void;
+  activeView?: WorkspaceView;
+  onNavigate?: (view: WorkspaceView) => void;
   children: ReactNode;
 }) {
   const { data: session } = useSession();
+  const router = useRouter();
+  const pathname = usePathname() || "";
   const firstName = session?.user?.name?.trim().split(/\s+/)[0] || "Student";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [artifactsOpen, setArtifactsOpen] = useState(false);
   const [artifactTab, setArtifactTab] = useState<ArtifactTab>("dossier");
 
+  const activeView: WorkspaceView = explicitView ?? (() => {
+    if (pathname.startsWith("/app/opportunities")) return "network";
+    if (pathname.startsWith("/app/limits")) return "dashboard";
+    if (pathname.startsWith("/app/journey")) return "journey";
+    if (pathname.startsWith("/app/connectors")) return "connectors";
+    if (pathname.startsWith("/app/settings")) return "settings";
+    return "agent";
+  })();
+
   const navigate = (view: WorkspaceView) => {
-    onNavigate(view);
+    if (onNavigate) {
+      onNavigate(view);
+    } else {
+      router.push(VIEW_TO_PATH[view] || "/app/agent");
+    }
     setMobileOpen(false);
   };
 
@@ -48,7 +73,7 @@ export default function AppShell({
 
   const handleTriggerPrompt = (prompt: string) => {
     window.dispatchEvent(new CustomEvent("abroadshield:prefill-chat", { detail: prompt }));
-    if (activeView !== "agent") onNavigate("agent");
+    if (activeView !== "agent") navigate("agent");
   };
 
   return (

@@ -38,7 +38,7 @@ export default function Connectors() {
   };
   useEffect(() => { void loadGmailStatus(); }, [authStatus]);
   const visible = useMemo(() => filter === "all" ? CONNECTORS : CONNECTORS.filter(c => c.category === filter), [filter]);
-  const connectGmail = async () => { setLoadingGmail(true); try { await signIn("google", { callbackUrl: `${window.location.origin}/#connectors` }); } finally { setLoadingGmail(false); } };
+  const connectGmail = async () => { setLoadingGmail(true); try { await signIn("google", { callbackUrl: `${window.location.origin}/app/connectors` }); } finally { setLoadingGmail(false); } };
 
   return (
     <div className="mx-auto w-full max-w-6xl px-5 py-6 sm:px-8 sm:py-8 pb-16">

@@ -154,7 +154,7 @@ export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: strin
   return (
     <div className="relative w-full bg-[var(--shield-ink)]">
       {/* SECTION 1: The 8-Stage Life Vector */}
-      <section className="as-public-section">
+      <section id="lifecycle" className="as-public-section">
         <div className="as-public-container">
           <Reveal className="max-w-3xl">
             <div className="as-public-eyebrow">
@@ -288,7 +288,7 @@ export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: strin
       </section>
 
       {/* SECTION 2: 360° Life Architecture Matrix */}
-      <section className="as-public-section">
+      <section id="architecture" className="as-public-section">
         <div className="as-public-container">
           <Reveal className="max-w-3xl">
             <div className="as-public-eyebrow">
@@ -339,7 +339,7 @@ export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: strin
       </section>
 
       {/* SECTION 3: The Reality-Checked Opportunity Engine */}
-      <section className="as-public-section">
+      <section id="gateways" className="as-public-section">
         <div className="as-public-container">
           <div className="rounded-3xl border border-[var(--shield-border)] bg-[linear-gradient(135deg,oklch(0.18_0.025_255/0.8),oklch(0.12_0.015_255/0.95))] p-7 shadow-2xl sm:p-10">
             <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">

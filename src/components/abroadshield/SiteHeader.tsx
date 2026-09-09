@@ -48,7 +48,7 @@ export default function SiteHeader({ activeView, onViewChange, views, onTryAgent
     }
   }, []);
 
-  const publicNav = views.filter((item) => ["home", "journey", "agent", "countries", "pricing"].includes(item.id));
+  const publicNav = views;
   const authenticated = status === "authenticated" && Boolean(session?.user);
   const sessionLoading = status === "loading";
 
@@ -174,10 +174,10 @@ export default function SiteHeader({ activeView, onViewChange, views, onTryAgent
                 <div className="grid grid-cols-2 gap-2 border-t border-[var(--shield-border)] pt-3">
                   <button
                     type="button"
-                    onClick={() => handleNav("dashboard")}
+                    onClick={() => handleNav("agent")}
                     className="as-public-button-primary rounded-xl px-4 py-2.5 text-xs font-semibold"
                   >
-                    AI Workspace
+                    AI Co-Pilot
                   </button>
                   <button
                     type="button"

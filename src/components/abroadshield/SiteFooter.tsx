@@ -7,9 +7,9 @@ interface Props {
 }
 
 const LINKS = [
-  ["journey", "How it works"],
-  ["countries", "Country intelligence"],
-  ["pricing", "Pricing direction"],
+  ["lifecycle", "How it works"],
+  ["architecture", "360° Architecture"],
+  ["gateways", "Verified Gateways"],
 ] as const;
 
 export default function SiteFooter({ onNavigate }: Props) {
