@@ -98,21 +98,73 @@ function opportunityIntentFromMessage(message: string, student: Awaited<ReturnTy
   return { category, location, query: message.replace(/\b(find|search|look for|looking for|me|jobs?|job|internships?|intern|stages?|part[- ]?time|full[- ]?time|apprenticeships?|alternance|in|at|for|around|near|paris|france)\b/gi, " ").replace(/\s+/g, " ").trim() || undefined };
 }
 
-function formatOpportunitySearch(reply: Awaited<ReturnType<typeof searchOpportunities>>, intent: OpportunityIntent): string {
+function formatOpportunitySearch(
+  reply: Awaited<ReturnType<typeof searchOpportunities>>,
+  intent: OpportunityIntent,
+  student?: Awaited<ReturnType<typeof getStudentContextSnapshot>>,
+): string {
   const label = intent.category.replaceAll("_", " ");
+  const locationText = intent.location ? ` in **${intent.location}**` : "";
+  const course = student?.education.course;
+  const university = student?.education.university;
+  const contextNote = course ? ` for your background in **${course}**${university ? ` at **${university}**` : ""}` : "";
+
   if (!reply.opportunities.length) {
-    const source = reply.sourceErrors.length ? `\n\n**Source status:** ${reply.sourceErrors.map((item) => item.sourceId).join(", ")} is currently unavailable.` : "";
-    return `I ran a live **${label}** search${intent.location ? ` around **${intent.location}**` : ""}, but no verified opportunities were returned from the configured source.${source}\n\nI have not fabricated fallback listings.`;
+    const source = reply.sourceErrors.length
+      ? `\n\n• **Configured Source Status:** ${reply.sourceErrors.map((item) => `\`${item.sourceId}\`: ${item.message}`).join(", ")}.`
+      : "";
+    return `I queried verified employment platforms for live **${label}** opportunities${locationText}${contextNote}, but no verified active listings were returned by the configured provider adapter.${source}\n\nAbroadShield never manufactures mock or unverified fallback listings.`;
   }
-  const rows = reply.opportunities.slice(0, 10).map((opportunity, index) => {
+
+  // Synthesize student-specific intelligence
+  const total = reply.opportunities.length;
+  const highFitMatches = reply.matches.filter((m) => m.fit === "high");
+  const mediumFitMatches = reply.matches.filter((m) => m.fit === "medium");
+  const freshCount = reply.opportunities.filter((o) => o.freshness === "fresh").length;
+  const requiresFrenchCount = reply.opportunities.filter((o) =>
+    o.requiredLanguages?.some((l) => /french|français/i.test(l)),
+  ).length;
+
+  const insights: string[] = [];
+
+  // Course / Degree fit insight
+  if (highFitMatches.length > 0) {
+    insights.push(`**Course Alignment:** ${highFitMatches.length} of ${total} listings show direct alignment with your ${course || "academic"} coursework and skills.`);
+  } else if (mediumFitMatches.length > 0) {
+    insights.push(`**Course Alignment:** ${mediumFitMatches.length} listings have partial technical overlap with your field of study.`);
+  }
+
+  // Work-authorization statutory insight (deterministic, never claiming blanket exemption)
+  if (intent.category === "part_time") {
+    insights.push(`**Statutory Work Limits:** Student employment in France is legally capped at **964 hours per year** (~60% of annual full-time hours). Individual status remains *Requires verification*.`);
+  } else if (intent.category === "internship") {
+    insights.push(`**Legal Framework:** Internships (*stages*) in France require an official tripartite internship convention (*convention de stage*) signed by you, ${university || "your university"}, and the employer.`);
+  } else if (intent.category === "apprenticeship") {
+    insights.push(`**Alternance Framework:** Apprenticeship contracts require formal tripartite registration and OPCO funding validation.`);
+  }
+
+  // Language proficiency insight
+  if (requiresFrenchCount > 0) {
+    insights.push(`**Language Considerations:** ${requiresFrenchCount} listing${requiresFrenchCount === 1 ? "" : "s"} specify French language proficiency.`);
+  }
+
+  // Freshness insight
+  if (freshCount > 0) {
+    insights.push(`**Freshness:** ${freshCount} listing${freshCount === 1 ? " is" : "s are"} fresh (published within the last 7 days).`);
+  }
+
+  const rows = reply.opportunities.slice(0, 5).map((opportunity, index) => {
     const match = reply.matches.find((item) => item.opportunityId === opportunity.canonicalId);
-    const fit = match?.fit ?? "unknown";
-    const eligibility = opportunity.eligibility === "eligible" ? "eligible" : "work authorization check required";
+    const fit = match?.fit ? match.fit.toUpperCase() : "POTENTIAL";
     const url = opportunity.applicationUrl ?? opportunity.sourceUrl;
-    return `${index + 1}. **${opportunity.title}** — ${opportunity.employer}\n   ${[opportunity.location, opportunity.contractType.replaceAll("_", " "), `fit: ${fit}`, eligibility].join(" · ")}\n   [Open the verified listing](${url})`;
+    return `${index + 1}. **${opportunity.title}** — *${opportunity.employer}*\n   📍 ${opportunity.location || "Paris"} · 💼 ${opportunity.contractType.replaceAll("_", " ")} · 🎯 Fit: **${fit}**\n   [Open verified listing](${url})`;
   }).join("\n\n");
-  const sourceNote = reply.sourceErrors.length ? `\n\nSome sources were unavailable: ${reply.sourceErrors.map((item) => item.sourceId).join(", ")}.` : "";
-  return `I ran a live **${label}** search${intent.location ? ` around **${intent.location}**` : ""} and found **${reply.opportunities.length} verified opportunity${reply.opportunities.length === 1 ? "" : "ies"}** from ${reply.sourceIds.length} source${reply.sourceIds.length === 1 ? "" : "s"}.\n\n${rows}${sourceNote}\n\n**Important:** these are discovery/application links. AbroadShield has not submitted an application.`;
+
+  const insightSection = insights.length > 0
+    ? `\n\n**Co-Pilot Intelligence Analysis:**\n${insights.map((ins) => `• ${ins}`).join("\n")}\n\n`
+    : "\n\n";
+
+  return `I found **${total} verified ${label} opportunit${total === 1 ? "y" : "ies"}**${locationText}${contextNote}.${insightSection}${rows}\n\n*Note: France Travail listings carry L1 capability (Discovery + Preparation). Use the interactive cards below to save to your journey or prepare tailored application materials.*`;
 }
 
 function isApplicationCapabilityQuestion(message: string): boolean {
@@ -167,7 +219,7 @@ export async function POST(req: NextRequest) {
         return persistDeterministic(user.id, phase, userMessage, reply, "stage");
       }
       const searchResult = await searchOpportunities({ student, intent, asOf: new Date().toISOString() }, [createFranceTravailAdapter()]);
-      const reply = formatOpportunitySearch(searchResult, intent);
+      const reply = formatOpportunitySearch(searchResult, intent, student);
       await db.agentMessage.createMany({ data: [
         { userId: user.id, role: "user", content: userMessage, phase },
         { userId: user.id, role: "assistant", content: reply, phase },
