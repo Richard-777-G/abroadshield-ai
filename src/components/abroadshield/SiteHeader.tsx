@@ -31,7 +31,6 @@ export default function SiteHeader({ activeView, onViewChange, views, onTryAgent
   const handleNav = useCallback((id: string) => {
     onViewChange(id);
     setOpen(false);
-    window.scrollTo({ top: 0, behavior: "auto" });
   }, [onViewChange]);
 
   const requestAuth = useCallback((mode: AuthMode) => {

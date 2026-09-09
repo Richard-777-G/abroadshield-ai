@@ -338,7 +338,7 @@ export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: strin
         </div>
       </section>
 
-      {/* SECTION 3: The Reality-Checked Opportunity Engine */}
+      {/* SECTION 3: Official Public Gateways & Institutional Integrity */}
       <section id="gateways" className="as-public-section">
         <div className="as-public-container">
           <div className="rounded-3xl border border-[var(--shield-border)] bg-[linear-gradient(135deg,oklch(0.18_0.025_255/0.8),oklch(0.12_0.015_255/0.95))] p-7 shadow-2xl sm:p-10">
@@ -346,25 +346,25 @@ export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: strin
               <div>
                 <div className="as-public-eyebrow">
                   <ShieldCheck className="h-3.5 w-3.5" />
-                  <span>Real Opportunity Discovery · Zero Fabricated Postings</span>
+                  <span>Official Public Gateways · Zero Scraped Postings</span>
                 </div>
                 <h3 className="mt-3 text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
-                  Official public gateways. <br />
-                  <span className="as-text-gradient">Verified statutory limits.</span>
+                  Public employment APIs. <br />
+                  <span className="as-text-gradient">Deterministic statutory ceilings.</span>
                 </h3>
                 <p className="as-public-copy mt-4 text-sm leading-relaxed">
-                  Most student platforms scrape job boards and show stale or fictitious listings. AbroadShield connects directly to public employment APIs (like France Travail), validates every role against your visa’s working hours ceiling, and prepares tailored application dossiers.
+                  AbroadShield interfaces directly with verified public employment infrastructure (France Travail), evaluating every discovered position against student work limits before preparing European standard application dossiers.
                 </p>
 
                 <div className="mt-6 flex flex-wrap gap-2 text-xs font-mono">
                   <span className="rounded-lg border border-[var(--shield-border)] bg-[var(--shield-ink)] px-3 py-1.5 text-white">
-                    ✓ France Travail Gateway
+                    ✓ France Travail API (Live)
                   </span>
                   <span className="rounded-lg border border-[var(--shield-border)] bg-[var(--shield-ink)] px-3 py-1.5 text-white">
-                    ✓ 964h Annual Limit Checker
+                    ✓ Service-Public.fr Evidence
                   </span>
                   <span className="rounded-lg border border-[var(--shield-border)] bg-[var(--shield-ink)] px-3 py-1.5 text-white">
-                    ✓ CV Standard Adapter
+                    ✓ European CV Standards
                   </span>
                 </div>
               </div>
@@ -374,17 +374,17 @@ export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: strin
                   <Zap className="h-7 w-7" />
                 </div>
                 <div className="mt-4 text-base font-bold text-white">
-                  Experience AbroadShield Live
+                  Enter Your Private Workstation
                 </div>
                 <p className="mt-1.5 text-xs text-[var(--shield-text-dim)]">
-                  Open the private workspace to search real opportunities, check visa rules, and orchestrate your life abroad.
+                  Access live opportunity retrieval, deterministic visa limits, and AI co-pilot execution.
                 </p>
                 <button
                   type="button"
                   onClick={() => onNavigate?.("agent")}
                   className="as-public-button-primary mt-5 w-full rounded-xl py-3 text-xs font-bold shadow-lg"
                 >
-                  <span>Start with the AI Co-Pilot</span>
+                  <span>Launch AI Co-Pilot</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
