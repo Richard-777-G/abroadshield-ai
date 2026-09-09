@@ -274,80 +274,149 @@ export default function AgentChat() {
     );
   };
 
+  useEffect(() => {
+    const handleNewChat = () => {
+      reset();
+    };
+    window.addEventListener("abroadshield:new-chat", handleNewChat);
+    return () => window.removeEventListener("abroadshield:new-chat", handleNewChat);
+  }, []);
+
   return (
-    <section id="agent" className="relative w-full bg-transparent py-6 sm:py-8">
-      <div className="relative mx-auto w-full max-w-6xl px-5 sm:px-8">
-        <Reveal className="mb-7">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.76_0.18_160/0.4)] bg-[oklch(0.76_0.18_160/0.1)] px-3.5 py-1 text-[11px] font-mono font-bold tracking-wide text-[var(--shield-emerald-bright)]">
-            <Sparkles className="h-3.5 w-3.5" />
-            Autonomous Execution Co-Pilot · Active
-          </div>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Ask it <span className="as-text-gradient">to do the work.</span>
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--shield-text-dim)]">
-            One task at a time. The agent carries your journey context, respects verified statutory rules, and returns interactive work surfaces you control.
-          </p>
-        </Reveal>
-
-        <div className="overflow-hidden rounded-3xl border border-[var(--shield-border)] bg-[linear-gradient(180deg,oklch(0.16_0.02_255/0.95),oklch(0.12_0.015_255/0.98))] shadow-2xl">
-          <div className="relative flex items-center justify-between border-b border-[var(--shield-border)] bg-[var(--shield-ink-2)] px-5 py-4">
-            <div className="relative flex items-center gap-3">
-              <div className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-[oklch(0.76_0.18_160/0.5)] bg-[oklch(0.76_0.18_160/0.15)] text-[var(--shield-emerald-bright)]">
-                <Bot className="h-5 w-5" />
-                <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-[var(--shield-ink)] bg-[var(--shield-emerald-bright)] as-pulse" />
-              </div>
-              <div>
-                <div className="text-sm font-bold text-white">AbroadShield Agent Co-Pilot</div>
-                <div className="text-[11px] font-mono text-[var(--shield-text-dim)]">
-                  {profile.name
-                    ? `Carrying ${profile.name}'s journey context`
-                    : "Ready for your journey context"}{" "}
-                  · {profile.currentPhase.replaceAll("-", " ")}
-                </div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={reset}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--shield-border)] bg-[var(--shield-ink)] px-3 py-1.5 text-[11px] font-semibold text-[var(--shield-text-dim)] transition hover:text-white"
-            >
-              <RotateCcw className="h-3 w-3" />
-              Reset Terminal
-            </button>
-          </div>
-
-          <div
-            ref={scrollRef}
-            className="as-scroll max-h-[460px] min-h-[340px] space-y-4 overflow-y-auto bg-[oklch(0.14_0.018_165/0.5)] p-5 sm:p-6"
-          >
-            {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} onAction={markAction} />
-            ))}
-          </div>
-
+    <div className="relative flex h-full min-h-[calc(100vh-3.5rem)] flex-col justify-between bg-transparent">
+      {/* Scrollable Message Stage */}
+      <div
+        ref={scrollRef}
+        className="as-scroll flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8"
+      >
+        <div className="mx-auto max-w-3xl space-y-6">
+          {/* ChatGPT / Claude Style Welcome Stage when no conversation yet */}
           {messages.length <= 1 && (
-            <div className="border-t border-[var(--shield-border)] bg-[var(--shield-ink-2)] px-5 py-4 sm:px-6">
-              <div className="mb-2.5 text-[10px] font-mono font-bold uppercase tracking-wider text-[var(--shield-text-faint)]">
-                Autonomous Task Starters //
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="py-8 sm:py-14 text-center"
+            >
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-[oklch(0.76_0.18_160/0.4)] bg-[oklch(0.76_0.18_160/0.12)] text-[var(--shield-emerald-bright)] shadow-[0_0_35px_rgba(16,185,129,0.15)]">
+                <Sparkles className="h-7 w-7" />
               </div>
-              <div className="flex flex-wrap gap-2">
-                {CHAT_STARTERS.map((starter) => (
+
+              <h1 className="mt-5 text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
+                How can AbroadShield co-pilot your move today?
+              </h1>
+
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--shield-border)] bg-[var(--shield-ink-2)] px-3 py-1 text-xs font-mono text-[var(--shield-emerald-bright)]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--shield-emerald-bright)] as-pulse" />
+                  <span>
+                    {profile.destination ? `${profile.destination}` : "Active Destination"} · Art. R5221-26 (964h/yr Ceiling)
+                  </span>
+                </span>
+                {profile.course && (
+                  <span className="rounded-full border border-[var(--shield-border)] bg-[var(--shield-ink-2)] px-3 py-1 text-xs text-[var(--shield-text-dim)]">
+                    {profile.course}
+                  </span>
+                )}
+              </div>
+
+              <p className="mx-auto mt-3 max-w-xl text-xs leading-relaxed text-[var(--shield-text-dim)] sm:text-sm">
+                Direct conversational execution. The agent remembers your persistent journey context, verifies statutory ceilings, and uses primary sources.
+              </p>
+
+              {/* 4 High-Leverage Starter Cards in 2x2 Grid (Claude / ChatGPT style) */}
+              <div className="mt-8 grid gap-3 sm:grid-cols-2 text-left">
+                {[
+                  {
+                    title: "France Travail Target Search",
+                    tag: "VERIFIED API",
+                    prompt: "Find internships in Paris related to my course compliant with student visa limits.",
+                    desc: "Query official French employment databases under Art. R5221-26 limits.",
+                  },
+                  {
+                    title: "Statutory Feasibility Audit",
+                    tag: "L1 COMPLIANCE",
+                    prompt: "Audit my student work authorization under French Article R5221-26 and check convention de stage rules.",
+                    desc: "Verify 964h working limits, internship exemptions, and tax rules.",
+                  },
+                  {
+                    title: "Alumni Outreach Email Draft",
+                    tag: "APPROVAL GATED",
+                    prompt: "Draft a concise professional outreach email to an alumni in my target field in Paris. Stop at the draft for my approval.",
+                    desc: "Craft tailored contact messages with mandatory sign-off.",
+                  },
+                  {
+                    title: "Application Plan & European CV",
+                    tag: "DOSSIER",
+                    prompt: "Prepare an application plan with European CV formatting and student work authorization clauses.",
+                    desc: "Generate compliant dossier materials and roadmap.",
+                  },
+                ].map((item, idx) => (
                   <button
+                    key={idx}
                     type="button"
-                    key={starter.label}
-                    onClick={() => void send(starter.prompt)}
+                    onClick={() => void send(item.prompt)}
                     disabled={sending}
-                    className="rounded-full border border-[oklch(0.76_0.18_160/0.4)] bg-[oklch(0.76_0.18_160/0.1)] px-3.5 py-1.5 text-xs font-semibold text-[var(--shield-emerald-bright)] transition hover:border-[oklch(0.76_0.18_160/0.8)] hover:bg-[oklch(0.76_0.18_160/0.2)] disabled:opacity-50"
+                    className="group flex flex-col justify-between rounded-2xl border border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-4 text-left transition hover:border-[var(--shield-border-strong)] hover:bg-white/[0.03]"
                   >
-                    {starter.label}
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white group-hover:text-[var(--shield-emerald-bright)]">
+                          {item.title}
+                        </span>
+                        <span className="rounded bg-black/40 px-1.5 py-0.5 text-[8px] font-mono text-[var(--shield-emerald-bright)] border border-[oklch(0.76_0.18_160/0.3)]">
+                          {item.tag}
+                        </span>
+                      </div>
+                      <p className="mt-1.5 text-[11px] leading-relaxed text-[var(--shield-text-dim)]">
+                        {item.desc}
+                      </p>
+                    </div>
+                    <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-[var(--shield-emerald-bright)] opacity-0 transition group-hover:opacity-100">
+                      <span>Launch Mission</span>
+                      <Send className="h-3 w-3" />
+                    </div>
                   </button>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
 
-          <div className="border-t border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-3 sm:p-4">
+          {/* Active Conversation Messages */}
+          {messages.map((message) => (
+            <MessageBubble key={message.id} message={message} onAction={markAction} />
+          ))}
+        </div>
+      </div>
+
+      {/* Floating Bottom Composer Dock (ChatGPT / Claude Canvas style) */}
+      <div className="sticky bottom-0 z-20 px-4 pb-4 pt-2 sm:px-6 lg:px-8 bg-gradient-to-t from-[var(--shield-ink)] via-[var(--shield-ink)]/95 to-transparent">
+        <div className="mx-auto max-w-3xl">
+          {/* Quick Tool Selector Pills */}
+          <div className="mb-2 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[var(--shield-text-faint)] shrink-0">
+              Tool Accelerators:
+            </span>
+            {[
+              { label: "🎯 France Travail", prompt: "Search France Travail for verified internships matching my course." },
+              { label: "🛡️ Statutory 964h", prompt: "Explain Article R5221-26 964-hour rule and convention de stage exemption." },
+              { label: "✉️ Draft Outreach", prompt: "Draft a professional contact email to a lab researcher in Paris." },
+              { label: "📋 CV Dossier", prompt: "Prepare European CV tailoring guidelines and work authorization clauses." },
+            ].map((tool, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => void send(tool.prompt)}
+                disabled={sending}
+                className="shrink-0 rounded-full border border-[var(--shield-border)] bg-[var(--shield-ink-2)] px-2.5 py-0.5 text-[10px] font-medium text-[var(--shield-text-dim)] transition hover:border-[var(--shield-emerald-bright)] hover:text-white"
+              >
+                {tool.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Composer Capsule */}
+          <div className="as-composer-capsule rounded-2xl p-2 sm:p-2.5">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
@@ -360,29 +429,30 @@ export default function AgentChat() {
                   }
                 }}
                 rows={1}
-                placeholder="Ask your co-pilot for a real task or opportunity search…"
-                className="as-scroll max-h-32 flex-1 resize-none rounded-2xl border border-[var(--shield-border)] bg-[var(--shield-ink)] px-4 py-3 text-sm text-[var(--shield-text)] placeholder:text-[var(--shield-text-dim)] focus:border-[oklch(0.76_0.18_160/0.6)] focus:outline-none focus:ring-1 focus:ring-[oklch(0.76_0.18_160/0.4)]"
+                placeholder="Ask AbroadShield to search roles, audit statutory rules, or draft materials…"
+                className="as-scroll max-h-36 min-h-[44px] flex-1 resize-none bg-transparent px-3 py-2.5 text-sm text-[var(--shield-text)] placeholder:text-[var(--shield-text-dim)] focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => void send(input)}
                 disabled={!input.trim() || sending}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--shield-text)] text-[var(--shield-ink)] font-bold transition hover:opacity-90 disabled:opacity-30"
-                aria-label="Send"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--shield-emerald)] text-black font-bold transition hover:bg-[var(--shield-emerald-bright)] disabled:opacity-20 disabled:hover:bg-[var(--shield-emerald)]"
+                aria-label="Send message"
               >
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 fill-current" />}
               </button>
             </div>
-            <div className="mt-2 flex items-center justify-between px-1 text-[10px] text-[var(--shield-text-faint)]">
+
+            <div className="mt-1.5 flex items-center justify-between px-2 text-[10px] text-[var(--shield-text-faint)]">
               <span>Enter to send · Shift+Enter for newline</span>
               <span className="font-mono text-[9px] uppercase tracking-wider text-[var(--shield-emerald-bright)]">
-                Approval-Gated External Action
+                Autonomous Statutory Engine
               </span>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 

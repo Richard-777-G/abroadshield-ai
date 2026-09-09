@@ -47,8 +47,22 @@ export default function Home() {
   const [authMode, setAuthMode] = useState<AuthMode>("signup");
 
   useEffect(() => {
-    if (status === "authenticated") { resetProfile(); void hydrateFromServer(); }
-    if (status === "unauthenticated") { resetProfile(); setShowOnboarding(false); setShowAuth(false); setActiveRoute("home"); if (window.location.hash) window.history.replaceState(null, "", "/"); }
+    if (status === "authenticated") {
+      resetProfile();
+      void hydrateFromServer();
+      const currentHash = window.location.hash.slice(1);
+      if (!currentHash || currentHash === "home") {
+        setActiveRoute("agent");
+        window.history.replaceState(null, "", "#agent");
+      }
+    }
+    if (status === "unauthenticated") {
+      resetProfile();
+      setShowOnboarding(false);
+      setShowAuth(false);
+      setActiveRoute("home");
+      if (window.location.hash) window.history.replaceState(null, "", "/");
+    }
   }, [status, hydrateFromServer, resetProfile]);
 
   const requestAuth = useCallback((mode: AuthMode = "signup") => { setAuthMode(mode); setShowAuth(true); }, []);

@@ -68,7 +68,7 @@ export default function AuthModal({ open, onClose, mode: initialMode = "signup" 
         email: normalizedEmail,
         password,
         redirect: false,
-        callbackUrl: "/#dashboard",
+        callbackUrl: "/#agent",
       });
 
       if (!result || result.error || result.ok === false) {
@@ -83,7 +83,7 @@ export default function AuthModal({ open, onClose, mode: initialMode = "signup" 
       }
 
       onClose();
-      window.location.assign("/#dashboard");
+      window.location.assign("/#agent");
     } catch {
       setError("Authentication is temporarily unavailable. Please try again.");
     } finally {
@@ -94,7 +94,7 @@ export default function AuthModal({ open, onClose, mode: initialMode = "signup" 
   const handleOAuth = (provider: string) => {
     setLoading(true);
     setError("");
-    void signIn(provider, { callbackUrl: "/#dashboard" });
+    void signIn(provider, { callbackUrl: "/#agent" });
   };
 
   const hasGoogle = Boolean(providers.google);

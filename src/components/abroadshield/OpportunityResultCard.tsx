@@ -61,6 +61,11 @@ export default function OpportunityResultCard({
       const data = await res.json();
       if (res.ok && data.ok) {
         setSaved(true);
+        window.dispatchEvent(
+          new CustomEvent("abroadshield:open-artifacts", {
+            detail: { tab: "dossier" },
+          }),
+        );
       } else {
         setSaveError(data.error || "Failed to save opportunity.");
       }
@@ -74,6 +79,11 @@ export default function OpportunityResultCard({
   const handlePrepare = async () => {
     if (prepPlan) {
       setPrepExpanded(!prepExpanded);
+      window.dispatchEvent(
+        new CustomEvent("abroadshield:open-artifacts", {
+          detail: { tab: "application" },
+        }),
+      );
       return;
     }
 
@@ -92,6 +102,11 @@ export default function OpportunityResultCard({
         setPrepExpanded(true);
         // Also reflect that it's now tracked as saved or preparing
         setSaved(true);
+        window.dispatchEvent(
+          new CustomEvent("abroadshield:open-artifacts", {
+            detail: { tab: "application" },
+          }),
+        );
       } else {
         setPrepError(data.error || "Could not generate preparation plan.");
       }

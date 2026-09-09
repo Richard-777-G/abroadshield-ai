@@ -186,17 +186,17 @@ export default function Hero3D({ onNavigate }: { onNavigate?: (view: string) => 
               <button
                 type="button"
                 onClick={() => onNavigate?.("agent")}
-                className="as-public-button-primary group rounded-full px-5 py-3 text-sm shadow-xl"
+                className="as-public-button-primary group rounded-full px-6 py-3.5 text-sm font-bold shadow-2xl"
               >
-                <Zap className="h-4 w-4 fill-current" />
+                <Zap className="h-4 w-4 fill-current text-black" />
                 <span>Launch Agent Co-Pilot</span>
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="h-4 w-4 text-black transition-transform group-hover:translate-x-1" />
               </button>
 
               <button
                 type="button"
                 onClick={() => onNavigate?.("journey")}
-                className="as-public-button-secondary rounded-full px-5 py-3 text-sm"
+                className="as-public-button-secondary rounded-full px-6 py-3.5 text-sm font-semibold"
               >
                 <span>Explore 8-Stage Life Vector</span>
               </button>

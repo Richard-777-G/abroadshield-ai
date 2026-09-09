@@ -219,11 +219,11 @@ export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: strin
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15 }}
                 transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-6 rounded-3xl border border-[var(--shield-border)] bg-[linear-gradient(180deg,oklch(0.16_0.02_255/0.95),oklch(0.12_0.015_255/0.98))] p-6 shadow-2xl sm:p-8"
+                className="mt-6 rounded-3xl border border-[var(--shield-border)] bg-[var(--shield-ink-2)] p-6 shadow-2xl sm:p-8"
               >
                 <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
                   <div>
-                    <div className="inline-flex items-center gap-2 rounded-full border border-[oklch(0.76_0.18_160/0.4)] bg-[oklch(0.76_0.18_160/0.1)] px-3 py-1 text-xs font-mono font-semibold text-[var(--shield-emerald-bright)]">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-[var(--shield-emerald)]/30 bg-[var(--shield-emerald)]/10 px-3 py-1 text-xs font-mono font-semibold text-[var(--shield-emerald-bright)]">
                       <span>PHASE {currentStage.step} // {currentStage.title.toUpperCase()}</span>
                     </div>
 
@@ -241,8 +241,8 @@ export default function HomeShowcase({ onNavigate }: { onNavigate?: (view: strin
                       </p>
                     </div>
 
-                    <div className="mt-4 rounded-2xl border border-[oklch(0.82_0.16_75/0.3)] bg-[oklch(0.82_0.16_75/0.06)] p-4">
-                      <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-[var(--shield-amber-bright)]">
+                    <div className="mt-4 rounded-2xl border border-amber-500/25 bg-amber-500/10 p-4">
+                      <div className="flex items-center gap-2 text-xs font-mono font-semibold uppercase tracking-wider text-amber-300">
                         <ShieldAlert className="h-4 w-4" />
                         <span>Statutory Guardrail &amp; Compliance Check</span>
                       </div>

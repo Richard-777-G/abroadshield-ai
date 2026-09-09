@@ -94,26 +94,26 @@
   --sidebar-border: oklch(0.88 0.01 240);
   --sidebar-ring: oklch(0.62 0.17 162);
 
-  /* Next-Gen AbroadShield Obsidian Color System */
-  --shield-emerald: oklch(0.76 0.18 160);
-  --shield-emerald-bright: oklch(0.87 0.19 155);
-  --shield-emerald-deep: oklch(0.38 0.10 165);
-  --shield-lime: oklch(0.86 0.20 135);
-  --shield-mint: oklch(0.90 0.14 175);
-  --shield-amber: oklch(0.82 0.16 75);
-  --shield-amber-bright: oklch(0.88 0.18 75);
-  --shield-rose: oklch(0.66 0.20 25);
-  --shield-violet: oklch(0.68 0.16 295);
-  --shield-cyan: oklch(0.76 0.15 215);
-  --shield-ink: oklch(0.10 0.012 255);
-  --shield-ink-2: oklch(0.14 0.016 255);
-  --shield-ink-3: oklch(0.18 0.020 255);
-  --shield-panel: oklch(0.15 0.018 255 / 0.82);
-  --shield-border: oklch(0.32 0.025 255 / 0.35);
-  --shield-border-strong: oklch(0.55 0.05 160 / 0.45);
-  --shield-text: oklch(0.98 0.005 240);
-  --shield-text-dim: oklch(0.75 0.02 240);
-  --shield-text-faint: oklch(0.48 0.015 240);
+  /* Next-Gen AbroadShield Unified Obsidian & Quantum Color System */
+  --shield-emerald: #10b981;
+  --shield-emerald-bright: #34d399;
+  --shield-emerald-deep: #065f46;
+  --shield-lime: #84cc16;
+  --shield-mint: #6ee7b7;
+  --shield-amber: #f59e0b;
+  --shield-amber-bright: #fbbf24;
+  --shield-rose: #f43f5e;
+  --shield-violet: #8b5cf6;
+  --shield-cyan: #06b6d4;
+  --shield-ink: #08090d;
+  --shield-ink-2: #0e111a;
+  --shield-ink-3: #141824;
+  --shield-panel: rgba(14, 17, 26, 0.88);
+  --shield-border: rgba(255, 255, 255, 0.08);
+  --shield-border-strong: rgba(255, 255, 255, 0.18);
+  --shield-text: #f8fafc;
+  --shield-text-dim: #94a3b8;
+  --shield-text-faint: #64748b;
 }
 
 .dark {
@@ -488,3 +488,58 @@
     animation: none !important;
   }
 }
+
+/* AI-First Co-Pilot Workstation Systems (ChatGPT / Claude / Antigravity Style) */
+.as-workstation-canvas {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  background: var(--shield-ink);
+}
+
+.as-composer-capsule {
+  background: rgba(14, 17, 26, 0.85);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.as-composer-capsule:focus-within {
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(16, 185, 129, 0.35);
+}
+
+.as-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--shield-text-dim);
+  transition: all 0.15s ease;
+}
+
+.as-sidebar-item:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.as-sidebar-item.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+}
+
+.as-artifact-drawer {
+  background: rgba(14, 17, 26, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-left: 1px solid var(--shield-border);
+  box-shadow: -15px 0 35px -10px rgba(0, 0, 0, 0.5);
+}
+

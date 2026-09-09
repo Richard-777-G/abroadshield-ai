@@ -104,10 +104,10 @@ export default function SiteHeader({ activeView, onViewChange, views, onTryAgent
               <>
                 <button
                   type="button"
-                  onClick={() => handleNav("dashboard")}
-                  className="rounded-full border border-[oklch(0.76_0.18_160/0.4)] bg-[oklch(0.76_0.18_160/0.12)] px-4 py-2 text-[12px] font-bold text-[var(--shield-emerald-bright)] shadow-sm transition hover:bg-[oklch(0.76_0.18_160/0.2)]"
+                  onClick={() => handleNav("agent")}
+                  className="rounded-full border border-[var(--shield-emerald)]/40 bg-[var(--shield-emerald)]/10 px-4 py-2 text-[12px] font-bold text-[var(--shield-emerald-bright)] shadow-sm transition hover:bg-[var(--shield-emerald)]/20"
                 >
-                  AI Workspace
+                  Open AI Co-Pilot
                 </button>
                 <button
                   type="button"
